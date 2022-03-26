@@ -1,0 +1,29 @@
+{% include header.html %}
+<div class="container">
+	<div class="profile">
+		<a href="{{ site.url }}"><img src="{{site.author.picture}}" class="profile-image"></a>
+		<div class="profile-about">
+			<h2 style="margin-bottom: 0; font-weight: 700;">{{site.author.name}}</h2>
+			{% if site.author.github %}
+				<a href="https://github.com/{{site.author.github}}" target="_blank"><img src="assets/images/icon/github.svg" class="social-icon"></a>
+			{% endif %}
+			{% if site.author.linkedin %}
+				<a href="https://linkedin.com/in/{{site.author.linkedin}}" target="_blank"><img src="assets/images/icon/linkedin.svg" class="social-icon"></a>
+			{% endif %}
+			<br>
+			{{ site.author.bio }}
+			<br>
+			<div class="mode" id="mode-switcher" onclick="toggleNightMode();">
+				<span></span>
+			</div>
+		</div>
+	</div>
+	<div class="navbar">
+		<b> <a href="about">about</a> | <a href="/">archive</a> | <a href="/">resume</a> </b>
+	</div>
+	{{ content }}
+	<div class="footer">
+		<span> © 2022 mairacanal | Made with <font color="red">♥</font> on Earth, a minimalist Jekyll Theme by <a href="https://hakan.io"><b>Hakan</b></a> </span>
+	</div>
+</div>
+{% include footer.html %}
