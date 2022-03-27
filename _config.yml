@@ -27,14 +27,14 @@ kramdown:
   syntax_highlighter: rouge
 
 
-exclude:
-  - .jekyll-cache
-  - .obsidian
-  - Gemfile
-  - Gemfile.lock
-  - LICENSE.md
-  - README.md
-  - CONTRIBUTING.md
+exclude: [vendor]
+  # - .jekyll-cache
+  # - .obsidian
+  # - Gemfile
+  # - Gemfile.lock
+  # - LICENSE.md
+  # - README.md
+  # - CONTRIBUTING.md
 
 plugins:
   - jekyll-paginate
