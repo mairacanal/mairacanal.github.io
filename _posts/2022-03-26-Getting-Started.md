@@ -8,7 +8,7 @@ categories: Genel
 tags: [linux, kernel]
 ---
 
-I started my journey with the Linux Kernel in October 2020. At that time, I thought it was impossible for a 19-year-old Brazilian girl to have an approved commit at the kernel. Then, I find out about an extracurricular group at Campinas, LKCAMP. And I found out that undergraduate students were able to contribute to the kernel. Although I couldn´t go to the LKCAMP meetings, this really push me forward, cause I saw that I was able to be a part of the kernel community.
+I started my journey with the Linux Kernel in October 2021. At that time, I thought it was impossible for a 19-year-old Brazilian girl to have an approved commit at the kernel. Then, I find out about an extracurricular group at Campinas, LKCAMP. And I found out that undergraduate students were able to contribute to the kernel. Although I couldn´t go to the LKCAMP meetings, this really push me forward, cause I saw that I was able to be a part of the kernel community.
 
 I was a Linux user for about two years, and I became passionate about the system. I was eager to contribute to the community and improve the kernel. But, I was in doubt about where to start. 
 
