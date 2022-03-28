@@ -14,7 +14,7 @@ I was a Linux user for about two years, and I became passionate about the system
 
 So, I started to fly solo and explore all the kernel TODO lists. I didn't really get many of the tasks on the lists, but one, in particular, attracted me: the DRM TODO list. This list has been categorized into different levels: from starter to expert. I picked up a starter task:
 
-Replace all drm_lock boilerplates for DRM_MODESET_LOCK_ALL_* helpers
+**Replace all drm_lock boilerplates for DRM_MODESET_LOCK_ALL_* helpers**
 
 With a lot of git grep, I found a drm_lock boilerplate and code my first Linux Kernel patch. It was small, but it was my first patch and I was extremely excited.
 
@@ -64,17 +64,23 @@ But my next challenge was to find out how to send my patch.
 
 I was used to the Pull Request scheme of contribution and didn't really get which mailing list should I send my patch to. After some research, this [tutoral](https://medium.com/@cristianzsh/submitting-your-first-patch-to-the-linux-kernel-e81d2541fac6) introduce me to the `checkpatch.sh` and `get_maintainer.sh` scripts. 
 
-So, I finally send my first patch to the Linux Kernel... And it was denied. Another contributor sent the patch ahead of me. It happens...
+So, I finally send my first patch to the Linux Kernel... And it was **denied**. Another contributor sent the patch ahead of me. It happens...
 
-But, I didn't give up on my first denied patch. I tried to send a patch to the power domain system, replacing dev_err() for dev_err_probe() to reduce code size and uniform error handling. But, in my second patch, I didn't really see that the dev_err_probe() should only be used inside the probe function of a driver. So, Greg KH pointed that out and denied my second patch.
+## Second patch: here we go again
 
-I mean, at that point, I was really thinking of giving up. But I remember something I learned during my undergraduate research: the kernel is currently changing the GPIO interface from GPIO numberspace to GPIO descriptor. I read the TODO list from the GPIO subsystem and found out that one of the work items is: Convert all consumer drivers to only #include <linux/gpio/consumer.h>.
+But, I didn't give up on my first denied patch. I tried to send a patch to the power domain system, replacing dev_err() for dev_err_probe() to reduce code size and uniform error handling. But, in my second patch, I didn't really see that the dev_err_probe() should only be used inside the probe function of a driver. So, Greg KH pointed that out and **denied my second patch**.
+
+## Third patch: about to give up
+
+I mean, at that point, I was really thinking of giving up. But I remember something I learned during my undergraduate research: the kernel is currently changing the GPIO interface from GPIO numberspace to GPIO descriptor. I read the TODO list from the GPIO subsystem and found out that one of the work items is: *Convert all consumer drivers to only #include <linux/gpio/consumer.h>*.
 
 This was gold to me! I had experience with the GPIO descriptor consumer interface during my undergraduate research, so converting drivers was an easy task for me.
 
 So, I git grep `#include <linux/of_gpio.h>` and choose the `media/i2c/s5c73m3/s5c73m3-core.c` driver to convert. I send my patch and... Nothing. Really, nobody answered me for more than a month. And was anxious to have an approved patch.
 
-So, I picked up the `regulator/lp872x.c` driver and converted also. Then, on my fourth try, my patch was finally approved. Mark Brown approved my patch and applied. My patch was merged to the mainstream in Linux v5.17.
+## Fourth patch: my first approved patch
+
+So, I picked up the `regulator/lp872x.c` driver and converted also. Then, on my fourth try, **my patch was finally approved**. Mark Brown approved my patch and applied. My patch was merged to the mainstream in Linux v5.17.
 
 ```
 
