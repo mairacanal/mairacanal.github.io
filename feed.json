@@ -7,8 +7,8 @@ layout: null
     "home_page_url": "{{ "/" | absolute_url }}",
     "feed_url": "{{ "/feed.json" | absolute_url }}",
     "description": {{ site.description | jsonify }},
-    "icon": "{{ "assets/images/apple-touch-icon.png" | absolute_url }}",
-    "favicon": "{{ "assets/images/favicon.png" | absolute_url }}",
+    "icon": "{{ "/apple-touch-icon.png" | absolute_url }}",
+    "favicon": "{{ "/favicon.ico" | absolute_url }}",
     "expired": false,
     {% if site.author %}
     "author": {% if site.author.name %} {

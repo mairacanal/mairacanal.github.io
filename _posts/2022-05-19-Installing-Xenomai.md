@@ -5,7 +5,7 @@ author: Maíra Canal
 layout: post
 permalink: /install-xenomai-beaglebone-black/
 categories: Genel
-tags: [linux, embedded, real-time]
+tags: [linux, embedded]
 ---
 
 There are many ways to bring Real-Time to Linux. A standard Linux distribution can provide a reasonable latency to a soft real-time application. But, if you are dealing with applications with harsh timing restrictions, you might be unsatisfied with the results provided by a standard Linux distro.

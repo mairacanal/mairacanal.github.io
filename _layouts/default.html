@@ -1,29 +1,96 @@
-{% include header.html %}
-<div class="container">
-	<div class="profile">
-		<a href="{{ site.url }}"><img src="{{site.author.picture}}" class="profile-image"></a>
-		<div class="profile-about">
-			<h2 style="margin-bottom: 0; font-weight: 700;">{{site.author.name}}</h2>
-			{% if site.author.github %}
-				<a href="https://github.com/{{site.author.github}}" target="_blank"><img src="assets/images/icon/github.svg" class="social-icon"></a>
-			{% endif %}
-			{% if site.author.linkedin %}
-				<a href="https://linkedin.com/in/{{site.author.linkedin}}" target="_blank"><img src="assets/images/icon/linkedin.svg" class="social-icon"></a>
-			{% endif %}
-			<br>
-			{{ site.author.bio }}
-			<br>
-			<div class="mode" id="mode-switcher" onclick="toggleNightMode();">
-				<span></span>
-			</div>
-		</div>
-	</div>
-	<div class="navbar">
-		<b> <a href="about">about</a> | <a href="/">archive</a> | <a href="/">resume</a> </b>
-	</div>
-	{{ content }}
-	<div class="footer">
-		<span> © 2022 mairacanal | Made with <font color="red">♥</font> on Earth, a minimalist Jekyll Theme by <a href="https://hakan.io"><b>Hakan</b></a> </span>
-	</div>
-</div>
-{% include footer.html %}
+---
+layout: compress
+---
+
+<!DOCTYPE html>
+<html lang="en">
+{% include head.html %}
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=G-JFT6WXZSWG"></script>
+ <script>
+   window.dataLayer = window.dataLayer || [];
+   function gtag() { dataLayer.push(arguments); }
+   gtag('js', new Date());
+
+   gtag('config', 'G-JFT6WXZSWG');
+ </script>
+
+
+
+
+<body>
+  <main>
+    {% include anchor_headings.html html=content anchorBody="#" %}
+  </main>
+
+  
+
+  <script>
+    function setTheme(theme) {
+      if (theme === "dark") {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        window.localStorage.setItem('theme', 'dark');
+        document.getElementById("theme-toggle").classList.add('sun');
+        document.getElementById("theme-toggle").classList.remove('moon');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        window.localStorage.setItem('theme', 'light');
+        document.getElementById("theme-toggle").classList.add('moon');
+        document.getElementById("theme-toggle").classList.remove('sun');
+      }
+    }
+
+    let theme = localStorage.getItem('theme');
+
+    theme = theme || (window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' : 'light');
+
+    setTheme(theme);
+
+    function modeSwitcher() {
+      let currentMode = document.documentElement.getAttribute('data-theme');
+
+      if (currentMode === "dark") {
+        setTheme('light');
+      } else {
+        setTheme('dark');
+      }
+    }
+  </script>
+
+
+
+</body>
+
+<footer class="social-footer">
+  <div class="social-footer-icons">
+    <a href="https://github.com/mairacanal" title="Github profile" target="_blank"
+      rel="noopener noreferrer"><i class="fa fa-github" aria-hidden="true"></i></a>
+    <a href="https://gitlab.com/mairacanal" title="GitLab profile" target="_blank"
+      rel="noopener noreferrer"><i class="fa fa-gitlab" aria-hidden="true"></i></a>
+    <a href="{{site.url}}{{ site.baseurl }}/atom.xml" title="Feed RSS" target="_blank" rel="noopener noreferrer"><i
+        class="fa fa-rss" aria-hidden="true"></i></a>
+    <a href="https://www.linkedin.com/in/mairacanal" title="LinkedIn profile" target="_blank"
+      rel="noopener noreferrer"><i class="fa fa-linkedin" aria-hidden="true"></i></a>
+    <a href="https://github.com/P0WEX/Gesko" title="Browse the theme" target="_blank" rel="noopener noreferrer"><i
+        class="fa fa-paint-brush" aria-hidden="true"></i></a>
+  </div>
+</footer>
+
+
+{% if page.url == '/' %}
+  <script src="{{ site.url }}{{ site.baseurl }}/assets/js/simple-jekyll-search.js"></script>
+  <script>
+    var sjs = SimpleJekyllSearch({
+      searchInput: document.getElementById('search-input'),
+      resultsContainer: document.getElementById('search-results'),
+		      json: '{{ site.url }}{{ site.baseurl }}/search.json',
+      searchResultTemplate: '<li><a href="{url}" title="{description}">{title}</a></li>',
+      noResultsText: 'No results found..',
+      limit: 10,
+      fuzzy: true,
+    })
+  </script>
+  {% endif %}
+
+
+</html>
