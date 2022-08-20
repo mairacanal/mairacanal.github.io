@@ -10,8 +10,6 @@ tags: [gsoc, linux, kernel, graphics]
 
 Last week, the [series](https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t) with DRM Kernel Selftests conversion to KUnit tests was merged into `drm-misc-next` and will probably be on the mainline on 5.20.
 
-<!-- more -->
-
 This series was developed during an [LKCAMP](https://lkcamp.dev/) hackathon in October 2021 and is the combined effort of seven Linux Kernel beginners. In this hackathon, we learned about the KUnit Framework and also learned a bit about DRM.
 
 The series took quite a while to come out, as it was just a side-project to most of us, but, in June, I finally prepared the patches and transformed them into a mergeable series.
