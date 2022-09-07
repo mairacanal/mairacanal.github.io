@@ -3,7 +3,7 @@ title: "GSoC Final Report"
 date: 2022-09-07
 author: Maíra Canal
 layout: post
-permalink: /gson-final-report/
+permalink: /gsoc-final-report/
 categories: Genel
 tags: [gsoc, linux, kernel]
 ---

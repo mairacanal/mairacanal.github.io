@@ -242,7 +242,7 @@ function has dozens of side effects.
 
 > More glossary for some software engineering terms: \
 > **\- Readability:** how easily a software artifact can be read? \
-> **\- Understandability:** how easily a software artifact can be comprehend? \
+> **\- Understandability:** how easily a software artifact can be comprehend?
 
 But this is not a dead end for the AMDGPU's DML code: I mean, the AMDGPU driver
 works awesomely on Linux, and code refactoring is always an option.
