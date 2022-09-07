@@ -345,7 +345,7 @@ features on the DRM or improving the DRM core.
 
 Finally, by the end of GSoC, I’ll be joining another mentorship project on the
 Linux Graphics Stack, the [Igalia Coding
-Experience](https://www.igalia.com/coding-experience/) here I will be learning
+Experience](https://www.igalia.com/coding-experience/), in which I will be learning
 more about the DRM subsystem and IGT in the next months. This is making me very
 excited, as I will continue to contribute with open source, especially the Linux
 kernel, with the help of my great mentors Melissa Wen and André Almeida, who are
