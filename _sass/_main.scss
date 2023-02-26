@@ -374,9 +374,6 @@ main {
 	flex-direction: column;
 }
 
-.profile-image-container{width: 40%;}
-.profile-image{width: 128px; height: 128px; border-radius: 50%; transition: transform .2s;}
-
 .flex-row-between {
 	display: flex;
 	flex-direction: row;
@@ -443,7 +440,6 @@ figcaption {
 
 .bio {
 	margin-bottom: 5rem;
-	text-align: right;
 }
 
 ::selection {
