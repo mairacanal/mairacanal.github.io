@@ -83,10 +83,10 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  jekyll
+  jekyll (~> 4.2)
   jekyll-extlinks!
   jekyll-relative-links!
-  webrick
+  webrick (~> 1.8)
 
 BUNDLED WITH
    2.3.22
