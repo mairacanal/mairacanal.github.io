@@ -6,9 +6,9 @@ domain: "mairacanal.github.io"
 url: "https://mairacanal.github.io" # Domain Name of host. [username].github.io for github pages
 permalink: pretty
 
-dark_scheme: tokyo-city-terminal-dark
-light_scheme: tokyo-city-terminal-light
-printing_scheme: tomorrow # Must have #FFFFFF background
+dark_scheme: catppuccin-frappe
+light_scheme: catppuccin-latte
+# printing_scheme: tomorrow # Must have #FFFFFF background
 
 
 plugins:
