@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Cross-Compiling CTS for the Raspberry Pi 4</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/cross-compiling-cts-rpi4/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Cross-Compiling CTS for the Raspberry Pi 4</h1>
+      
+      
+        <p>
+          Date: <time datetime="2023-05-16T12:00:00+00:00">16th May 2023</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#igalia">#igalia</a>
+          
+            <a href="/notes#graphics">#graphics</a>
+          
+            <a href="/notes#embedded">#embedded</a>
+          
+        </p>
+      
+    </header>
+
+    <p>This blogpost was actually written partially in November/December 2022 while I was developing IGT tests for the V3D driver.
+I ended up leaving it aside for a while and now, I came back and finished the last loose ends.
+That’s why I’m referencing the time where I was fighting against V3D’s noop jobs.</p>
+
+<hr>
+
+<p>Currently, during my <a href="https://www.igalia.com/coding-experience/" class="external">Igalia Coding Experience</a>, I’m working on the V3D’s IGT tests and therefore, I’m dealing a lot with the Raspberry Pi 4.
+During the project, I had a real struggle to design the tests for the <code class="language-plaintext highlighter-rouge">v3d_submit_cl</code> ioctl, as I was not capable of submit a proper noop job to the GPU.</p>
+
+<p>In order to debug the tests, my mentor <a href="https://melissawen.github.io/" class="external">Melissa Wen</a> suggested to me to run the CTS tests to reproduce a noop job and debug it through Mesa.
+I cloned the CTS repository into my Raspberry Pi 4 and I tried to compile, but my Raspberry Pi 4 went OOM.
+This sent me on a journey to cross-compile CTS for the Raspberry Pi 4.
+I decided to compile this journey into this blogpost.</p>
+
+<p>During this blogpost, I’m using a Raspbian OS with desktop 64-bit.</p>
+
+<h1 id="installing-mesa">Installing Mesa</h1>
+<hr>
+<p>First, you need to install Mesa on the Raspberry Pi 4.
+I decided to compile Mesa on the Raspberry Pi 4 itself, but maybe one day, I can write a blogpost about cross-compiling Mesa.</p>
+
+<h2 id="1-installing-libdrm">1. Installing libdrm</h2>
+
+<p>Currently, the Raspbian repositories only provide <code class="language-plaintext highlighter-rouge">libdrm 2.4.104</code> and Mesa’s main branch needs <code class="language-plaintext highlighter-rouge">libdrm &gt;=2.4.109</code>.
+So, first, let’s install <code class="language-plaintext highlighter-rouge">libdrm 2.4.109</code> on the Raspberry Pi 4.</p>
+
+<p>First, let’s make sure that you have <code class="language-plaintext highlighter-rouge">meson</code> installed on your RPi4.
+We will need <code class="language-plaintext highlighter-rouge">meson</code> to build <code class="language-plaintext highlighter-rouge">libdrm</code> and Mesa.
+I’m installing <code class="language-plaintext highlighter-rouge">meson</code> through <code class="language-plaintext highlighter-rouge">pip3</code> because we need a <code class="language-plaintext highlighter-rouge">meson</code> version greater than 0.60 to build Mesa.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># On the Raspberry Pi 4</span>
+<span class="nv">$ </span><span class="nb">sudo </span>pip3 <span class="nb">install </span>meson
+</code></pre></div></div>
+
+<p>Then, you can install <code class="language-plaintext highlighter-rouge">libdrm 2.4.109</code> on the RPi4.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># On the Raspberry Pi 4</span>
+<span class="nv">$ </span>wget https://dri.freedesktop.org/libdrm/libdrm-2.4.114.tar.xz
+<span class="nv">$ </span><span class="nb">tar </span>xvpf libdrm-2.4.114.tar.xz
+<span class="nv">$ </span><span class="nb">cd </span>libdrm-2.4.114
+<span class="nv">$ </span><span class="nb">mkdir </span>build
+<span class="nv">$ </span><span class="nb">cd </span>build
+<span class="nv">$ FLAGS</span><span class="o">=</span><span class="s2">"-O2 -march=armv8-a+crc+simd -mtune=cortex-a72"</span> <span class="se">\</span>
+    <span class="nv">CXXFLAGS</span><span class="o">=</span><span class="s2">"-O2 -march=armv8-a+crc+simd -mtune=cortex-a72"</span> <span class="se">\</span>
+    meson <span class="nt">-Dudev</span><span class="o">=</span><span class="nb">true</span> <span class="nt">-Dvc4</span><span class="o">=</span><span class="s2">"enabled"</span> <span class="nt">-Dintel</span><span class="o">=</span><span class="s2">"disabled"</span> <span class="nt">-Dvmwgfx</span><span class="o">=</span><span class="s2">"disabled"</span> <span class="se">\</span>
+    <span class="nt">-Dradeon</span><span class="o">=</span><span class="s2">"disabled"</span> <span class="nt">-Damdgpu</span><span class="o">=</span><span class="s2">"disabled"</span> <span class="nt">-Dnouveau</span><span class="o">=</span><span class="s2">"disabled"</span> <span class="nt">-Dfreedreno</span><span class="o">=</span><span class="s2">"disabled"</span> <span class="se">\</span>
+    <span class="nt">-Dinstall-test-programs</span><span class="o">=</span><span class="nb">true</span> ..
+<span class="nv">$ </span><span class="nb">sudo </span>ninja <span class="nb">install</span>
+</code></pre></div></div>
+
+<h2 id="2-going-back-to-mesa">2. Going back to Mesa</h2>
+
+<p>So, now let’s install Mesa.
+During this blogpost, I will use <code class="language-plaintext highlighter-rouge">${USER}</code> as the username on the machine.
+Note that, in order to run <code class="language-plaintext highlighter-rouge">sudo apt build-dep mesa</code>, you will have to uncomment some <code class="language-plaintext highlighter-rouge">deb-src</code> on the file <code class="language-plaintext highlighter-rouge">/etc/apt/sources.list</code> and run <code class="language-plaintext highlighter-rouge">sudo apt update</code>.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># On the Raspberry Pi 4</span>
+
+<span class="c"># Install Mesa's build dependencies</span>
+<span class="nv">$ </span><span class="nb">sudo </span>apt build-dep mesa
+
+<span class="c"># Build and Install Mesa</span>
+<span class="nv">$ </span>git clone https://gitlab.freedesktop.org/mesa/mesa
+<span class="nv">$ </span><span class="nb">cd </span>mesa
+<span class="nv">$ </span><span class="nb">mkdir </span>builddir
+<span class="nv">$ </span><span class="nb">mkdir </span>installdir
+<span class="nv">$ CFLAGS</span><span class="o">=</span><span class="s2">"-mcpu=cortex-a72"</span> <span class="nv">CXXFLAGS</span><span class="o">=</span><span class="s2">"-mcpu=cortex-a72"</span> <span class="se">\</span>
+    meson <span class="nt">-Dprefix</span><span class="o">=</span><span class="s2">"/home/</span><span class="k">${</span><span class="nv">USER</span><span class="k">}</span><span class="s2">/mesa/installdir"</span> <span class="nt">-D</span> <span class="nv">platforms</span><span class="o">=</span>x11 <span class="se">\</span>
+    <span class="nt">-D</span> vulkan-drivers<span class="o">=</span>broadcom <span class="se">\</span>
+    <span class="nt">-D</span> gallium-drivers<span class="o">=</span>kmsro,v3d,vc4 builddir
+<span class="nv">$ </span><span class="nb">cd </span>builddir
+<span class="nv">$ </span>ninja
+<span class="nv">$ </span><span class="nb">cd</span> ..
+<span class="nv">$ </span>ninja <span class="nt">-C</span> builddir <span class="nb">install</span>
+</code></pre></div></div>
+
+<h1 id="creating-the-raspberry-pis-sysroot">Creating the Raspberry Pi’s sysroot</h1>
+<hr>
+<p>In order to cross-compile the Raspberry Pi, you need to clone the target sysroot to the host.
+For it, we are going to use <code class="language-plaintext highlighter-rouge">rsync</code>, so the host and the target need to be connected through a network.</p>
+
+<h2 id="on-the-raspberry-pi-4">On the Raspberry Pi 4</h2>
+
+<h3 id="1-update-the-system">1. Update the system</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">sudo </span>apt update
+<span class="nv">$ </span><span class="nb">sudo </span>apt dist-upgrade
+</code></pre></div></div>
+
+<h3 id="2-enable-rsync-with-elevated-rights">2. Enable rsync with elevated rights</h3>
+
+<p>As I said before, we will be using the <code class="language-plaintext highlighter-rouge">rsync</code> command to sync files between the host and the Raspberry Pi.
+For some of these files, root rights is required internally, so let’s enable <code class="language-plaintext highlighter-rouge">rsync</code> with elevated rights.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$USER</span><span class="s2"> ALL=NOPASSWD:</span><span class="si">$(</span>which rsync<span class="si">)</span><span class="s2">"</span> | <span class="nb">sudo tee</span> <span class="nt">--append</span> /etc/sudoers
+</code></pre></div></div>
+
+<h3 id="3-setup-important-symlinks">3. Setup important symlinks</h3>
+
+<p>Some symbolic links are needed to make the toolchain work properly, so to create all required symbolic link reliably, this bash script is needed.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>wget https://raw.githubusercontent.com/abhiTronix/raspberry-pi-cross-compilers/master/utils/SSymlinker
+</code></pre></div></div>
+
+<p>Once it is downloaded, you just need to make it executable, and then run it for each path needed.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">sudo chmod</span> +x SSymlinker
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/include/aarch64-linux-gnu/asm <span class="nt">-d</span> /usr/include
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/include/aarch64-linux-gnu/gnu <span class="nt">-d</span> /usr/include
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/include/aarch64-linux-gnu/bits <span class="nt">-d</span> /usr/include
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/include/aarch64-linux-gnu/sys <span class="nt">-d</span> /usr/include
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/include/aarch64-linux-gnu/openssl <span class="nt">-d</span> /usr/include
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/lib/aarch64-linux-gnu/crtn.o <span class="nt">-d</span> /usr/lib/crtn.o
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/lib/aarch64-linux-gnu/crt1.o <span class="nt">-d</span> /usr/lib/crt1.o
+<span class="nv">$ </span>./SSymlinker <span class="nt">-s</span> /usr/lib/aarch64-linux-gnu/crti.o <span class="nt">-d</span> /usr/lib/crti.o
+</code></pre></div></div>
+
+<h2 id="on-the-host-machine">On the host machine</h2>
+
+<h3 id="1-setting-up-the-directory-structure">1. Setting up the directory structure</h3>
+
+<p>First, we need to create a workspace for building CTS, where the Raspberry Pi 4 sysroot is going to be built.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">sudo mkdir</span> ~/rpi-vk
+<span class="nv">$ </span><span class="nb">sudo mkdir</span> ~/rpi-vk/installdir
+<span class="nv">$ </span><span class="nb">sudo mkdir</span> ~/rpi-vk/tools
+<span class="nv">$ </span><span class="nb">sudo mkdir</span> ~/rpi-vk/sysroot
+<span class="nv">$ </span><span class="nb">sudo mkdir</span> ~/rpi-vk/sysroot/usr
+<span class="nv">$ </span><span class="nb">sudo mkdir</span> ~/rpi-vk/sysroot/usr/share
+<span class="nv">$ </span><span class="nb">sudo chown</span> <span class="nt">-R</span> 1000:1000 ~/rpi-vk
+<span class="nv">$ </span><span class="nb">cd</span> ~/rpi-vk
+</code></pre></div></div>
+
+<h3 id="2-sync-raspberry-pi-4-sysroot">2. Sync Raspberry Pi 4 sysroot</h3>
+
+<p>Now, we need to sync up our sysroot folder with the system files from the Raspberry Pi.
+We will be using <code class="language-plaintext highlighter-rouge">rsync</code> that let us sync files from the Raspberry Pi.
+To do this, enter the following commands one by one into your terminal and remember to change username and 192.168.1.47 with the IP address of your Raspberry Pi.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>rsync <span class="nt">-avz</span> <span class="nt">--rsync-path</span><span class="o">=</span><span class="s2">"sudo rsync"</span> <span class="nt">--delete</span> pi@192.168.1.47:/lib sysroot
+<span class="nv">$ </span>rsync <span class="nt">-avz</span> <span class="nt">--rsync-path</span><span class="o">=</span><span class="s2">"sudo rsync"</span> <span class="nt">--delete</span> pi@192.168.1.47:/usr/include sysroot/usr
+<span class="nv">$ </span>rsync <span class="nt">-avz</span> <span class="nt">--rsync-path</span><span class="o">=</span><span class="s2">"sudo rsync"</span> <span class="nt">--delete</span> pi@192.168.1.47:/usr/lib sysroot/usr
+<span class="nv">$ </span>rsync <span class="nt">-avz</span> <span class="nt">--rsync-path</span><span class="o">=</span><span class="s2">"sudo rsync"</span> <span class="nt">--delete</span> pi@192.168.1.47:/usr/share sysroot/usr
+<span class="nv">$ </span>rsync <span class="nt">-avz</span> <span class="nt">--rsync-path</span><span class="o">=</span><span class="s2">"sudo rsync"</span> <span class="nt">--delete</span> pi@192.168.1.47:/home/<span class="k">${</span><span class="nv">USER</span><span class="k">}</span>/mesa/installdir installdir
+</code></pre></div></div>
+
+<h3 id="3-fix-symbolic-links">3. Fix symbolic links</h3>
+
+<p>The files we copied in the previous step still have symbolic links pointing to the file system on the Raspberry Pi.
+So, we need to alter this, so that they become relative links from the new <code class="language-plaintext highlighter-rouge">sysroot</code> directory on the host machine.</p>
+
+<p>There is a Python script available online that can help us.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>wget https://raw.githubusercontent.com/abhiTronix/rpi_rootfs/master/scripts/sysroot-relativelinks.py
+</code></pre></div></div>
+
+<p>Once it is downloaded, you just need to make it executable and run it.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">sudo chmod</span> +x sysroot-relativelinks.py
+<span class="nv">$ </span>./sysroot-relativelinks.py sysroot
+</code></pre></div></div>
+
+<h3 id="4-installing-the-raspberry-pi-64-bit-cross-compiler-toolchain">4. Installing the Raspberry Pi 64-Bit Cross-Compiler Toolchain</h3>
+
+<p>As Raspbian OS 64-bits uses GCC 10.2.0, let’s install the proper cross-compiler toolchain on our host machine.
+I’m using the toolchain provided by <a href="https://github.com/abhiTronix/raspberry-pi-cross-compilers" class="external">abhiTronix/raspberry-pi-cross-compilers</a>, but there are many other around the web that you can use.</p>
+
+<p>We are going to use the <code class="language-plaintext highlighter-rouge">tools</code> folder to setup our toolchain.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">cd</span> ~/rpi-vk/tools
+<span class="nv">$ </span>wget https://sourceforge.net/projects/raspberry-pi-cross-compilers/files/Bonus%20Raspberry%20Pi%20GCC%2064-Bit%20Toolchains/Raspberry%20Pi%20GCC%2064-Bit%20Cross-Compiler%20Toolchains/Bullseye/GCC%2010.2.0/cross-gcc-10.2.0-pi_64.tar.gz/download
+<span class="nv">$ </span><span class="nb">tar </span>xvf download
+<span class="nv">$ </span><span class="nb">rm </span>download
+</code></pre></div></div>
+
+<h3 id="5-setting-up-wayland">5. Setting up Wayland</h3>
+
+<p>If you run all the steps from this tutorial expect this one, you will still get some weird Wayland-related errors when cross-compiling it.
+This will happen because probably the <code class="language-plaintext highlighter-rouge">wayland-scanner</code> version from your host is different from the <code class="language-plaintext highlighter-rouge">wayland-scanner</code> version of the target.
+For example, on Fedora 37, the <code class="language-plaintext highlighter-rouge">wayland-scanner</code> version is 1.21.0 and the version on the Raspberry Pi 4 is 1.18.0.</p>
+
+<p>In order to build Wayland, you will need the following dependencies:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">sudo </span>dnf <span class="nb">install </span>expat-devel xmlto
+</code></pre></div></div>
+
+<p>So, let’s install the proper Wayland version on our sysroot.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>wget https://wayland.freedesktop.org/releases/wayland-1.18.0.tar.xz
+<span class="nv">$ </span><span class="nb">tar </span>xvf wayland-1.18.0.tar.xz
+<span class="nv">$ </span><span class="nb">cd </span>wayland-1.18.0
+<span class="nv">$ </span>meson <span class="nt">--prefix</span> ~/rpi-vk/sysroot/usr build
+<span class="nv">$ </span>ninja <span class="nt">-C</span> <span class="nb">install</span>
+</code></pre></div></div>
+
+<h1 id="lets-cross-compile-cts">Let’s cross-compile CTS!</h1>
+<hr>
+<p>Now that we have the hole Raspberry Pi environment set up, we just need to create a toolchain file for CMake and its all set!
+So, let’s clone the CTS repository.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git clone https://github.com/KhronosGroup/VK-GL-CTS
+<span class="nv">$ </span><span class="nb">cd </span>VK-GL-CTS
+</code></pre></div></div>
+
+<p>To build dEQP, you need first to download sources for zlib, libpng, jsoncpp, glslang, vulkan-docs, spirv-headers, and spirv-tools.
+To download sources, run:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>python3 external/fetch_sources.py
+</code></pre></div></div>
+
+<p>Inside the CTS directory, we are going to create a toolchain file called <code class="language-plaintext highlighter-rouge">cross_compiling.cmake</code> with the following contents:</p>
+
+<div class="language-cmake highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">set</span><span class="p">(</span>CMAKE_VERBOSE_MAKEFILE ON<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_SYSTEM_NAME Linux<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_SYSTEM_VERSION 1<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_SYSTEM_PROCESSOR aarch64<span class="p">)</span>
+
+<span class="c1"># Check if the sysroot and toolchain paths are correct</span>
+<span class="nb">set</span><span class="p">(</span>tools /home/<span class="si">${</span><span class="nv">USER</span><span class="si">}</span>/rpi-vk/tools/cross-pi-gcc-10.2.0-64<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>rootfs_dir $ENV{HOME}/rpi-vk/sysroot<span class="p">)</span>
+
+<span class="nb">set</span><span class="p">(</span>CMAKE_FIND_ROOT_PATH <span class="si">${</span><span class="nv">rootfs_dir</span><span class="si">}</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_SYSROOT <span class="si">${</span><span class="nv">rootfs_dir</span><span class="si">}</span><span class="p">)</span>
+
+<span class="nb">set</span><span class="p">(</span>ENV{PKG_CONFIG_PATH} <span class="s2">""</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>ENV{PKG_CONFIG_LIBDIR} <span class="s2">"</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/lib/pkgconfig:</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/share/pkgconfig"</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>ENV{PKG_CONFIG_SYSROOT_DIR} <span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="p">)</span>
+
+<span class="nb">set</span><span class="p">(</span>CMAKE_LIBRARY_ARCHITECTURE aarch64-linux-gnu<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_EXE_LINKER_FLAGS <span class="s2">"</span><span class="si">${</span><span class="nv">CMAKE_EXE_LINKER_FLAGS</span><span class="si">}</span><span class="s2"> -fPIC -Wl,-rpath-link,</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/lib/</span><span class="si">${</span><span class="nv">CMAKE_LIBRARY_ARCHITECTURE</span><span class="si">}</span><span class="s2"> -L</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/lib/</span><span class="si">${</span><span class="nv">CMAKE_LIBRARY_ARCHITECTURE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_C_FLAGS <span class="s2">"</span><span class="si">${</span><span class="nv">CMAKE_CXX_FLAGS</span><span class="si">}</span><span class="s2"> -fPIC -Wl,-rpath-link,</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/lib/</span><span class="si">${</span><span class="nv">CMAKE_LIBRARY_ARCHITECTURE</span><span class="si">}</span><span class="s2"> -L</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/lib/</span><span class="si">${</span><span class="nv">CMAKE_LIBRARY_ARCHITECTURE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_CXX_FLAGS <span class="s2">"</span><span class="si">${</span><span class="nv">CMAKE_CXX_FLAGS</span><span class="si">}</span><span class="s2"> -fPIC -Wl,-rpath-link,</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/lib/</span><span class="si">${</span><span class="nv">CMAKE_LIBRARY_ARCHITECTURE</span><span class="si">}</span><span class="s2"> -L</span><span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span><span class="s2">/usr/lib/</span><span class="si">${</span><span class="nv">CMAKE_LIBRARY_ARCHITECTURE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">set</span><span class="p">(</span>WAYLAND_SCANNER <span class="si">${</span><span class="nv">CMAKE_SYSROOT</span><span class="si">}</span>/usr/bin/wayland-scanner<span class="p">)</span>
+
+<span class="c1">## Compiler Binary</span>
+<span class="nf">SET</span><span class="p">(</span>BIN_PREFIX <span class="si">${</span><span class="nv">tools</span><span class="si">}</span>/bin/aarch64-linux-gnu<span class="p">)</span>
+
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_C_COMPILER <span class="si">${</span><span class="nv">BIN_PREFIX</span><span class="si">}</span>-gcc<span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_CXX_COMPILER <span class="si">${</span><span class="nv">BIN_PREFIX</span><span class="si">}</span>-g++ <span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_LINKER <span class="si">${</span><span class="nv">BIN_PREFIX</span><span class="si">}</span>-ld
+            CACHE STRING <span class="s2">"Set the cross-compiler tool LD"</span> FORCE<span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_AR <span class="si">${</span><span class="nv">BIN_PREFIX</span><span class="si">}</span>-ar
+            CACHE STRING <span class="s2">"Set the cross-compiler tool AR"</span> FORCE<span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_NM {BIN_PREFIX}-nm
+            CACHE STRING <span class="s2">"Set the cross-compiler tool NM"</span> FORCE<span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_OBJCOPY <span class="si">${</span><span class="nv">BIN_PREFIX</span><span class="si">}</span>-objcopy
+            CACHE STRING <span class="s2">"Set the cross-compiler tool OBJCOPY"</span> FORCE<span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_OBJDUMP <span class="si">${</span><span class="nv">BIN_PREFIX</span><span class="si">}</span>-objdump
+            CACHE STRING <span class="s2">"Set the cross-compiler tool OBJDUMP"</span> FORCE<span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_RANLIB <span class="si">${</span><span class="nv">BIN_PREFIX</span><span class="si">}</span>-ranlib
+            CACHE STRING <span class="s2">"Set the cross-compiler tool RANLIB"</span> FORCE<span class="p">)</span>
+<span class="nf">SET</span> <span class="p">(</span>CMAKE_STRIP {BIN_PREFIX}-strip
+            CACHE STRING <span class="s2">"Set the cross-compiler tool RANLIB"</span> FORCE<span class="p">)</span>
+
+<span class="nb">set</span><span class="p">(</span>CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY<span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span>CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY<span class="p">)</span>
+</code></pre></div></div>
+
+<p>Note that we had to specify our toolchain and also the specify the path to the <code class="language-plaintext highlighter-rouge">wayland-scanner</code>.
+Now that we are all set, we can finally cross-compile CTS.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">mkdir </span>build
+<span class="nv">$ </span><span class="nb">cd </span>build
+<span class="nv">$ </span>cmake <span class="nt">-DCMAKE_BUILD_TYPE</span><span class="o">=</span>Debug <span class="se">\</span>
+	<span class="nt">-DCMAKE_LIBRARY_PATH</span><span class="o">=</span>/home/<span class="k">${</span><span class="nv">USER</span><span class="k">}</span>/rpi-vk/installdir/lib <span class="se">\</span>
+	<span class="nt">-DCMAKE_INCLUDE_PATH</span><span class="o">=</span>/home/<span class="k">${</span><span class="nv">USER</span><span class="k">}</span>/rpi-vk/installdir/include <span class="se">\</span>
+	<span class="nt">-DCMAKE_GENERATOR</span><span class="o">=</span>Ninja <span class="se">\</span>
+	<span class="nt">-DCMAKE_TOOLCHAIN_FILE</span><span class="o">=</span>/home/<span class="k">${</span><span class="nv">USER</span><span class="k">}</span>/VK-GL-CTS/cross_compiling.cmake ..
+<span class="nv">$ </span>ninja
+</code></pre></div></div>
+
+<p>Now, you can transfer the compiled files to the Raspberry Pi 4 and run CTS!</p>
+
+<hr>
+<p>This was a fun little challenge of my CE project and it was pretty nice to learn more about CTS.
+Running CTS was also a great idea from Melissa as I was able to hexdump the contents of a noop job for the V3DV and fix my noop job on IGT.
+So, now I finally have a working noop job on IGT and you can check it <a href="https://patchwork.freedesktop.org/series/112363/" class="external">here</a>.</p>
+
+<p>Also, a huge thanks to my friend <a href="https://grillo-0.github.io/blog/" class="external">Arthur Grillo</a> for helping me with resources about cross-compiling for the Raspberry Pi.</p>
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/cross-compiling-cts-rpi4/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Installing Xenomai on the Beaglebone Black</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/install-xenomai-beaglebone-black/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Installing Xenomai on the Beaglebone Black</h1>
+      
+      
+        <p>
+          Date: <time datetime="2022-05-19T00:00:00+00:00">19th May 2022</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#linux">#linux</a>
+          
+            <a href="/notes#embedded">#embedded</a>
+          
+        </p>
+      
+    </header>
+
+    <p>There are many ways to bring Real-Time to Linux. A standard Linux distribution can provide a reasonable latency to a soft real-time application. But, if you are dealing with applications with harsh timing restrictions, you might be unsatisfied with the results provided by a standard Linux distro.</p>
+
+<p>There are basically 3 options for building a Linux Real-Time system:</p>
+
+<ol>
+  <li>
+    <p><strong>Dual-Kernel/Hypervisor approach:</strong> A combination between a micro-kernel and the Linux Kernel, where the micro-kernel has priority over the Linux Kernel and manages the real-time tasks. This approach has a major disadvantage: the need to maintain the microkernel, doubling the work to develop and maintain drivers, and architecture-specific software.</p>
+  </li>
+  <li>
+    <p><strong>Heterogeneous Asymmetric Multi-Core System:</strong> A system where a Linux and a deterministic kernel, such as FreeRTOS, run independently on different cores. The deterministic kernel is then responsible for the real-time tasks.</p>
+  </li>
+  <li>
+    <p><strong>Single-Kernel approach:</strong> Make the Linux Kernel more real-time capable by improving its preemptiveness.</p>
+  </li>
+</ol>
+
+<p>Xenomai has two options to deliver real-time: a dual-kernel approach and a single-kernel approach.</p>
+
+<p>The dual-kernel approach is named Cobalt. The Cobalt extension is built into the Linux kernel and deals with all real-time tasks by scheduling real-time threads. The Cobalt core has a higher priority over the Linux kernel native activities.</p>
+
+<p>Moreover, Xenomai also provides the Mercury core, which relies on the real-time capabilities of the native Linux kernel.</p>
+
+<p>As I was setting up a system for my undergraduate research, I have been trying to install Xenomai on the Beaglebone Black. I found a bunch of tutorials online, but a huge part of them was outdated and some simply did not work for me. So, I decided to synthesize all my work installing Xenomai on the Beaglebone Black.</p>
+
+<p>There are two ways to install Xenomai on the Beaglebone Black:</p>
+
+<ol>
+  <li>
+    <p>By recompiling the Linux Kernel and applying the appropriate patches.</p>
+  </li>
+  <li>
+    <p>By using a precompiled kernel with the Xenomai patches already applied.</p>
+  </li>
+</ol>
+
+<p>I used the second approach because it is slightly faster. But, if you want to stick with the first approach, I recommend checking on the <a href="https://source.denx.de/Xenomai/xenomai/-/wikis/Installing_Xenomai_3" class="external">Xenomai documentation</a>.</p>
+
+<p>So, let’s install Xenomai.</p>
+
+<h2 id="installing-xenomai">Installing Xenomai</h2>
+
+<h3 id="1-install-debian-on-the-beaglebone-black">1. Install Debian on the Beaglebone Black</h3>
+
+<p>If you already have Debian installed on your Beaglebone Black, then just skip this step.</p>
+
+<p>Otherwise, you can follow the <a href="http://derekmolloy.ie/write-a-new-image-to-the-beaglebone-black/" class="external">tutorial</a> from Derek Molloy on how to write a Debian Image to the Beaglebone Black.</p>
+
+<h3 id="2-install-the-cobalt-core">2. Install the Cobalt Core</h3>
+
+<p>First, we need to access the Beaglebone Black through SSH.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh debian@192.168.7.2
+</code></pre></div></div>
+
+<p>In order to keep the repositories and packages updated before we start the Cobalt core installation, we can run:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt update
+sudo apt upgrade
+</code></pre></div></div>
+
+<p>To install the Cobalt core, first, we need to know the version of the Linux image we will install. A couple of pre-compiled kernel versions are provided by Beagleboard for Debian Buster and they are listed <a href="http://repos.rcn-ee.net/latest/buster-armhf/LATEST-ti-xenomai" class="external">here</a>.</p>
+
+<p>After deciding on the kernel version, we can just run the following command to install and update the kernel.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install linux-image-{KERNEL TAGFORM}
+</code></pre></div></div>
+
+<p>I installed the 4.19.94-ti-xenomai-r64 version, so I ran:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install linux-image-4.19.94-ti-xenomai-r64
+</code></pre></div></div>
+
+<p>To load the new kernel, we need to reboot the machine and reconnect through SSH.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo reboot
+ssh debian@192.168.7.2
+</code></pre></div></div>
+
+<p>To check that the kernel was properly installed, we can check the kernel version with:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uname -r
+</code></pre></div></div>
+
+<p>The output must be the kernel tag form that you selected previously. In my case, the output was 4.19.94-ti-xenomai-r64.</p>
+
+<p>We can also check the kernel log and search for Xenomai references. Looking at <code class="language-plaintext highlighter-rouge">dmesg</code>, we will find something like this:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>debian@beaglebone:~$ dmesg | grep -i xenomai
+[    0.000000] Linux version 4.19.94-ti-xenomai-r64 (voodoo@rpi4b4g-06) (gcc version 8.3.0 (Debian 8.3.0-6)) #1buster SMP PREEMPT Sat May 22 01:02:28 UTC 2021
+[    1.220506] [Xenomai] scheduling class idle registered.
+[    1.220521] [Xenomai] scheduling class rt registered.
+[    1.220676] I-pipe: head domain Xenomai registered.
+[    1.225554] [Xenomai] Cobalt v3.1
+[    1.753962] usb usb1: Manufacturer: Linux 4.19.94-ti-xenomai-r64 musb-hcd
+</code></pre></div></div>
+
+<p>Look that we are running Cobalt v3.1 and this version is extremely important to the next step.</p>
+
+<h3 id="3-install-xenomai-userspace-tools-and-bindings">3. Install Xenomai userspace tools and bindings</h3>
+
+<p>First, we need to install the appropriate Xenomai bindings. From the kernel log, I could check that I’m running Cobalt v3.1, so I’m going to download the Xenomai 3.1 tarball.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget https://xenomai.org/downloads/xenomai/stable/xenomai-3.1.tar.bz2
+</code></pre></div></div>
+
+<p>If you are running another version of Cobalt, you can just change the version tag from the URL.</p>
+
+<p>Next, we can decompress the tarball and get inside the Xenomai folder.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tar xf xenomai-3.1.tar.bz2
+cd xenomai-3.1
+</code></pre></div></div>
+
+<p>Now, it is time to build and install the Xenomai binding. First, we need to configure the built environment by running:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./configure --enable-smp
+</code></pre></div></div>
+
+<p>Although the Beaglebone Black has a single-core processor, the flag <code class="language-plaintext highlighter-rouge">--enable-smp</code> is important, because the precompiled kernel versions from Beagleboard enable CONFIG_SMP by default.</p>
+
+<p>Then, finally, we can build and install Xenomai.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make
+sudo make install
+</code></pre></div></div>
+
+<p>And then, you are done!</p>
+
+<p>You can test the real-time system by running:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo su
+/usr/xenomai/bin/latency
+</code></pre></div></div>
+
+<p>The output will be similar to this:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>== Sampling period: 1000 us
+== Test mode: periodic user-mode task
+== All results in microseconds
+warming up...
+RTT|  00:00:01  (periodic user-mode task, 1000 us period, priority 99)
+RTH|----lat min|----lat avg|----lat max|-overrun|---msw|---lat best|--lat worst
+RTD|      7.875|     13.579|     50.625|       0|     0|      7.875|     50.625
+RTD|     11.458|     15.983|     53.958|       0|     0|      7.875|     53.958
+RTD|     11.458|     13.997|     50.750|       0|     0|      7.875|     53.958
+RTD|     11.541|     15.578|     55.999|       0|     0|      7.875|     55.999
+RTD|     11.416|     13.186|     52.208|       0|     0|      7.875|     55.999
+RTD|     11.499|     14.507|     57.249|       0|     0|      7.875|     57.249
+RTD|     11.499|     13.787|     48.707|       0|     0|      7.875|     57.249
+RTD|     11.540|     13.694|     50.582|       0|     0|      7.875|     57.249
+RTD|     11.456|     15.118|     49.498|       0|     0|      7.875|     57.249
+RTD|     11.373|     13.618|     51.290|       0|     0|      7.875|     57.249
+RTD|     11.498|     15.844|     48.914|       0|     0|      7.875|     57.249
+RTD|     11.539|     17.654|     55.581|       0|     0|      7.875|     57.249
+RTD|     11.539|     15.403|     52.622|       0|     0|      7.875|     57.249
+RTD|     11.539|     12.955|     51.580|       0|     0|      7.875|     57.249
+RTD|     10.747|     13.254|     52.163|       0|     0|      7.875|     57.249
+^C---|-----------|-----------|-----------|--------|------|-------------------------
+RTS|      7.875|     14.543|     57.249|       0|     0|    00:00:15/00:00:15
+</code></pre></div></div>
+
+<p>This command displays a message every second with minimum, maximum, and average latency values. Notice that all the latencies are in the order of microseconds.</p>
+
+<p>So, now, you can go on and build a real-time application with the Xenomai userspace API on the Beaglebone Black.</p>
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/install-xenomai-beaglebone-black/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

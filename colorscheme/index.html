@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Change colorscheme</title>
+    <meta name="description" content="Set your colorscheme on the website"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/colorscheme/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a aria-current="page" class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Change colorscheme</h1>
+      
+          <p><em>Set your colorscheme on the website</em></p>
+      
+      
+      
+    </header>
+
+    <fieldset>
+  <datalist id="scheme-list">
+  </datalist>
+  <legend>
+    <small>
+      Powered by <a href="https://github.com/base16-project/base16" class="external">base16</a>
+      + <a href="https://github.com/misterio77/nix-colors" class="external">nix-colors</a>.
+    </small>
+  </legend>
+
+  <p>
+    Name: <span id="scheme-name"></span>
+    <br>
+    Author: <span id="scheme-author"></span>
+  </p>
+
+  <p>
+    <span style="color: var(--base00)">█</span><!--
+ --><span style="color: var(--base01)">█</span><!--
+ --><span style="color: var(--base02)">█</span><!--
+ --><span style="color: var(--base03)">█</span><!--
+ --><span style="color: var(--base04)">█</span><!--
+ --><span style="color: var(--base05)">█</span><!--
+ --><span style="color: var(--base06)">█</span><!--
+ --><span style="color: var(--base07)">█</span><!--
+ --><span style="color: var(--base08)">█</span><!--
+ --><span style="color: var(--base09)">█</span><!--
+ --><span style="color: var(--base0A)">█</span><!--
+ --><span style="color: var(--base0B)">█</span><!--
+ --><span style="color: var(--base0C)">█</span><!--
+ --><span style="color: var(--base0D)">█</span><!--
+ --><span style="color: var(--base0E)">█</span><!--
+ --><span style="color: var(--base0F)">█</span>
+  </p>
+
+  <label class="colorscheme">
+    <input class="colorscheme" id="scheme-input" list="scheme-list" placeholder="auto">
+  </label>
+
+  <button id="scheme-random" class="random">
+    Random
+  </button>
+
+  <button id="scheme-default" hidden class="restore">
+    Restore
+  </button>
+
+</fieldset>
+
+<script async type="module">
+let scheme_input = document.getElementById("scheme-input");
+let scheme_list = document.getElementById("scheme-list");
+let scheme_random_button = document.getElementById("scheme-random");
+let scheme_default_button = document.getElementById("scheme-default");
+
+async function fetch_schemes() {
+  var schemes_data = await fetch("https://colors.m7.rs/themes.json");
+  var schemes_json = await schemes_data.json();
+  return Object.keys(schemes_json);
+}
+
+fetch_schemes().then(function(schemes) {
+  // Add options to datalist
+  schemes.forEach(function(scheme) {
+    var option = document.createElement('option');
+    option.value = scheme;
+    scheme_list.appendChild(option);
+  });
+
+  // Add click event for random button
+  scheme_random_button.addEventListener("click", function () {
+    // Get random scheme
+    let scheme = schemes[Math.floor(Math.random() * schemes.length)];
+    setTheme(scheme);
+    scheme_input.value = scheme;
+    scheme_default_button.hidden = false;
+  });
+});
+
+// Add listener on input to change theme
+scheme_input.addEventListener("input", function () {
+  let input = scheme_input.value;
+  if (input) {
+    setTheme(input);
+    scheme_default_button.hidden = false;
+  } else {
+    resetTheme();
+    scheme_default_button.hidden = true;
+  }
+});
+
+// Add click event for clear button
+scheme_default_button.addEventListener("click", function () {
+  scheme_default_button.hidden = true;
+  resetTheme();
+  scheme_input.value = "";
+});
+
+// Set first value based on current theme
+let current = getTheme();
+if (current) {
+  scheme_input.value = current;
+  scheme_default_button.hidden = false;
+}
+</script>
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/colorscheme/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

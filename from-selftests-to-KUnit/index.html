@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | From Selftests to KUnit</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/from-selftests-to-KUnit/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>From Selftests to KUnit</h1>
+      
+      
+        <p>
+          Date: <time datetime="2022-07-19T00:00:00+00:00">19th July 2022</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#gsoc">#gsoc</a>
+          
+            <a href="/notes#linux">#linux</a>
+          
+            <a href="/notes#kernel">#kernel</a>
+          
+            <a href="/notes#graphics">#graphics</a>
+          
+        </p>
+      
+    </header>
+
+    <p>Last week, the <a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t" class="external">series</a> with DRM Kernel Selftests conversion to KUnit tests was merged into <code class="language-plaintext highlighter-rouge">drm-misc-next</code> and will probably be on the mainline on 5.20.</p>
+
+<p>This series was developed during an <a href="https://lkcamp.dev/" class="external">LKCAMP</a> hackathon in October 2021 and is the combined effort of seven Linux Kernel beginners. In this hackathon, we learned about the KUnit Framework and also learned a bit about DRM.</p>
+
+<p>The series took quite a while to come out, as it was just a side-project to most of us, but, in June, I finally prepared the patches and transformed them into a mergeable series.</p>
+
+<p>So, let’s understand the differences between kselftests and KUnit tests and learn some about the KUnit framework.</p>
+
+<h2 id="testing-testing-testing">Testing… Testing… Testing…</h2>
+
+<hr>
+
+<p>Tests are not all the same. We create different kinds of tests for different purposes. So, let’s clarify some kinds of tests that will be quoted in this blogpost:</p>
+
+<ol>
+  <li>
+<strong>Unit Testing:</strong> tests individual units or components with the purpose to validate each unit of the software code and check whether they are performing as expected. A unit test should be the finest granularity of testing and as such should allow all possible code paths to be tested in the code under test.</li>
+  <li>
+<strong>Functional Testing:</strong> validates the software system against functional requirements. So, basically, the system is tested against the function requirement/specification.</li>
+  <li>
+<strong>Regression Testing:</strong> tests that ensure that a code change does not affect the functionality of the existing software product.</li>
+</ol>
+
+<h2 id="what-is-kselftest">What is Kselftest?</h2>
+
+<hr>
+
+<p><a href="https://docs.kernel.org/dev-tools/kselftest.html" class="external">Linux Kernel Selftests (kselftest)</a> is a set of features functional and regression tests developed to avoid regressions on the Linux Kernel. The idea is that the developer will find a regression, fix it, and then write a test so that the Kernel won’t have this regression again.</p>
+
+<p>The kselftests use shell scripts and C programs to load the tests into the kernel and have support for hardware-dependent tests. It doesn’t support workload or application tests, as its idea is primarily to increase the breadth and depth test coverage on the Kernel.</p>
+
+<p>Although not designed for it, unit tests can also be developed with kselftests. But noticed that it is not a Unit Test Framework, such as JUnit, Google Test, or PyTest.</p>
+
+<p>kselftest has C interfaces for reporting test results using the Test Anything Protocol (TAP) and a test harness for running tests.</p>
+
+<h2 id="what-is-kunit">What is KUnit?</h2>
+
+<hr>
+
+<p><a href="https://docs.kernel.org/dev-tools/kunit/index.html" class="external">KUnit (Kernel Unit Testing Framework)</a> is the Unit Testing Framework for the Linux Kernel. KUnit makes it possible to run test suites on kernel boot or load the tests as a module. It reports all test case results through a TAP (Test Anything Protocol) in the kernel log.</p>
+
+<p>KUnit follows the white-box testing approach, which allows testers to inspect and verify the inner workings of a software system. So, it can test any kernel component and is not restricted to userspace.</p>
+
+<p>KUnit doesn’t require installing the kernel on a test machine or in a VM. It addresses the problem of being able to run tests without needing a virtual machine or actual hardware with User Mode Linux.</p>
+
+<p>KUnit provides facilities for defining unit test cases, grouping related test cases into test suites, providing common infrastructure for running tests, and much more.</p>
+
+<h2 id="how-to-choose-a-framework">How to choose a framework?</h2>
+
+<hr>
+
+<p>Each one of the frameworks has its place and importance, as both kinds of tests are important to improve Kernel’s reliability and robustness.</p>
+
+<p>The main difference between kselftest and KUnit is that <strong>KUnit is a unit testing framework</strong> and <strong>kselftest is not</strong>. kselftest requires installing the kernel on a test machine or in a VM and require tests to be written in userspace and run on the kernel under test. On the other side, KUnit does not.</p>
+
+<p>So, when it comes to testing a single unit of code in isolation, you’ll definitely go with KUnit. Otherwise, you’ll have to check the kselftests or autotests frameworks.</p>
+
+<h2 id="why-drm-selftests-were-plausible-for-a-conversion">Why DRM selftests were plausible for a conversion?</h2>
+
+<hr>
+
+<p>First, I must point out that the DRM selftests are not kselftests. They work very similarly, but the DRM subsystem developed a unique structure for running their unit tests, which was available on <code class="language-plaintext highlighter-rouge">drm_selftests.h</code>. For a general idea, they had simple <code class="language-plaintext highlighter-rouge">FAIL_ON(expression)</code> assertions, indicating that the test would fail if the expression was true, and each test was a module initialized by <code class="language-plaintext highlighter-rouge">run_selftests</code>.</p>
+
+<p>So, let’s check a DRM selftest function and analyze it to check if it’s plausible for conversion. Take this function from <code class="language-plaintext highlighter-rouge">drivers/gpu/drm/selftests/drm_cmdline_selftests.h</code>:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kt">int</span> <span class="nf">drm_cmdline_test_force_D_only_not_digital</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ignored</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">struct</span> <span class="n">drm_cmdline_mode</span> <span class="n">mode</span> <span class="o">=</span> <span class="p">{</span> <span class="p">};</span>
+
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="o">!</span><span class="n">drm_mode_parse_command_line_for_connector</span><span class="p">(</span><span class="s">"D"</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">no_connector</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">mode</span><span class="p">));</span>
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">specified</span><span class="p">);</span>
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">refresh_specified</span><span class="p">);</span>
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">bpp_specified</span><span class="p">);</span>
+
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">rb</span><span class="p">);</span>
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">cvt</span><span class="p">);</span>
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">interlace</span><span class="p">);</span>
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">margins</span><span class="p">);</span>
+	<span class="n">FAIL_ON</span><span class="p">(</span><span class="n">mode</span><span class="p">.</span><span class="n">force</span> <span class="o">!=</span> <span class="n">DRM_FORCE_ON</span><span class="p">);</span>
+
+	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This test function is testing a single function <code class="language-plaintext highlighter-rouge">drm_mode_parse_command_line_for_connector</code> and using test assertion to check if it behaves as expected. Can we agree that this is testing a single unit of code in isolation? So, this is a unit test!</p>
+
+<p>If you look through the other files, you are going to find out that they are very similar to this function. So, they are all unit tests.</p>
+
+<p>As they are unit tests, it is more suitable to use a Unit Test Framework, such as KUnit, on these tests. Moreover, converting these tests to KUnit would make them smaller and provide a userspace tool for developers to test with.</p>
+
+<p>There is also one more reason to convert the DRM selftests. As DRM selftests created a whole structure to run their unit tests, converting the tests would mean deleting this structure and promoting code reuse.</p>
+
+<h2 id="converting-the-tests">Converting the tests</h2>
+
+<hr>
+
+<p>KUnit has multiple test expectation expressions. The most used ones are:</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_TRUE (test, condition)</code>: causes a test failure when the expression is not true.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_FALSE (test, condition)</code>: causes a test failure when the expression is not false.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_EQ (test, left, right)</code>: expects that <strong>left</strong> and <strong>right</strong> are equal.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_NE (test, left, right)</code>: expects that <strong>left</strong> and <strong>right</strong> are not equal.</li>
+</ul>
+
+<p>There are a couple more and all of them can be seen on the <a href="https://docs.kernel.org/dev-tools/kunit/api/test.html" class="external">KUnit documentation</a>.</p>
+
+<p>Examining again the  <code class="language-plaintext highlighter-rouge">drm_mode_parse_command_line_for_connector</code> function, we can see that the test expectation expression used is <code class="language-plaintext highlighter-rouge">FAIL_ON</code>. This means that the test will fail when the expression inside it is true. Checking the test expectation expressions listed above, we can say the equivalent of <code class="language-plaintext highlighter-rouge">FAIL_ON</code> is <code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_FALSE</code>, right?</p>
+
+<p>So, we can just adjust the function to the KUnit signature and change all <code class="language-plaintext highlighter-rouge">FAIL_ON</code> for <code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_FALSE</code>. The result will be something like this:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kt">void</span> <span class="nf">drm_cmdline_test_force_D_only_not_digital</span><span class="p">(</span><span class="k">struct</span> <span class="n">kunit</span> <span class="o">*</span><span class="n">test</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">struct</span> <span class="n">drm_cmdline_mode</span> <span class="n">mode</span> <span class="o">=</span> <span class="p">{</span> <span class="p">};</span>
+
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="o">!</span><span class="n">drm_mode_parse_command_line_for_connector</span><span class="p">(</span><span class="s">"D"</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">no_connector</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">mode</span><span class="p">));</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">specified</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">refresh_specified</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">bpp_specified</span><span class="p">);</span>
+
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">rb</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">cvt</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">interlace</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">margins</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">force</span> <span class="o">!=</span> <span class="n">DRM_FORCE_ON</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>After this, our test already works with the KUnit tool. But, there is still some improvement to be made. Check out the first assertion:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="o">!</span><span class="n">drm_mode_parse_command_line_for_connector</span><span class="p">(</span><span class="s">"D"</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">no_connector</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">mode</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>Observe that the condition has a logical NOT operator, so, for the condition to be false, the function must return true. So, we can change the assertion to be more readable to:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">KUNIT_EXPECT_TRUE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">drm_mode_parse_command_line_for_connector</span><span class="p">(</span><span class="s">"D"</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">no_connector</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">mode</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>The last assertion can also be changed. We can change the comparative logical operator for the <code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_EQ</code> expression.</p>
+
+<p>So, the final look of our unit test would be:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kt">void</span> <span class="nf">drm_cmdline_test_force_D_only_not_digital</span><span class="p">(</span><span class="k">struct</span> <span class="n">kunit</span> <span class="o">*</span><span class="n">test</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">struct</span> <span class="n">drm_cmdline_mode</span> <span class="n">mode</span> <span class="o">=</span> <span class="p">{</span> <span class="p">};</span>
+
+	<span class="n">KUNIT_EXPECT_TRUE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">drm_mode_parse_command_line_for_connector</span><span class="p">(</span><span class="s">"D"</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">no_connector</span><span class="p">,</span>
+							   <span class="o">&amp;</span><span class="n">mode</span><span class="p">));</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">specified</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">refresh_specified</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">bpp_specified</span><span class="p">);</span>
+
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">rb</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">cvt</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">interlace</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_FALSE</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">margins</span><span class="p">);</span>
+	<span class="n">KUNIT_EXPECT_EQ</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">mode</span><span class="p">.</span><span class="n">force</span><span class="p">,</span> <span class="n">DRM_FORCE_ON</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This is just a small bit of the work done! I and other LKCAMP participants converted tests across nine files. And the result can be seen on this <a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t" class="external">mailing list thread</a>.</p>
+
+<hr>
+
+<p>Working on these tests over the last month was pretty satisfying. The series had five iterations over the mailing list and talking to the maintainers is very rewarding. Also, it was great to remember the Saturday that I spend with three very dear friends (thanks to Arthur, Matheus, and Carlos). Seeing the patches go to the mainline was great!</p>
+
+<p>After adding the DRM KUnit tests to the upstream, we must maintain it working properly and try checking the reported bugs. For example, Guenter Roeck reported problems running tests on PowerPC, so I worked on a new <a href="https://lore.kernel.org/dri-devel/20220717184336.1197723-1-mairacanal@riseup.net/T/#u" class="external">patch</a> to fix it in order to make things run smoothly. So, that’s about it for now!</p>
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/from-selftests-to-KUnit/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

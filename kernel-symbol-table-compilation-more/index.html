@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | About Kernel Symbol Table, Compilation, and more</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/kernel-symbol-table-compilation-more/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>About Kernel Symbol Table, Compilation, and more</h1>
+      
+      
+        <p>
+          Date: <time datetime="2022-07-11T00:00:00+00:00">11th July 2022</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#gsoc">#gsoc</a>
+          
+            <a href="/notes#linux">#linux</a>
+          
+            <a href="/notes#kernel">#kernel</a>
+          
+        </p>
+      
+    </header>
+
+    <p>This week I was planning on talking about Device Mocking with KUnit, as I’m currently working on my first unit test for a physical device, the AMDGPU Radeon RX5700. I would introduce you to the Kernel Unit Testing Framework (KUnit), how it works, how to mock devices with it, and why it is so great to write tests.</p>
+
+<p>But, my week was pretty more interesting due to a limitation on the KUnit Framework. This got me thinking about the Kernel Symbol Table and compilation for a while. So, I decided to write about it this week.</p>
+
+<h2 id="the-problem">The Problem</h2>
+
+<hr>
+
+<p>When starting the GSoC project, my fellow colleagues and I ran straight into a problem with the use of KUnit on the AMDGPU stack.</p>
+
+<p>We would create a simple test, just like this one:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include</span> <span class="cpf">&lt;kunit/test.h&gt;</span><span class="cp">
+#include</span> <span class="cpf">"inc/bw_fixed.h"</span><span class="cp">
+</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">abs_i64_test</span><span class="p">(</span><span class="k">struct</span> <span class="n">kunit</span> <span class="o">*</span><span class="n">test</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">KUNIT_EXPECT_EQ</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="mi">0ULL</span><span class="p">,</span> <span class="n">abs_i64</span><span class="p">(</span><span class="mi">0LL</span><span class="p">));</span>
+
+	<span class="cm">/* Argument type limits */</span>
+	<span class="n">KUNIT_EXPECT_EQ</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">MAX_I64</span><span class="p">,</span> <span class="n">abs_i64</span><span class="p">(</span><span class="n">MAX_I64</span><span class="p">));</span>
+	<span class="n">KUNIT_EXPECT_EQ</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">MAX_I64</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">abs_i64</span><span class="p">(</span><span class="n">MIN_I64</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="k">struct</span> <span class="n">kunit_case</span> <span class="n">bw_fixed_test_cases</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+	<span class="n">KUNIT_CASE</span><span class="p">(</span><span class="n">abs_i64_test</span><span class="p">),</span>
+	<span class="p">{</span>  <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="k">struct</span> <span class="n">kunit_suite</span> <span class="n">bw_fixed_test_suite</span> <span class="o">=</span> <span class="p">{</span>
+	<span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">"dml_calcs_bw_fixed"</span><span class="p">,</span>
+	<span class="p">.</span><span class="n">test_cases</span> <span class="o">=</span> <span class="n">bw_fixed_test_cases</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="n">kunit_test_suite</span><span class="p">(</span><span class="n">bw_fixed_test_suite</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Ok, pretty simple test: just checking the boundary values for a function that returns the absolute value of a 64-bit integer. Nothing could go wrong…</p>
+
+<p>And, at first, running the <code class="language-plaintext highlighter-rouge">kunit-tool</code> everything would go fine. But, if we tried to compile the test as a module, we would get a linking error:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Multiple definitions of 'init_module'/'cleanup_module' at kunit_test_suites().
+</code></pre></div></div>
+
+<p>This looks like a simple error, but if we think further this is a matter of kernel symbols and linking. So, let’s hop on and understand the basics of kernel symbols and linking. Finally, I will tell the end of this KUnit tell.</p>
+
+<h2 id="the-stages-of-compilation">The Stages of Compilation</h2>
+
+<hr>
+
+<p><img src="/assets/images/compilation-stack.png" alt="The Stages of Compilation"></p>
+
+<p>First, it is important to understand the stages of the compilation of a C program. If you’re a C-veteran, you can skip this section. But if you are starting in the C-programming world recently (or maybe just used to run <code class="language-plaintext highlighter-rouge">make</code> without thinking further), let’s understand a bit more about the compilation process for C programs - basically any compiled language.</p>
+
+<p>The first stage of compilation is <strong>preprocessing.</strong> The preprocessor expands the included files - a.k.a. <code class="language-plaintext highlighter-rouge">.h</code>, expands the macros, and removes the comments. Basically, the preprocessor obeys to the directives, that is, the commands that begin with #.</p>
+
+<p>The second stage of compilation is <strong>compiling.</strong> The compiling stage takes the preprocessor’s output and produces either assembly code or an <em>object file</em> as output. The object code contains the binary machine code that is generated from compiling the C source.</p>
+
+<p>Then, we got to the <strong>linking</strong> stage. Linking takes one or more object files and produces the product of the final compilation. This output can be a shared library or an executable.</p>
+
+<p>For our problem, the linking stage is the interesting one. In this stage, the linker links all the object files by replacing the references to undefined symbols with the appropriate addresses. So, at this stage, we get the missing definitions or multiple definitions errors.</p>
+
+<p>When <code class="language-plaintext highlighter-rouge">ld</code> (or <code class="language-plaintext highlighter-rouge">lld</code> for those at the clang community), tells us that there are missing definitions, it means that either the definitions don’t exist, or that the object files or libraries where they reside are not provided to the linker. For the multiple definition errors, the linker is telling us that the same symbol was defined in two different object files or libraries.</p>
+
+<p>So, going back to our error, we now know that:</p>
+
+<ol>
+  <li>The linker generates this error.</li>
+  <li>We are defining the <code class="language-plaintext highlighter-rouge">init_module()/cleanup_module()</code> twice.</li>
+</ol>
+
+<p>But, if you check the code, there is no duplicate of either of those functions. 🤔</p>
+
+<p>Ok, now, let’s take a look at the kernel symbol table.</p>
+
+<h2 id="kernel-symbols-table">Kernel Symbols Table</h2>
+
+<hr>
+
+<p>So, we keep talking about symbols. But now, we need to understand which symbols are visible and available to our module and which aren’t.</p>
+
+<p>We can think of the kernel symbols in three levels of visibility:</p>
+
+<ul>
+  <li>
+<strong>static:</strong> visible only inside their compilation unit.</li>
+  <li>
+<strong>external:</strong> potentially visible to any other code built into the kernel.</li>
+  <li>
+<strong>exported:</strong> visible and available to any loadable module.</li>
+</ul>
+
+<p>So, by quoting the book <em>Linux Kernel Development</em> (3nd ed.), p. 348:</p>
+
+<blockquote>
+  <p>When modules are loaded, they are dynamically linked into the kernel. As with userspace, dynamically linked binaries can call only into external functions explicitly <em>exported</em> for use. In the kernel, this is handled via special directive called <code class="language-plaintext highlighter-rouge">EXPORT_SYMBOL()</code> and <code class="language-plaintext highlighter-rouge">EXPORT_SYMBOL_GPL()</code>.
+Export functions are available for use by modules. Functions not exported cannot be invoked from modules. The linking and invoking rules are much more stringent for modules than code in the core kernel image. Core code can call any nonstatic interface in the kernel because all core source files are linked into a single base image. Exported symbols, of course, must be nonstatic, too. The set of exported kernel symbols are known as the <em>exported kernel interfaces.</em></p>
+
+</blockquote>
+
+<p>So, at this point, you can already get this statement, as you already understand about linking ;)</p>
+
+<p>The kernel symbol table can be pretty important in debugging and you can check the list of symbols in a module with the <code class="language-plaintext highlighter-rouge">nm</code> command. Moreover, sometimes you want more than just the symbols from a module, but the symbols from the whole kernel. In this case, you can check the <code class="language-plaintext highlighter-rouge">/proc/kallsyms</code> file: it contains symbols of dynamically loaded modules as well as symbols from static code.</p>
+
+<p>Also, during a kernel build, a file named <code class="language-plaintext highlighter-rouge">Module.symvers</code> will be generated. This file contains all exported symbols from the kernel and compiled modules. For each symbol, the corresponding CRC value, export type, and namespace are also stored.</p>
+
+<p>Building an out-of-tree module is not trivial, and you can check the kbuild docs <a href="https://docs.kernel.org/kbuild/modules.html" class="external">here</a>, to understand more about symbols, how to install modules, and more.</p>
+
+<p>Now, you have all the pieces needed to crack this puzzle. But I only gave you separate pieces of this problem. It’s time to bring these pieces together.</p>
+
+<h2 id="how-to-solve-this-linking-problem">How to solve this linking problem?</h2>
+
+<hr>
+
+<p>Let’s go back to the linking error we got at the test:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Multiple definitions of 'init_module'/'cleanup_module' at kunit_test_suites().
+</code></pre></div></div>
+
+<p>So, first, we need to understand how we are defining <code class="language-plaintext highlighter-rouge">init_module</code> multiple times. The first definition is at <code class="language-plaintext highlighter-rouge">kunit_test_suites()</code>. So, when building a KUnit test as a module, KUnit creates brand new <code class="language-plaintext highlighter-rouge">module_init/exit_module</code> functions.</p>
+
+<p>But, think for a while with me… The <code class="language-plaintext highlighter-rouge">amdgpu</code> module, linked with our test, already defines a <code class="language-plaintext highlighter-rouge">module_init</code> function for the graphics module.</p>
+
+<blockquote>
+  <p>FYI: the <code class="language-plaintext highlighter-rouge">module_init</code> is the module entry point when the module is loaded.</p>
+
+</blockquote>
+
+<p>So, we have figured out the problem! We have one <code class="language-plaintext highlighter-rouge">init_module</code> at <code class="language-plaintext highlighter-rouge">kunit_test_suites()</code>  and other <code class="language-plaintext highlighter-rouge">init_module</code> at <code class="language-plaintext highlighter-rouge">amdgpu</code> entry point, which is <code class="language-plaintext highlighter-rouge">amdgpu_drv.c</code>. And, as they are linked together, we have a linking problem!</p>
+
+<p>And, how can we solve this problem?</p>
+
+<h3 id="solutions-inside-the-tests">Solutions inside the tests</h3>
+
+<ol>
+  <li>
+    <p><strong>Adding <code class="language-plaintext highlighter-rouge">EXPORT_SYMBOL</code> to all tested functions</strong></p>
+
+    <p>Going back to the idea of the Kernel Symbol Table, we can load the <code class="language-plaintext highlighter-rouge">amdgpu</code> module and expose all the tested functions to any loadable module by adding <code class="language-plaintext highlighter-rouge">EXPORT_SYMBOL</code>. Then, we can compile the test module independently - that said, outside the <code class="language-plaintext highlighter-rouge">amdgpu</code> module - and loaded separately.</p>
+
+    <p>It feels like an easy fix, right? Not exactly! This would pollute the symbol namespace from the <code class="language-plaintext highlighter-rouge">amdgpu</code> module and also pollute the code. Polluting the code means more work to maintain and work with the code. So, this is not a good idea.</p>
+  </li>
+  <li>
+    <p><strong>Incorporating the tests into the driver stack</strong></p>
+
+    <p>Another idea is to call the tests inside the driver stack. So, inside the AMDGPU’s <code class="language-plaintext highlighter-rouge">init_module</code> function, we can call the KUnit’s private suite execution function and run the tests when the <code class="language-plaintext highlighter-rouge">amdgpu</code> module is loaded.</p>
+
+    <p>It is the strategy that some drivers, such as thunderbolt, were using. But, this introduces some incompatibilities with the KUnit tooling, as it makes it impossible to use the great <code class="language-plaintext highlighter-rouge">kunit-tool</code>  and also doesn’t scale pretty well. If I want to have multiple modules with tests for a single driver, it would require the use of many <code class="language-plaintext highlighter-rouge">#ifdef</code> guards and the creation of awful init functions in multiple files.</p>
+
+    <p>Creating a test should be simple: not a huge structure with preprocessor directives and multiple files.</p>
+  </li>
+</ol>
+
+<h3 id="a-better-solution-changing-how-kunit-calls-modules">A better solution: changing how KUnit calls modules</h3>
+
+<p>The previous solutions were a workaround for the real problem: KUnit was stealing <code class="language-plaintext highlighter-rouge">module_init</code> from other modules. For built-in tests,  the <code class="language-plaintext highlighter-rouge">kunit_test_suite()</code> macro adds a list of suites in the <code class="language-plaintext highlighter-rouge">.kunit_test_suites</code> linker section. However, a <code class="language-plaintext highlighter-rouge">module_init()</code> function is used for kernel modules to run the test suites.</p>
+
+<p>So, after some discussion on the KUnit Mailing List, Jeremy Kerr unified the module and non-module KUnit init formats. David Gow submitted a patch from him removing the KUnit-defined module inits, and instead parsing the KUnit tests from their own section in the module.</p>
+
+<p>Now, the array of <code class="language-plaintext highlighter-rouge">struct kunit_suite *</code> will be placed in the <code class="language-plaintext highlighter-rouge">.kunit_test_suites</code> ELF section and the tests will run on the module load.</p>
+
+<p>You can check the <a href="https://lore.kernel.org/linux-kselftest/20220709032001.819487-1-davidgow@google.com/" class="external">version 4</a> of this patchset.</p>
+
+<p>Having this structure will make our work on GSoC much easier, and much cleaner! Huge thanks to all KUnit folks working on this great framework!</p>
+
+<hr>
+
+<p>Getting this problem is not trivial! When it comes to compilation, linking, and, symbols, many CS students get pretty confused. In contrast, this is a pretty poetic part of computation: seeing these high-level symbols becoming simple assembly instructions and thinking about memory stacks.</p>
+
+<p>If you are feeling a bit confused over this, I hugely recommend the Tanenbaum books and also <em>Linux Kernel Development</em> by Robert Love. Although Tanenbaum doesn’t write specifically about compilation, the knowledge of Compute Architecture and Operational Systems is fundamental to understanding the idea of running binaries on a machine.</p>
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/kernel-symbol-table-compilation-more/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Adding a Timeout feature to Rustgem</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/adding-timeout-rustgem/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Adding a Timeout feature to Rustgem</h1>
+      
+      
+        <p>
+          Date: <time datetime="2023-03-22T00:00:00+00:00">22nd March 2023</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#igalia">#igalia</a>
+          
+            <a href="/notes#graphics">#graphics</a>
+          
+        </p>
+      
+    </header>
+
+    <p>After my last blogpost, I kept developing the Rust version of the VGEM driver,
+also known as rustgem for now. Previously, I had developed two important
+features of the driver: the ability to attach a fence and the ability to signal
+a fence. Still one important feature is still missing: the ability to prevent
+hangs. Currently, if the fence is not signaled, the driver will simply hang. So,
+we can create a callback that signals the fence when the fence is not signaled
+by the user for more than 10 seconds.</p>
+
+<p>In order to create this callback, we need to have a Timer that will trigger it
+after the specified amount of time.  Gladly, the Linux kernel provides us with a
+Timer that can be set with a callback and a timeout. But, to use it in the Rust
+code, we need to have a safe abstraction, that will ensure that the code is safe
+under some assumptions.</p>
+
+<h1 id="first-attempt-writing-a-timer-abstraction">First Attempt: writing a Timer abstraction</h1>
+<hr>
+
+<p>Initially, I was developing an abstraction on my own as I checked the RfL
+tree and there were no Timer abstractions available.</p>
+
+<p>The most important question here is “how can we guarantee access to other
+objects inside the callback?”. The callback only has receives a pointer to the
+<code class="language-plaintext highlighter-rouge">struct timer_list</code> as its single argument. Naturally, we can think about using
+a <code class="language-plaintext highlighter-rouge">container_of</code> macro. In order to make the compatibility layer between
+Rust and the C callback, I decided to store the object inside the Timer. Yep, I
+didn’t like that a lot, but it was the solution I came up with at the time. The
+struct looked something like this:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cd">/// A driver-specific Timer Object</span>
+<span class="c1">//</span>
+<span class="c1">// # Invariants</span>
+<span class="c1">// timer is a valid pointer to a struct timer_list and we own a reference to it.</span>
+<span class="p">[</span><span class="nf">repr</span><span class="p">(</span><span class="n">C</span><span class="p">)]</span>
+<span class="k">pub</span> <span class="k">struct</span> <span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="n">TimerOps</span><span class="o">&lt;</span><span class="n">Inner</span> <span class="o">=</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span> <span class="p">{</span>
+   <span class="n">timer</span><span class="p">:</span> <span class="o">*</span><span class="nn">bindings</span><span class="p">::</span><span class="n">timer_list</span><span class="p">,</span>
+   <span class="n">inner</span><span class="p">:</span> <span class="n">D</span><span class="p">,</span>
+   <span class="n">_p</span><span class="p">:</span> <span class="n">PhantomData</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Moreover, the second important question I had was “how can the user pass a
+callback function to the timer?”. There were two possibilities: using a closure
+and using a Trait. I decided to go through the trait path. Things would be kind
+of similar if I decided to go into the closure path.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cd">/// Trait which must be implemented by driver-specific timer objects.</span>
+<span class="k">pub</span> <span class="k">trait</span> <span class="n">TimerOps</span><span class="p">:</span> <span class="nb">Sized</span> <span class="p">{</span>
+    <span class="cd">/// Type of the Inner data inside the Timer</span>
+    <span class="k">type</span> <span class="n">Inner</span><span class="p">;</span>
+
+    <span class="cd">/// Timer callback</span>
+    <span class="k">fn</span> <span class="nf">timer_callback</span><span class="p">(</span><span class="n">timer</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="k">Self</span><span class="p">,</span> <span class="k">Self</span><span class="p">::</span><span class="n">Inner</span><span class="o">&gt;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>With those two questions solved, it seems that we are all set and good to go.
+So, we can create methods to initialize the timer and modify the timer’s
+timeout, implement the Drop trait, and use the following callback by default:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">unsafe</span> <span class="k">extern</span> <span class="s">"C"</span> <span class="k">fn</span> <span class="n">timer_callback</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="n">TimerOps</span><span class="o">&lt;</span><span class="n">Inner</span> <span class="o">=</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="nb">Sized</span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">timer</span><span class="p">:</span> <span class="o">*</span><span class="k">mut</span> <span class="nn">bindings</span><span class="p">::</span><span class="n">timer_list</span><span class="p">,</span>
+<span class="p">)</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">timer</span> <span class="o">=</span> <span class="k">crate</span><span class="p">::</span><span class="nd">container_of!</span><span class="p">(</span><span class="n">timer</span><span class="p">,</span> <span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">timer</span><span class="p">)</span>
+			    <span class="k">as</span> <span class="o">*</span><span class="k">mut</span> <span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">;</span>
+
+    <span class="c1">// SAFETY: The caller is responsible for passing a valid timer_list subtype</span>
+    <span class="nn">T</span><span class="p">::</span><span class="nf">timer_callback</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="o">*</span><span class="n">timer</span> <span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>All should work, right? Well… No, I didn’t really mention how I was allocating
+memory. And let’s say I was initially allocating it wrongly and therefore, the
+<code class="language-plaintext highlighter-rouge">container_of</code> macro was pointing to the wrong memory space.</p>
+
+<p>Initially, I was allocating only <code class="language-plaintext highlighter-rouge">timer</code> with the kernel memory allocator
+<code class="language-plaintext highlighter-rouge">krealloc</code> and allocating the rest of the struct with Rust’s memory allocator.
+By making such a mess, <code class="language-plaintext highlighter-rouge">container_of</code> wasn’t able to point to the right
+memory address.</p>
+
+<p>I had to change things a bit to allocate the whole struct <code class="language-plaintext highlighter-rouge">UniqueTimer</code> with
+the kernel’s memory allocator. However, <code class="language-plaintext highlighter-rouge">krealloc</code> returns a raw pointer and it
+would be nice for the final user to get a raw pointer to the object. I wrapped
+up inside another struct that could be dereferenced into the <code class="language-plaintext highlighter-rouge">UniqueTimer</code>
+object.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cd">/// A generic Timer Object</span>
+<span class="cd">///</span>
+<span class="cd">/// This object should be instantiated by the end user, as it holds</span>
+<span class="cd">/// a unique reference to the UniqueTimer struct. The UniqueTimer</span>
+<span class="cd">/// methods can be used through it.</span>
+<span class="k">pub</span> <span class="k">struct</span> <span class="n">Timer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="n">TimerOps</span><span class="o">&lt;</span><span class="n">Inner</span> <span class="o">=</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">(</span><span class="o">*</span><span class="k">mut</span> <span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">);</span>
+
+<span class="k">impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span> <span class="n">TimerOps</span><span class="o">&lt;</span><span class="n">Inner</span> <span class="o">=</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span> <span class="n">Timer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="cd">/// Create a timer for its first use</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">setup</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="n">D</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="k">Self</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="k">unsafe</span> <span class="p">{</span>
+            <span class="nn">bindings</span><span class="p">::</span><span class="nf">krealloc</span><span class="p">(</span>
+                <span class="nn">core</span><span class="p">::</span><span class="nn">ptr</span><span class="p">::</span><span class="nf">null_mut</span><span class="p">(),</span>
+                <span class="nn">core</span><span class="p">::</span><span class="nn">mem</span><span class="p">::</span><span class="nn">size_of</span><span class="p">::</span><span class="o">&lt;</span><span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;&gt;</span><span class="p">(),</span>
+                <span class="nn">bindings</span><span class="p">::</span><span class="n">GFP_KERNEL</span> <span class="p">|</span> <span class="nn">bindings</span><span class="p">::</span><span class="n">__GFP_ZERO</span><span class="p">,</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="o">*</span><span class="k">mut</span> <span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span>
+        <span class="p">};</span>
+
+        <span class="c1">// SAFETY: The pointer is valid, so pointers to members are too.</span>
+        <span class="c1">// After this, all fields are initialized.</span>
+        <span class="k">unsafe</span> <span class="p">{</span>
+            <span class="nd">addr_of_mut!</span><span class="p">((</span><span class="o">*</span><span class="n">t</span><span class="p">)</span><span class="py">.inner</span><span class="p">)</span><span class="nf">.write</span><span class="p">(</span><span class="n">inner</span><span class="p">);</span>
+            <span class="nn">bindings</span><span class="p">::</span><span class="nf">timer_setup</span><span class="p">(</span><span class="nd">addr_of_mut!</span><span class="p">((</span><span class="o">*</span><span class="n">t</span><span class="p">)</span><span class="py">.timer</span><span class="p">),</span> <span class="nf">Some</span><span class="p">(</span><span class="nn">timer_callback</span><span class="p">::</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">D</span><span class="o">&gt;</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">};</span>
+
+        <span class="k">Self</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>And then the <code class="language-plaintext highlighter-rouge">container_of</code> macro started working! Now, I could setup a Timer
+for each fence and keep the fence inside the timer. Finally, I could use the
+fence inside the timer to signal it when it was not signaled by the user for
+more than 10 seconds.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">impl</span> <span class="n">TimerOps</span> <span class="k">for</span> <span class="n">VgemFenceOps</span> <span class="p">{</span>
+    <span class="k">type</span> <span class="n">Inner</span> <span class="o">=</span> <span class="n">UniqueFence</span><span class="o">&lt;</span><span class="k">Self</span><span class="o">&gt;</span><span class="p">;</span>
+
+    <span class="k">fn</span> <span class="nf">timer_callback</span><span class="p">(</span><span class="n">timer</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">UniqueTimer</span><span class="o">&lt;</span><span class="k">Self</span><span class="p">,</span> <span class="n">UniqueFence</span><span class="o">&lt;</span><span class="k">Self</span><span class="o">&gt;&gt;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">_</span> <span class="o">=</span> <span class="n">timer</span><span class="nf">.inner</span><span class="p">()</span><span class="nf">.signal</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>So, I tested the driver with IGT using the <code class="language-plaintext highlighter-rouge">vgem_slow</code> test and it was now
+passing! All IGT tests were passing and it looked like the driver was
+practically completed (some FIXME problems notwithstanding). But, let’s see if
+this abstraction is really safe…</p>
+
+<h1 id="second-attempt-using-a-timer-abstraction">Second Attempt: using a Timer abstraction</h1>
+<hr>
+
+<p>First, let’s inspect the <code class="language-plaintext highlighter-rouge">struct timer_list</code> in the C code.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">timer_list</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">hlist_node</span>   <span class="n">entry</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span>       <span class="n">expires</span><span class="p">;</span>
+    <span class="kt">void</span>            <span class="p">(</span><span class="o">*</span><span class="n">function</span><span class="p">)(</span><span class="k">struct</span> <span class="n">timer_list</span> <span class="o">*</span><span class="p">);</span>
+    <span class="n">u32</span>         <span class="n">flags</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>By looking at this struct, we can see a problem in my abstraction: a timer
+can point to a timer through a list. If you are not familiar with Rust, this can
+seem normal, but self-referential types can lead to undefined behavior (UB).</p>
+
+<p>Let’s say we have an example type with two fields: <code class="language-plaintext highlighter-rouge">u32</code> and a pointer to this
+<code class="language-plaintext highlighter-rouge">u32</code> value. Initially, everything looks fine, the pointer field points to the
+value field in memory address A, which contains a valid <code class="language-plaintext highlighter-rouge">u32</code>, and all pointers
+are <strong>valid</strong>. But Rust has the freedom to move values around memory. For
+example, if we pass this struct into another function, it might get moved to a
+different memory address. So, the once valid pointer is no longer valid, because
+when we move the struct, the struct’s fields change their address, but not their
+value. Now, the pointer fields still point to the memory address A, although the
+value field is located at the memory address B now. This is really bad and can
+lead to UB.</p>
+
+<p>The solution is to make <code class="language-plaintext highlighter-rouge">timer_list</code> implement the <code class="language-plaintext highlighter-rouge">!Unpin</code> trait. This means
+that to use this type safely, we can’t use regular pointers for self-reference.
+Instead, we use special pointers that “pin” their values into place, ensuring
+they can’t be moved.</p>
+
+<p>Still looking at the <code class="language-plaintext highlighter-rouge">struct timer_list</code>, it is possible to notice that a timer
+can queue itself in the timer function. This functionality is not covered by my
+current abstraction.</p>
+
+<p>Moreover, I was using jiffies to modify the timeout duration and I was adding a
+<code class="language-plaintext highlighter-rouge">Duration</code> to the jiffies. This is problematic, because it can cause a data
+races. Reading jiffies and adding a duration to them should be an atomic
+operation.</p>
+
+<blockquote>
+  <p>Huge thanks to the RfL folks that pointed the errors in my implementation!</p>
+</blockquote>
+
+<p>With all these problems pointed out, it is time to fix them! I could have
+reimplemented my safe abstraction, but the RfL folks pointed me to a Timer
+abstraction that they are developing in a <a href="https://github.com/fbq/linux-rust/commits/rust-dev" class="external">downstream
+tree</a>. Therefore, I decided
+to use their Timer abstraction.</p>
+
+<p>There were two options to implement a Timer abstraction:</p>
+
+<ol>
+  <li>To implement the <code class="language-plaintext highlighter-rouge">Timeout</code> trait to the <code class="language-plaintext highlighter-rouge">VgemFence</code> struct</li>
+  <li>To use the <code class="language-plaintext highlighter-rouge">FnTimer</code> abstraction</li>
+</ol>
+
+<p>In the end, I decided to go with the second approach. The <code class="language-plaintext highlighter-rouge">FnTimer</code> receives a
+closure that will be executed at the timeout. The closure can return an enum that
+indicated if the timer is done or if it should be rescheduled.</p>
+
+<p>When implementing the timer, I had <strong>a lot</strong> of borrow checker problems.  See…
+I need to use the <code class="language-plaintext highlighter-rouge">Fence</code> object inside the callback and also move the <code class="language-plaintext highlighter-rouge">Fence</code>
+object at the end of the function. So, I got plenty of “cannot move out of
+<code class="language-plaintext highlighter-rouge">fence</code> because it is borrowed” errors. Also, I needed the Timer to be dropped
+at the same time as the fence, so I needed to store the Timer inside the
+<code class="language-plaintext highlighter-rouge">VgemFence</code> struct.</p>
+
+<p>The solution to the problems: smart pointers! I boxed the <code class="language-plaintext highlighter-rouge">FnTimer</code> and the closure
+inside the <code class="language-plaintext highlighter-rouge">FnTimer</code> so that I could store it inside the <code class="language-plaintext highlighter-rouge">VgemFence</code> struct.
+Then, the second problem got fixed. But, I still cannot use the fence inside the
+closure, because it wasn’t encapsulated inside a smart pointer. So, I used an
+<code class="language-plaintext highlighter-rouge">Arc</code> to box <code class="language-plaintext highlighter-rouge">Fence</code>, clone it, and move it to the scope of the closure.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span> <span class="k">struct</span> <span class="n">VgemFence</span> <span class="p">{</span>
+	<span class="n">fence</span><span class="p">:</span> <span class="nb">Arc</span><span class="o">&lt;</span><span class="n">UniqueFence</span><span class="o">&lt;</span><span class="n">Fence</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+	<span class="n">_timer</span><span class="p">:</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">FnTimer</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span> <span class="nf">FnMut</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">Result</span><span class="o">&lt;</span><span class="n">Next</span><span class="o">&gt;</span> <span class="o">+</span> <span class="nb">Sync</span><span class="o">&gt;&gt;&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">VgemFence</span> <span class="p">{</span>
+	<span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span> <span class="k">fn</span> <span class="nf">create</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">Result</span><span class="o">&lt;</span><span class="k">Self</span><span class="o">&gt;</span> <span class="p">{</span>
+		<span class="k">let</span> <span class="n">fence_ctx</span> <span class="o">=</span> <span class="nn">FenceContexts</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">QUEUE_NAME</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">QUEUE_CLASS_KEY</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+		<span class="k">let</span> <span class="n">fence</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">try_new</span><span class="p">(</span><span class="n">fence_ctx</span><span class="nf">.new_fence</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Fence</span> <span class="p">{})</span><span class="o">?</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+
+		<span class="c1">// SAFETY: The caller calls [`FnTimer::init_timer`] before using the timer.</span>
+		<span class="k">let</span> <span class="n">t</span> <span class="o">=</span> <span class="nn">Box</span><span class="p">::</span><span class="nf">try_new</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span>
+			<span class="nn">FnTimer</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Box</span><span class="p">::</span><span class="nf">try_new</span><span class="p">({</span>
+				<span class="k">let</span> <span class="n">fence</span> <span class="o">=</span> <span class="n">fence</span><span class="nf">.clone</span><span class="p">();</span>
+				<span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+					<span class="k">let</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fence</span><span class="nf">.signal</span><span class="p">();</span>
+					<span class="nf">Ok</span><span class="p">(</span><span class="nn">Next</span><span class="p">::</span><span class="n">Done</span><span class="p">)</span>
+				<span class="p">}</span>
+			<span class="p">})</span><span class="o">?</span> <span class="k">as</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span><span class="p">)</span>
+		<span class="p">})</span><span class="o">?</span><span class="p">;</span>
+
+		<span class="c1">// SAFETY: As FnTimer is inside a Box, it won't be moved.</span>
+		<span class="k">let</span> <span class="n">ptr</span> <span class="o">=</span> <span class="k">unsafe</span> <span class="p">{</span> <span class="nn">core</span><span class="p">::</span><span class="nn">pin</span><span class="p">::</span><span class="nn">Pin</span><span class="p">::</span><span class="nf">new_unchecked</span><span class="p">(</span><span class="o">&amp;*</span><span class="n">t</span><span class="p">)</span> <span class="p">};</span>
+
+		<span class="nd">timer_init!</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">"vgem_timer"</span><span class="p">);</span>
+
+		<span class="c1">// SAFETY: Duration.as_millis() returns a valid total number of whole milliseconds.</span>
+		<span class="k">let</span> <span class="n">timeout</span> <span class="o">=</span>
+			<span class="k">unsafe</span> <span class="p">{</span> <span class="nn">bindings</span><span class="p">::</span><span class="nf">msecs_to_jiffies</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_secs</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="nf">.as_millis</span><span class="p">()</span><span class="nf">.try_into</span><span class="p">()</span><span class="o">?</span><span class="p">)</span> <span class="p">};</span>
+
+		<span class="c1">// We force the fence to expire within 10s to prevent driver hangs</span>
+		<span class="n">ptr</span><span class="nf">.raw_timer</span><span class="p">()</span><span class="nf">.schedule_at</span><span class="p">(</span><span class="nf">jiffies_later</span><span class="p">(</span><span class="n">timeout</span><span class="p">));</span>
+
+		<span class="nf">Ok</span><span class="p">(</span><span class="k">Self</span> <span class="p">{</span> <span class="n">fence</span><span class="p">,</span> <span class="n">_timer</span><span class="p">:</span> <span class="n">t</span> <span class="p">})</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>You can observe in this code that the initialization of the <code class="language-plaintext highlighter-rouge">FnTimer</code> uses an
+<code class="language-plaintext highlighter-rouge">unsafe</code> operation. This happens because we still don’t have <a href="https://y86-dev.github.io/blog/safe-pinned-initialization/overview.html" class="external">Safe Pinned
+Initialization</a>.
+But the RfL folks are working hard to land this feature and improve ergonomics
+when using <code class="language-plaintext highlighter-rouge">Pin</code>.</p>
+
+<p>Now, running again the <code class="language-plaintext highlighter-rouge">vgem_slow</code> IGT test, you can see that all IGT tests are
+now passing!</p>
+
+<h1 id="next-steps">Next Steps</h1>
+<hr>
+
+<p>During this time, many improvements landed in the driver: all the objects are
+being properly dropped, including the DRM device; all error cases are returning
+the correct error; the SAFETY comments are properly written and most importantly,
+the timeout feature was introduced. With that, all IGT tests are passing and the
+driver is functional!</p>
+
+<p>Now, the driver is in a good shape, apart from one FIXME problem: currently, the
+IOCTL abstraction doesn’t support any drivers that the IOCTLs don’t start in
+0x00 and the VGEM driver starts its IOCTLs with 0x01. I don’t know yet how to
+bypass this problem without adding a dummy IOCTL as 0x00, but I hope to get a
+solution to it soon.</p>
+
+<p>The progress of this project can be followed in this
+<a href="https://github.com/mairacanal/linux/pull/11" class="external">PR</a> and I hope to see this project
+being integrated upstream in the future.</p>
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/adding-timeout-rustgem/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

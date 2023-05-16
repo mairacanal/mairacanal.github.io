@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Linux Kernel Developing with Fedora</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/kernel-development-fedora/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Linux Kernel Developing with Fedora</h1>
+      
+      
+        <p>
+          Date: <time datetime="2022-06-11T00:00:00+00:00">11th June 2022</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#gsoc">#gsoc</a>
+          
+            <a href="/notes#linux">#linux</a>
+          
+            <a href="/notes#kernel">#kernel</a>
+          
+        </p>
+      
+    </header>
+
+    <p>I’m a Fedora fan. I mean: I have two laptops for development, and all of them run Fedora. I also have a deployment machine. Guess what? It runs Fedora. Stickers? The Fedora Logo sticked forever on my laptop.</p>
+
+<p>So, by now, you know: I’m <strong>really</strong> a Fedora fan.</p>
+
+<p>So, when I started working with Linux Kernel, I really wanted to develop in a Fedora environment. But, without any kind of script, the work of a Linux Kernel developer is ungrateful. I mean, do you want to deploy to a remote machine? Be ready for network configurations, grub configurations, generate <em>initramfs</em> image, and tons of commands. Do you want to manage your config files? Basically, you are back to the ancient times when many save tons of config files on folders.</p>
+
+<p>So, it’s a tremendous setup overhead. But, there is a tool to unify all this infrastructure: the <a href="https://github.com/kworkflow/kworkflow" class="external">kworkflow</a>.</p>
+
+<p>Kworkflow is great. It unifies all tools for sending email, managing configs, debugging, and deploying. The Problem? It didn’t use to have support for Fedora.</p>
+
+<p>As a defender of the Fedora ecosystem, I couldn’t let that go, I had a mission: bring support for Fedora to kw.</p>
+
+<h2 id="why-use-fedora-for-development">Why use Fedora for development?</h2>
+
+<p>Ok, first of all, you need to understand my case of love for Fedora.</p>
+
+<p>My first Linux distribution was <a href="https://pop.system76.com" class="external">Pop_OS!</a>. It was great until they made the update to Cosmic. And I hated Cosmic with all my guts. I felt cheated by System76 (and if you check Reddit, you gonna see that it wasn’t only me). My computer was now slow, crashing and I simply hated all those buttons. I missed my classic and simple GNOME and I couldn’t understand how a company could go so against its community.</p>
+
+<p>So, I ended up changing it for Fedora 34. Yes, my first Fedora…</p>
+
+<p>And it was simply perfect: simple and plain GNOME 40 and moreover, Fedora is a bleeding-edge distribution. Fedora is always on the rollout for the latest Linux features, driver updates, and software. It is very innovative: Fedora comes with Wayland and Pipewire out-of-the-box, for example. And, although it is very innovative, it is incredibly stable.</p>
+
+<p>But, we didn’t solve up the problem of Red Hat simply making a disgusting change and the community simply hate it. In fact, we did! Fedora is incredibly democratic. The Fedora community is the most important part of the development of another version and any change is submitted to the community through a proposal.</p>
+
+<p>And that’s why I love Fedora so much: stability, innovation, and a great community.</p>
+
+<p>But, if none of that convinced you to move to Fedora, maybe Linus Torvalds does. It is a pretty known fact that the creator of Linux is a Fedora user.</p>
+
+<h2 id="implementing-kw-deploy-for-fedora">Implementing kw deploy for Fedora</h2>
+
+<p>Fedora is great, but… It didn’t use to have kw support. I couldn’t let that go. So, I started to work on the kw support for Fedora.</p>
+
+<p>First of all, we needed to make it possible to install kw on a Fedora system with the <code class="language-plaintext highlighter-rouge">setup.sh</code> script. This was pretty simple after all: I just needed to add a package dependency list to the kw files and specify how to install those packages, so basically <code class="language-plaintext highlighter-rouge">dnf</code>.</p>
+
+<p>To get the dependencies, I based myself on the Arch Linux dependency list. If you are willing to check more on this feature, check the <a href="https://github.com/kworkflow/kworkflow/pull/564" class="external">PR</a>.</p>
+
+<p>So, now the biggest challenge for me: introduce kw deploy for Fedora.</p>
+
+<p>The first step was to learn how to install a custom kernel in a Fedora distribution manually, how to generate the initramfs and what was the default bootloader and how to update it.</p>
+
+<p>Fedora has great documentation, so I check out the guide <a href="https://asamalik.fedorapeople.org/tmp-docs-preview/quick-docs/kernel/build-custom-kernel/" class="external">Building a Custom Kernel</a>.</p>
+
+<p>On Fedora, to build the kernel, you run:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make oldconfig
+make bzImage
+make modules
+</code></pre></div></div>
+
+<p>And them, to install the kernel, you run:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>make modules_install
+<span class="nb">sudo </span>make <span class="nb">install</span>
+</code></pre></div></div>
+
+<p>But, there is a small detail: we don´t want simply to install the kernel on your local system, we want to deploy remotely.</p>
+
+<p>So, we must generate the initramfs, and send it to the remote machine. The mechanism to send the modules and the initramfs was already coded on kw. So, I had only one task: find out how Fedora generates its initramfs.</p>
+
+<p>I found out an <a href="https://fedoramagazine.org/initramfs-dracut-and-the-dracut-emergency-shell/" class="external">article</a> from Fedora Magazine that explained how Fedora uses <code class="language-plaintext highlighter-rouge">dracut</code> to generate the initramfs. To generate the initramfs, it is as simple as running:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dracut <span class="nt">--force</span> <span class="nt">--kver</span> <span class="o">{</span>KERNEL_NAME<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Next step, check out the default bootloader for Fedora. Fedora uses GRUB2, as is can be seen in this <a href="https://docs.fedoraproject.org/en-US/quick-docs/bootloading-with-grub2/" class="external">article</a>. So, it looked straightly simple for me as kw already had GRUB support.</p>
+
+<p>But, all the GRUB support on kw was based on the <code class="language-plaintext highlighter-rouge">grub-mkconfig</code> command and Fedora comes with the <code class="language-plaintext highlighter-rouge">grub2-mkconfig</code> command. So, the first thing I had to work on was adding support to the <code class="language-plaintext highlighter-rouge">grub2-mkconfig</code> command on kw, as I found it unfair to simply install another GRUB package on the system of the kw user.</p>
+
+<p>That said, I based myself on the Debian deployment script and wrote the Fedora deployment script with the specific Fedora tools: <code class="language-plaintext highlighter-rouge">dracut</code> and <code class="language-plaintext highlighter-rouge">dnf</code>.</p>
+
+<p>But a new problem arrived: GRUB menu didn’t seem to show up on my machine. And I found out that Fedora comes with GRUB hidden by default. To display GRUB, you must run:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>grub2-editenv - <span class="nb">unset </span>menu_auto_hide
+</code></pre></div></div>
+
+<p>Ok, now GRUB showed up, but the newly compiled kernel didn’t show up in the GRUB menu. So, I found out that Fedora comes with GRUB_ENABLE_BLSCFG set by default. It was pretty simple to fix this, simply run:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sed</span> <span class="nt">-i</span> <span class="nt">-e</span> <span class="s1">'s/GRUB_ENABLE_BLSCFG=true/GRUB_ENABLE_BLSCFG=false/g'</span> /etc/default/grub
+</code></pre></div></div>
+
+<p>And that’s it! Now, <code class="language-plaintext highlighter-rouge">kw d</code> worked like a charm with Fedora. I tested on my local machine with Fedora 35 and remotely with Fedora 35 and Fedora 36.</p>
+
+<p>If you wanna check this feature out, take a look at this <a href="https://github.com/kworkflow/kworkflow/pull/613" class="external">PR</a>.</p>
+
+<h2 id="my-workflow-with-fedora">My workflow with Fedora</h2>
+
+<p>As I said, I have two development laptops: a Lenovo IdeaPad and a Dell Inspiron 15. Lenovo is my less powerful notebook, so I basically always carry him in my backpack. And the Dell Inspiron is my precious baby: it is an Intel Core i7, with 16 GB DRAM and Nvidia graphics.</p>
+
+<p>Moreover, I have a testing machine, with an AMD Radeon RX 5700 XT 50th Anniversary. This is where I run my kernel tests (especially, graphics tests) and run IGT GPU Tools.</p>
+
+<p>The problem? Setup up a network with three machines without becoming a cable hell. That’s why I use <a href="https://tailscale.com" class="external">Tailscale</a> to connect all my machines through a network. It’s a great tool for people with multiple machines.</p>
+
+<p>Next step: make deployment easy and simple. Basically, I want to compile the Kernel on my Dell Inspiron 15 and deploy it to my testing machine through the network.</p>
+
+<p>First thing: have a good config file.</p>
+
+<p>I manage my config files through <code class="language-plaintext highlighter-rouge">kw configm</code> and I have three config files: <code class="language-plaintext highlighter-rouge">STD_DCN_CONFIG</code>, <code class="language-plaintext highlighter-rouge">KUNIT_CONFIG</code>, and <code class="language-plaintext highlighter-rouge">STD_CONFIG</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">STD_DCN_CONFIG</code> has enabled AMDGPU drivers and DCN stuff, with the addition of TCP configurations to make Tailscale work properly. Also, I use BTRFS as my Filesystem (as it comes out of the box with Fedora), so I also had to configure the FS.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">KUNIT_CONFIG</code> is almost the same as <code class="language-plaintext highlighter-rouge">STD_DCN_CONFIG</code>, but with the addition of the <code class="language-plaintext highlighter-rouge">KUNIT</code> module. As I’m working in GSoC, this is my go-to config recently.</p>
+
+<p>And the <code class="language-plaintext highlighter-rouge">STD_CONFIG</code> is the config that comes with Fedora. I don’t use it that much. It’s pretty loaded with modules and it takes too long to compile.</p>
+
+<p>Ok, now it’s time to compile it. kw has a great tool to build Linux images, <code class="language-plaintext highlighter-rouge">kw b</code>, but it doesn’t support clang yet (but, <a href="https://crosscat.me" class="external">Isa</a> is working on it). So, as I like to use the LLVM system and use ccache to speed up builds, I run:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make <span class="nv">CC</span><span class="o">=</span><span class="s2">"ccache clang"</span> <span class="nt">-j8</span>
+</code></pre></div></div>
+
+<p>Great! Now we have a <code class="language-plaintext highlighter-rouge">vmlinuz</code> image. But, we still need to deploy it. Now, kw really shines for me. I simply run <code class="language-plaintext highlighter-rouge">kw d</code> with reboot setup on my <code class="language-plaintext highlighter-rouge">kworkflow.config</code> and, that’s it. I simply go to my deployment machine and choose a kernel to boot from.</p>
+
+<p>It is incredibly simple, right?</p>
+
+<h2 id="next-steps">Next Steps</h2>
+
+<p>Hope I have inspired you to try out <a href="https://getfedora.org" class="external">Fedora 36</a> and kw! These great tools will make your development simple and fast.</p>
+
+<p>My next step with Fedora: <strong>introduce kw to the dnf package manager.</strong> But that’s a talk to another post.</p>
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/kernel-development-fedora/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

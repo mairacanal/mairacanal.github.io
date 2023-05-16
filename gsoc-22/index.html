@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | I'm in GSoC '22</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/gsoc-22/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-light.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/tokyo-city-terminal-dark.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/tomorrow.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>I'm in GSoC '22</h1>
+      
+      
+        <p>
+          Date: <time datetime="2022-05-26T00:00:00+00:00">26th May 2022</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#gsoc">#gsoc</a>
+          
+            <a href="/notes#kernel">#kernel</a>
+          
+            <a href="/notes#graphics">#graphics</a>
+          
+        </p>
+      
+    </header>
+
+    <p>This year I had a goal: to improve my abilities as a kernel developer. After some research, I figured out about the <a href="https://summerofcode.withgoogle.com/" class="external">Google Summer of Code (GSoC)</a> initiative.</p>
+
+<p>Last year, I had contact with <a href="https://crosscat.me" class="external">Isabella Basso</a> during the <a href="https://lkcamp.dev" class="external">LKCAMP Hackathon</a> and she told me that she was being mentored by <a href="https://siqueira.tech" class="external">Rodrigo Siqueira</a>. So, in my early 22’, I tried to get in touch with him. He introduced me to this great group of women that were building a project for GSoC.</p>
+
+<p>So, since January, I, <a href="https://crosscat.me" class="external">Isabella Basso</a> and <a href="https://magalilemes.github.io" class="external">Magali Lemes</a> were building a project proposal for GSoC to the X.Org Foundation.</p>
+
+<p>Essentially, we had the idea to introduce unit testing to the Display Mode Library (DML) of the AMDGPU driver with KUnit.</p>
+
+<p>So, we divide the DML between us and also welcomed <a href="https://tales-aparecida.github.io/" class="external">Tales Almeida</a> to the project. Each of us submitted a project proposal to the X.Org Foundation and I proposed a project to <a href="https://summerofcode.withgoogle.com/programs/2022/projects/fATmfPlL" class="external">Introduce Unit Testing to the Display Mode VBA Library</a>.</p>
+
+<p>Gladly, on May 20th, I received an e-mail congratulating me from GSoC. I got extremely excited that I’ll spend the summer working on something that I love. Moreover, I got extremely happy that Isabella and Tales were approved with me.</p>
+
+<p>I am thrilled to be part of this project and I am super excited for the summer of ‘22. I’m looking forward to work on what I most love.</p>
+
+<p>So, let me talk a bit more about my project.</p>
+
+<h1 id="why-implement-unit-testing-in-the-amdgpu-drivers">Why implement Unit Testing in the AMDGPU drivers?</h1>
+
+<p>The modern AMD Linux kernel graphics driver is <a href="https://www.phoronix.com/scan.php?page=news_item&amp;px=AMDGPU-Closing-4-Million" class="external">the single largest driver</a> in the mainline Linux codebase. As AMD releases new GPU models, the size of AMDGPU drivers is only becoming even larger.</p>
+
+<p>At Linux 5.18, the modern AMD driver is approaching 4 million lines of code, which is more than 10% of the entire Linux kernel codebase.</p>
+
+<p>With such a huge codebase, assuring the quality and the reliability of the drivers becomes a hard task without systematic testing, especially for graphic drivers - which usually involve tons of complex calculations. Also, finding bugs becomes an increasingly hard task.</p>
+
+<p>Moreover, a large codebase usually indicates the need for code refactoring. But, refactoring a large codebase without any implemented tests will probably generate tons of bugs, as there is no quality measurement.</p>
+
+<p>In that sense, it is possible to argue for the benefits of implementing unit testing at the AMDGPU drivers. This implementation will help developers to recognize bugs before they are merged into the mainline and also makes it possible for future code refactors of the AMDGPU driver.</p>
+
+<p>When analyzing the AMDGPU driver, a particular part of the driver highlights itself as a good candidate for the implementation of unit tests: the <strong>Display Mode Library (DML)</strong>. DML is fundamental to the functioning of AMD Display Core Next (DCN) since DML calculates the signals - VSTARTUP, VUPDATE, and VREADY - used for Global Sync. DML calculates the signals based on a large number of parameters and ensures our hardware is able to feed the DCN pipeline without underflows or hangs in any given system configuration.</p>
+
+<h1 id="my-project-introducing-unit-testing-to-the-display-mode-vba-library">My project: Introducing Unit Testing to the Display Mode VBA Library</h1>
+
+<p>The general project’s idea is to implement unit testing in the Display Mode Library (DML) with the help of the KUnit Framework. Nonetheless, implementing unit testing on all DML functions seems not viable for a 12-week project. That said, my project intends to focus on the <strong>Display Mode VBA libraries</strong>, especially the <code class="language-plaintext highlighter-rouge">dml/display_mode_vba.h</code> and <code class="language-plaintext highlighter-rouge">dml/dcn20/display_mode_vba_20.h</code> libraries.</p>
+
+<p>In my project, I intend to create unit tests for <strong>all functions</strong> at the <code class="language-plaintext highlighter-rouge">dml/display_mode_vba.h</code> library because those functions are used in all DCN models VBA libraries. Moreover, considering I have access to the AMDGPU Radeon™ RX 5700 XT, I also intend to create unit tests for the functions at the <code class="language-plaintext highlighter-rouge">dml/dcn20/display_mode_vba_20.h</code> library.</p>
+
+<p>The static functions at the libraries won’t be tested, because the main intention is to test the public API of the Display Mode VBA library.</p>
+
+<p>The Display Mode VBA libraries have a very intricate codebase, so I hope that the implementation of unit tests with KUnit and the possible integration with IGT inspire developers to work on a code refactor.</p>
+
+<h1 id="so-now-what">So, now what?</h1>
+
+<p>I have already got my hands on the Community Bonding Period, primarily, working on some workflow issues. I use <a href="https://kworkflow.org" class="external">kworkflow</a> to ease my development workflow, but kw doesn’t deploy for Fedora-based systems yet. As a Fedora user (and huge fan), I couldn´t leave that as it is and work on an Arch system. So, I’m currently working on the deployment for Fedora systems.</p>
+
+<p>Also, I’m taking time to get familiar with the mailing lists and to read the AMDGPU documentation. <a href="https://melissawen.github.io" class="external">Melissa</a> recommended some great links and I’m willing to read them in the next couple of days.</p>
+
+<p>Moreover, I’m organizing my daily life for this new exciting period. I’m excited to start working and developing on this great community.</p>
+
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">Github</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">Linkedin</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/gsoc-22/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>
