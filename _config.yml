@@ -1,89 +1,57 @@
-site: mairacanal
-title: Maíra Canal
-description: >-
-  computer engineering @ USP <br> systems dev, embedded systems, operational systems, compilers <br> open source enthusiast /#linux
-lang: en-US
-timezone:  Brazil/São Paulo
-repo: https://github.com/mairacanal/mairacanal.github.io # site repo [optional]
-data-theme: dark # default theme "dark" | "light"
-discus-identifier: mairacanal # replace with your disqus shortname
-
-author:
-  name: Maíra Canal
-  picture: assets/images/profile.jpeg
-  username: mairacanal
-  github: mairacanal
-  email: maira.canal@usp.br
-
-# Font Settings
-googlewebfonts: family=Play:wght@400;700&family=Source+Code+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,300;1,400;1,500;1,600;1,700;1,900
+name: "Maíra Canal"
+description: "Blogging about development"
 
 # URL settings
+domain: "mairacanal.github.io"
 url: "https://mairacanal.github.io" # Domain Name of host. [username].github.io for github pages
 permalink: pretty
 
-# local
-# url: "http://localhost:4000" # 
-# baseurl: "" # 
+dark_scheme: tokyo-city-terminal-dark
+light_scheme: tokyo-city-terminal-light
+printing_scheme: tomorrow # Must have #FFFFFF background
 
-
-markdown: kramdown
-kramdown:
-  input: GFM
-  syntax_highlighter: rouge
-
-
-exclude:
-  - .jekyll-cache
-  - .obsidian
-  - Gemfile
-  - Gemfile.lock
-  - LICENSE.md
-  - README.md
-  - CONTRIBUTING.md
-  
-compress_html:
-  clippings: all
-  comments: ["<!-- ", " -->"]
-
-sass:
-  sass_dir: _sass
-  style: compressed
 
 plugins:
-  - jekyll-paginate
-  - jekyll-sitemap
+  - jekyll-extlinks
   - jekyll-relative-links
 
+extlinks:
+  attributes: 
+    class: external
+
+relative_links:
+  enabled: true
+  collections: true
+
+sass:
+  style: compact
+
+kramdown:
+  syntx_highlighter: coderay
+
+
+include: [".well-known"]
+
+source: _src
+
 collections:
-  pages:
-    output: true
-    permalink: /:name
   posts:
     output: true
-    permalink: /:year/:month/:day/:slug
-  
+    permalink: /blog/:path/index:output_ext
+    name: Posts
+
 defaults:
-  -
-    scope:
-      path: ""
-    values:
-      layout: "default"
-  -
-    scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: "page"
   -
     scope:
       path: ""
       type: "posts"
     values:
-      layout: "post"
-
-relative_links:
-  enabled:     true
-  collections: false
-
-
+      layout: "post.html"
+      nav_current: "/blog/"
+  -
+    scope:
+      path: ""
+    values:
+      layout: "default.html"
+      language: "en"
+      author: "Maíra Canal"
