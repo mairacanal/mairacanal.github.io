@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | {{ page.title }}</title>
+    <meta name="description" content="
+      {%- if page.description -%}
+        {{ page.description }}
+      {%- else -%}
+        {{ site.description }}
+      {%- endif -%}"
+    />
+    {% if page.noindex == true -%}
+      <meta name="robots" content="noindex">
+    {%- endif %}
+
+    <link rel="canonical" href="https://{{ site.domain }}{{ page.url }}" />
+    {% include head.html.liquid %}
+  </head>
+  <body>
+    {{ content | extlinks }}
+  </body>
+</html>

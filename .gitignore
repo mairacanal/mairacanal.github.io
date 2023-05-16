@@ -1,6 +1,5 @@
+result
 _site
-.sass-cache
-.bundle
 .jekyll-cache
 .jekyll-metadata
-vendor
+.sass-cache
