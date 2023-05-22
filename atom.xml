@@ -5,7 +5,493 @@
         <description>Blogging about development</description>
         <link>https://mairacanal.github.io</link>
         <atom:link href="https://mairacanal.github.io/atom.xml" rel="self" type="application/rss+xml" />
-        <lastBuildDate>Tue, 16 May 2023 12:00:00 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 22 May 2023 12:30:00 +0000</lastBuildDate>
+        
+            <item>
+                <title>May Update: Finishing my Second Igalia CE</title>
+                
+                <description>&lt;p&gt;After finishing up my first &lt;a href=&quot;https://www.igalia.com/coding-experience/&quot;&gt;Igalia Coding Experience&lt;/a&gt; in January, I got the amazing opportunity to keep working in the DRI community by extending my Igalia CE to a second round.
+Huge thanks to &lt;a href=&quot;https://www.igalia.com/&quot;&gt;Igalia&lt;/a&gt; for providing me with this opportunity!&lt;/p&gt;
+
+&lt;p&gt;Another four months passed by and here I am completing another milestone with Igalia.
+Previously, in the last final reports, I described GSoC as “an experience to get a better understanding of what open source is” and the first round of the Igalia CE as “an opportunity for me to mature my knowledge of technical concepts”.
+My second round of the Igalia CE was a period for broadening my horizons.&lt;/p&gt;
+
+&lt;p&gt;I had the opportunity to deepen my knowledge of a new programming language and learn more about Kernel Mode Setting (KMS).
+I took my time learning more about Vulkan and the Linux graphics stack.
+All of this new knowledge about the DRM infrastructure fascinated me and made me excited to keep developing.&lt;/p&gt;
+
+&lt;p&gt;So, this is a summary report of my journey at my second Igalia CE.&lt;/p&gt;
+
+&lt;h1 id=&quot;wrapping-up&quot;&gt;Wrapping Up&lt;/h1&gt;
+&lt;hr /&gt;
+
+&lt;p&gt;First, I took some time to wrap up the contributions of my previous Igalia CE.
+In my &lt;a href=&quot;/january-update-finishing-my-igalia-ce/&quot;&gt;January Update&lt;/a&gt;, I described the journey to include IGT tests for V3D.
+But at the time, I hadn’t yet sent the final versions of the tests.
+Right when I started my second Igalia CE, I sent the final versions of the V3D tests, which were accepted and merged.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/112363/&quot;&gt;[PATCH i-g-t 0/6] V3D Job Submission Tests&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/112805/&quot;&gt;[PATCH i-g-t 0/3] V3D Mixed Job Submission Tests&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h1 id=&quot;rustgem&quot;&gt;Rustgem&lt;/h1&gt;
+&lt;hr /&gt;
+
+&lt;p&gt;The first part of my Igalia CE was focused on rewriting the VGEM driver in Rust.
+VGEM (Virtual GEM Provider) is a minimal non-hardware-backed GEM (Graphics Execution Manager) service.
+It is used with non-native 3D hardware for buffer sharing between the X server and DRI.&lt;/p&gt;
+
+&lt;p&gt;The goal of the project was to explore Rust in the DRM subsystem and have a working VGEM driver written in Rust.
+Rust is a blazingly fast and memory-efficient language with its powerful &lt;strong&gt;ownership model&lt;/strong&gt;.
+It was really exciting to learn more about Rust and implement from the beginning a DRM driver.&lt;/p&gt;
+
+&lt;p&gt;During the project, I wrote two blog posts describing the technical aspects of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rustgem&lt;/code&gt; driver.
+If you are interested in this project, check them out!&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Date&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Blogpost&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;28th February&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;a href=&quot;/rust-for-vgem/&quot;&gt;Rust for VGEM&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;22th March&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;a href=&quot;/adding-timeout-rustgem/&quot;&gt;Adding a Timeout feature to Rustgem&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;By the end of the first half of the Igalia CE, I sent an RFC patch with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rustgem&lt;/code&gt; driver.
+Thanks to Asahi Lina, the Rust for Linux folks, and Daniel Vetter for all the feedback provided during the development of the driver.
+I still need to address some feedback and rebase the series on top of the new pin-init API, but I hope to see this driver upstream soon.
+You can check the driver’s current status in this &lt;a href=&quot;https://github.com/mairacanal/linux/pull/11&quot;&gt;PR&lt;/a&gt;.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230317121213.93991-1-mcanal@igalia.com/T/&quot;&gt;[RFC PATCH 0/9] Rust version of the VGEM driver&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Apart from rewriting the VGEM driver, I also sent a couple of improvements to the C version of the VGEM driver and its IGT tests.
+I found a missing &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mutex_destroy&lt;/code&gt; on the code and also an unused struct.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Patches&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230202125517.427976-1-mcanal@igalia.com/T/&quot;&gt;[PATCH] drm/vgem: add missing mutex_destroy&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230222160617.171429-1-mcanal@igalia.com/T/&quot;&gt;[PATCH] drm/vgem: Drop struct drm_vgem_gem_object&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;On the IGT side, I added some new tests to the VGEM tests.
+I wanted to ensure that my driver returned the correct values for all possible error paths, so I wrote this IGT test.
+Initially, it was just for me, but I decided to submit it upstream.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/114912/&quot;&gt;[PATCH v3 i-g-t 0/2] Add negative tests to VGEM&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h1 id=&quot;virtual-kernel-mode-setting-vkms&quot;&gt;Virtual Kernel Mode Setting (VKMS)&lt;/h1&gt;
+&lt;hr /&gt;
+
+&lt;p&gt;Focusing on the VKMS was the major goal of the second part of my Igalia CE.
+&lt;a href=&quot;https://melissawen.github.io/&quot;&gt;Melissa Wen&lt;/a&gt; is one of the maintainers of the VKMS, and she provided me with a fantastic opportunity to learn more about the VKMS.
+So far, I haven’t dealt with displays, and learning new concepts in the graphics stack was great.&lt;/p&gt;
+
+&lt;h2 id=&quot;rotating-planes&quot;&gt;Rotating Planes&lt;/h2&gt;
+
+&lt;p&gt;VKMS is a software-only KMS driver that is quite useful for testing and running X (or similar compositors) on headless machines.
+At the time, the driver didn’t have any support for optional plane properties, such as rotation and blend mode.
+Therefore, my goal was to implement the first plane property of the driver: rotation.
+I described the technicalities of this challenge in this &lt;a href=&quot;/rotating-planes-vkms/&quot;&gt;blog post&lt;/a&gt;, but I can say that it was a nice challenge of this mentorship project.&lt;/p&gt;
+
+&lt;p&gt;In the end, we have the first plane property implemented for the VKMS and it is already committed.
+Together with the VKMS part, I sent a series to the IGT mailing list with some improvements to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kms_rotation_crc&lt;/code&gt; tests.
+These improvements included adding new tests for rotation with offset and reflection and the isolation of some Intel-specific tests.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230418130525.128733-1-mcanal@igalia.com/T/&quot;&gt;[PATCH v4 0/6] drm/vkms: introduce plane rotation property&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230508220030.434118-1-mcanal@igalia.com/T/&quot;&gt;[PATCH 1/2] drm/vkms: Add kernel-doc to the function vkms_compose_row()&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/116025/&quot;&gt;[PATCH i-g-t 0/4] kms_rotation_crc improvements and generalization&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;improvements&quot;&gt;Improvements&lt;/h2&gt;
+
+&lt;p&gt;As I was working with the rotation series, I discovered a couple of things that could be improved in the VKMS driver.
+Last year, Igor Torrente sent a series to VKMS that changed the composition work in the driver.
+Before his series, the plane composition was executed on top of the primary plane.
+Now, the plane composition is executed on top of the CRTC.&lt;/p&gt;
+
+&lt;p&gt;Although his series was merged, some parts of the code still considered that the composition was executed on top of the primary plane, limiting the VKMS capabilities.
+So I sent a couple of patches to the mailing list, improving the handling of the primary plane and allowing full alpha blending on all planes.&lt;/p&gt;
+
+&lt;p&gt;Moreover, I sent a series that added a module parameter to set a background color to the CRTC.
+This work raised an interesting discussion about the need for this property by the user space and whether this parameter should be a KMS property.&lt;/p&gt;
+
+&lt;p&gt;Apart from introducing the rotation property to the VKMS driver, I also took my time to implement two other properties: alpha and blend mode.
+This series is still awaiting review, but it would be a nice addition to the VKMS, increasing its IGT test coverage rate.&lt;/p&gt;
+
+&lt;p&gt;Finally, I found a bug in the RGB565 conversion.
+The RGB565 conversion to ARGB16161616 involves some fixed-point operations and, when running the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;pixel-format&lt;/code&gt; IGT test, I verified that the RGB565 test was failing.
+So, some of those fixed-point operations were returning erroneous values.
+I checked that the RGB coefficients weren’t being rounded when converted from fixed-point to integers.
+But, this should happen in order to provided the proper coefficient values.
+Therefore, the fix was: implement a new helper that rounds the fixed-point value when converting it to a integer.&lt;/p&gt;
+
+&lt;p&gt;After performing all this work on the VKMS, I sent a patch adding myself as a VKMS maintainer, which was acked by Javier Martinez and Melissa Wen.
+So now, I’m working together with Melissa, &lt;a href=&quot;https://siqueira.tech/&quot;&gt;Rodrigo Siqueira&lt;/a&gt; and all DRI community to improve and maintain the VKMS driver.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230324164226.256084-1-mcanal@igalia.com/T/&quot;&gt;[PATCH v2 0/2] Update the handling of the primary plane&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230420232228.273340-1-mcanal@igalia.com/T/&quot;&gt;[PATCH v2 1/2] drm/vkms: allow full alpha blending on all planes&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230410125435.128689-1-mcanal@igalia.com/T/&quot;&gt;[PATCH v2] drm/vkms: add module parameter to set background color&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230428122751.24271-1-mcanal@igalia.com/T/&quot;&gt;[PATCH] drm/vkms: Implement all blend mode properties&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230512104044.65034-1-mcanal@igalia.com/T/&quot;&gt;[PATCH v3 1/2] drm: Add fixed-point helper to get rounded integer values&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;virtual-hardware&quot;&gt;Virtual Hardware&lt;/h2&gt;
+
+&lt;p&gt;A couple of years ago, Sumera Priyadarsini, an Outreachy intern, worked on a Virtual Hardware functionality for the VKMS.
+The idea was to add a Virtual Hardware or vblank-less mode as a kernel parameter to enable VKMS to emulate virtual devices.
+This means no vertical blanking events occur and page flips are completed arbitrarily when required for updating the frame.
+Unfortunately, she wasn’t able to wrap things up and this ended up never being merged into VKMS.&lt;/p&gt;
+
+&lt;p&gt;Melissa suggested rebasing this series and now we can have the Virtual Hardware functionality working on the current VKMS.
+This was a great work by Sumera and my work here was just to adapt her changes to the new VKMS code.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230509150501.81875-1-mcanal@igalia.com/T/&quot;&gt;[PATCH 0/2] drm/vkms: Enable Virtual Hardware support&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;bug-fixing&quot;&gt;Bug Fixing!&lt;/h2&gt;
+
+&lt;p&gt;Finally, I was in the last week of the project, just wrapping things up, when I decided to run the VKMS CI.
+I had recently committed the rotation series and I had run the CI before, but to my surprise, I got the following output:&lt;/p&gt;
+
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;root@fedora igt-gpu-tools]# ./build/tests/kms_writeback
+IGT-Version: 1.27.1-gce51f539 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;x86_64&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;Linux: 6.3.0-rc4-01641-gb8e392245105-dirty x86_64&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_kms-WARNING: Output Writeback-1 could not be assigned to a pipe
+Starting subtest: writeback-pixel-formats
+Subtest writeback-pixel-formats: SUCCESS &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;0.000s&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+Starting subtest: writeback-invalid-parameters
+Subtest writeback-invalid-parameters: SUCCESS &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;0.001s&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+Starting subtest: writeback-fb-id
+Subtest writeback-fb-id: SUCCESS &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;0.020s&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+Starting subtest: writeback-check-output
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: Test assertion failure &lt;span class=&quot;k&quot;&gt;function &lt;/span&gt;get_and_wait_out_fence, file ../tests/kms_writeback.c:288:
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: Failed assertion: ret &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; 0
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: Last errno: 38, Function not implemented
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: sync_fence_wait failed: Timer expired
+Stack trace:
+  &lt;span class=&quot;c&quot;&gt;#0 ../lib/igt_core.c:1963 __igt_fail_assert()&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#1 [get_and_wait_out_fence+0x83]&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#2 ../tests/kms_writeback.c:337 writeback_sequence()&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#3 ../tests/kms_writeback.c:360 __igt_unique____real_main481()&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#4 ../tests/kms_writeback.c:481 main()&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#5 ../sysdeps/nptl/libc_start_call_main.h:74 __libc_start_call_main()&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#6 ../csu/libc-start.c:128 __libc_start_main@@GLIBC_2.34()&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#7 [_start+0x25]&lt;/span&gt;
+Subtest writeback-check-output failed.
+&lt;span class=&quot;k&quot;&gt;****&lt;/span&gt; DEBUG &lt;span class=&quot;k&quot;&gt;****&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: Test assertion failure &lt;span class=&quot;k&quot;&gt;function &lt;/span&gt;get_and_wait_out_fence, file ../tests/kms_writeback.c:288:
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: Failed assertion: ret &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; 0
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: Last errno: 38, Function not implemented
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; CRITICAL: sync_fence_wait failed: Timer expired
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO: Stack trace:
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#0 ../lib/igt_core.c:1963 __igt_fail_assert()&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#1 [get_and_wait_out_fence+0x83]&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#2 ../tests/kms_writeback.c:337 writeback_sequence()&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#3 ../tests/kms_writeback.c:360 __igt_unique____real_main481()&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#4 ../tests/kms_writeback.c:481 main()&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#5 ../sysdeps/nptl/libc_start_call_main.h:74 __libc_start_call_main()&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#6 ../csu/libc-start.c:128 __libc_start_main@@GLIBC_2.34()&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;kms_writeback:1590&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; igt_core-INFO:   &lt;span class=&quot;c&quot;&gt;#7 [_start+0x25]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;****&lt;/span&gt;  END  &lt;span class=&quot;k&quot;&gt;****&lt;/span&gt;
+Subtest writeback-check-output: FAIL &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;1.047s&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠&lt;/p&gt;
+
+&lt;p&gt;Initially, I thought I had introduced the bug with my rotation series.
+Turns out, I just had made it more likely to happen.
+This bug has been hidden in VKMS for a while, but it happened just on rare occasions.
+Yeah, I’m talking about a race condition…
+The kind of bug that just stays hidden in your code for a long while.&lt;/p&gt;
+
+&lt;p&gt;When I started to debug, I thought it was a performance issue.
+But then, I increased the timeout to 10 seconds and even then the job wouldn’t finish.
+So, I thought that it could be a deadlock.
+But after inspecting the DRM internal locks and the VKMS locks, it didn’t seem the case.&lt;/p&gt;
+
+&lt;p&gt;Melissa pointed me to a hint: there was one framebuffer being leaked when removing the driver.
+I discovered that it was the writeback framebuffer.
+It meant that the writeback job was being queued, but it wasn’t being signaled.
+So, the problem was inside the VKMS locking mechanism.&lt;/p&gt;
+
+&lt;p&gt;After tons of GDB and ftrace, I was able to find out that the composer was being set twice without any calls to the composer worker.
+I changed the internal locks a bit and I was able to run the test repeatedly for minutes!
+I sent the fix for review and now I’m just waiting for a Reviewed-by.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Patches&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230515134133.108780-1-mcanal@igalia.com/T/&quot;&gt;[PATCH] drm/vkms: Fix race-condition between the hrtimer and the atomic commit&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;While debugging, I found some things that could be improved in the VKMS writeback file.
+So, I decided to send a series with some minor improvements to the code.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230515135204.115393-1-mcanal@igalia.com/T/&quot;&gt;[PATCH 0/3] drm/vkms: Minor Improvements&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h1 id=&quot;improving-igt-tests&quot;&gt;Improving IGT tests&lt;/h1&gt;
+&lt;hr /&gt;
+
+&lt;p&gt;If you run all IGT KMS tests on the VKMS driver, you will see that some tests will fail.
+That’s not what we would expect: we would expect that all tests would pass or skip.
+The tests could fail due to errors in the VKMS driver or be wrong exceptions on the IGT side.
+So, on the final part of my Igalia CE, I inspected a couple of IGT failures and sent fixes to address the errors.&lt;/p&gt;
+
+&lt;h2 id=&quot;linux-kernel&quot;&gt;Linux Kernel&lt;/h2&gt;
+
+&lt;p&gt;This patch is a revival of a series I sent in January to fix the IGT test &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kms_addfb_basic@addfb25-bad-modifier&lt;/code&gt;.
+This test also failed in VC4, and I investigated the reason in January.
+I sent a patch to guarantee that the test would pass and after some feedback, I came down to a dead end.
+So, I left this patch aside for a while and decided to recapture it now.
+Now, with this patch being merged, we can guarantee that the test  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kms_addfb_basic@addfb25-bad-modifier&lt;/code&gt; is passing for multiple drivers.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Patches&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20230412142923.136707-1-mcanal@igalia.com/T/&quot;&gt;[PATCH] drm/gem: Check for valid formats&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;igt&quot;&gt;IGT&lt;/h2&gt;
+
+&lt;p&gt;On the IGT side, I sent a couple of improvements to the tests.
+The failure was usually just a scenario that the test didn’t consider.
+For example, the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kms_plane_scaling&lt;/code&gt; test was failing in VKMS, because it didn’t consider the case in which the driver did not have the rotation property.
+As VKMS didn’t use to have the rotation property, the tests were failing instead of skipping.
+Therefore, I just developed a path for drivers without the rotation property for the tests to skip.&lt;/p&gt;
+
+&lt;p&gt;I sent improvements to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kms_plane_scaling&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kms_flip&lt;/code&gt;, and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kms_plane&lt;/code&gt; tests, making the tests pass or skip on all cases for the VKMS.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Patches&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/patch/533643/?series=116907&amp;amp;rev=1&quot;&gt;[PATCH i-g-t] tests/kms_plane_scaling: negative tests can return -EINVAL or -ERANGE&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/patch/533645/?series=116907&amp;amp;rev=1&quot;&gt;[PATCH i-g-t] tests/kms_plane_scaling: fix variable misspelling&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/patch/533644/?series=116907&amp;amp;rev=1&quot;&gt;[PATCH i-g-t] tests/kms_plane_scaling: remove unused parameters&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/117250/&quot;&gt;[PATCH i-g-t] tests/kms_plane_scaling: Only set rotation if rotation != rotate-0&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/117246/&quot;&gt;[PATCH v2 i-g-t] tests/kms_flip: Check if is Intel device before doing all the setup&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/patch/533753/&quot;&gt;[PATCH i-g-t v2] tests/kms_plane: allow pixel-format tests to run on drivers without legacy LUT&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;In Review&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;vkms-ci-list&quot;&gt;VKMS CI List&lt;/h2&gt;
+
+&lt;p&gt;One important thing to VKMS is creating a baseline of generic KMS tests that should pass.
+This way, we can test new contributions against this baseline and avoid introducing regressions in the codebase.
+I sent a patch to IGT to create a testlist for the VKMS driver with all the KMS tests that must pass on the VKMS driver. This is great for maintenance, as we can run the testlist to ensure that the VKMS functionalities are preserved.&lt;/p&gt;
+
+&lt;p&gt;With new features being introduced in VKMS, it is important to keep the test list updated.
+So, I verified the test results and updated this test list during my time at the Igalia CE.
+I intend to keep this list updated as long as I can.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Series&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/112972/&quot;&gt;[PATCH i-g-t] tests/vkms: Create a testlist to the vkms DRM driver&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/series/116316/&quot;&gt;[PATCH i-g-t 0/3] tests/vkms: Update VKMS’s testlist&lt;/a&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h1 id=&quot;acknowledgment&quot;&gt;Acknowledgment&lt;/h1&gt;
+&lt;hr /&gt;
+&lt;p&gt;First, I would like to thank my great mentor &lt;a href=&quot;https://melissawen.github.io/&quot;&gt;Melissa Wen&lt;/a&gt;.
+Melissa and I are completing a year together as mentee and mentor and it has been an amazing journey.
+Since GSoC, Melissa has been helping me by answering every single question I have and providing me with great encouragement.
+I have a lot of admiration for her and I’m really grateful for having her as my mentor during the last year.&lt;/p&gt;
+
+&lt;p&gt;Also, I would like to thank &lt;a href=&quot;https://www.igalia.com/&quot;&gt;Igalia&lt;/a&gt; for giving me this opportunity to keep working in the DRI community and learning more about this fascinating topic.
+Thanks to all Igalians that helped through this journey!&lt;/p&gt;
+
+&lt;p&gt;Moreover, I would like to thank the DRI community for reviewing my patches and giving me constructive feedback.
+Especially, I would like to thank Asahi Lina, Daniel Vetter and the Rust for Linux folks for all the help with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rustgem&lt;/code&gt; driver.&lt;/p&gt;
+
+</description>
+                <pubDate>Mon, 22 May 2023 12:30:00 +0000</pubDate>
+                <link>https://mairacanal.github.io/may-update-finishing-my-second-igalia-ce/</link>
+                <guid isPermaLink="true">https://mairacanal.github.io/may-update-finishing-my-second-igalia-ce/</guid>
+            </item>
         
             <item>
                 <title>Cross-Compiling CTS for the Raspberry Pi 4</title>
@@ -2478,182 +2964,6 @@ code, and bad code practices will prove costly one day or another.&lt;/p&gt;
                 <pubDate>Tue, 19 Jul 2022 00:00:00 +0000</pubDate>
                 <link>https://mairacanal.github.io/from-selftests-to-KUnit/</link>
                 <guid isPermaLink="true">https://mairacanal.github.io/from-selftests-to-KUnit/</guid>
-            </item>
-        
-            <item>
-                <title>About Kernel Symbol Table, Compilation, and more</title>
-                
-                <description>&lt;p&gt;This week I was planning on talking about Device Mocking with KUnit, as I’m currently working on my first unit test for a physical device, the AMDGPU Radeon RX5700. I would introduce you to the Kernel Unit Testing Framework (KUnit), how it works, how to mock devices with it, and why it is so great to write tests.&lt;/p&gt;
-
-&lt;p&gt;But, my week was pretty more interesting due to a limitation on the KUnit Framework. This got me thinking about the Kernel Symbol Table and compilation for a while. So, I decided to write about it this week.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-problem&quot;&gt;The Problem&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;When starting the GSoC project, my fellow colleagues and I ran straight into a problem with the use of KUnit on the AMDGPU stack.&lt;/p&gt;
-
-&lt;p&gt;We would create a simple test, just like this one:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#include&lt;/span&gt; &lt;span class=&quot;cpf&quot;&gt;&amp;lt;kunit/test.h&amp;gt;&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;
-#include&lt;/span&gt; &lt;span class=&quot;cpf&quot;&gt;&quot;inc/bw_fixed.h&quot;&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;
-&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;abs_i64_test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kunit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_EQ&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0ULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;abs_i64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0LL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-
-	&lt;span class=&quot;cm&quot;&gt;/* Argument type limits */&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_EQ&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MAX_I64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;abs_i64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MAX_I64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_EQ&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint64_t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MAX_I64&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;abs_i64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MIN_I64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kunit_case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bw_fixed_test_cases&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_CASE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;abs_i64_test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
-	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kunit_suite&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bw_fixed_test_suite&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;dml_calcs_bw_fixed&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-	&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test_cases&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bw_fixed_test_cases&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;kunit_test_suite&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bw_fixed_test_suite&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Ok, pretty simple test: just checking the boundary values for a function that returns the absolute value of a 64-bit integer. Nothing could go wrong…&lt;/p&gt;
-
-&lt;p&gt;And, at first, running the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kunit-tool&lt;/code&gt; everything would go fine. But, if we tried to compile the test as a module, we would get a linking error:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Multiple definitions of &apos;init_module&apos;/&apos;cleanup_module&apos; at kunit_test_suites().
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;This looks like a simple error, but if we think further this is a matter of kernel symbols and linking. So, let’s hop on and understand the basics of kernel symbols and linking. Finally, I will tell the end of this KUnit tell.&lt;/p&gt;
-
-&lt;h2 id=&quot;the-stages-of-compilation&quot;&gt;The Stages of Compilation&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/images/compilation-stack.png&quot; alt=&quot;The Stages of Compilation&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;First, it is important to understand the stages of the compilation of a C program. If you’re a C-veteran, you can skip this section. But if you are starting in the C-programming world recently (or maybe just used to run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;make&lt;/code&gt; without thinking further), let’s understand a bit more about the compilation process for C programs - basically any compiled language.&lt;/p&gt;
-
-&lt;p&gt;The first stage of compilation is &lt;strong&gt;preprocessing.&lt;/strong&gt; The preprocessor expands the included files - a.k.a. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.h&lt;/code&gt;, expands the macros, and removes the comments. Basically, the preprocessor obeys to the directives, that is, the commands that begin with #.&lt;/p&gt;
-
-&lt;p&gt;The second stage of compilation is &lt;strong&gt;compiling.&lt;/strong&gt; The compiling stage takes the preprocessor’s output and produces either assembly code or an &lt;em&gt;object file&lt;/em&gt; as output. The object code contains the binary machine code that is generated from compiling the C source.&lt;/p&gt;
-
-&lt;p&gt;Then, we got to the &lt;strong&gt;linking&lt;/strong&gt; stage. Linking takes one or more object files and produces the product of the final compilation. This output can be a shared library or an executable.&lt;/p&gt;
-
-&lt;p&gt;For our problem, the linking stage is the interesting one. In this stage, the linker links all the object files by replacing the references to undefined symbols with the appropriate addresses. So, at this stage, we get the missing definitions or multiple definitions errors.&lt;/p&gt;
-
-&lt;p&gt;When &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ld&lt;/code&gt; (or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;lld&lt;/code&gt; for those at the clang community), tells us that there are missing definitions, it means that either the definitions don’t exist, or that the object files or libraries where they reside are not provided to the linker. For the multiple definition errors, the linker is telling us that the same symbol was defined in two different object files or libraries.&lt;/p&gt;
-
-&lt;p&gt;So, going back to our error, we now know that:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;The linker generates this error.&lt;/li&gt;
-  &lt;li&gt;We are defining the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;init_module()/cleanup_module()&lt;/code&gt; twice.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;But, if you check the code, there is no duplicate of either of those functions. 🤔&lt;/p&gt;
-
-&lt;p&gt;Ok, now, let’s take a look at the kernel symbol table.&lt;/p&gt;
-
-&lt;h2 id=&quot;kernel-symbols-table&quot;&gt;Kernel Symbols Table&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;So, we keep talking about symbols. But now, we need to understand which symbols are visible and available to our module and which aren’t.&lt;/p&gt;
-
-&lt;p&gt;We can think of the kernel symbols in three levels of visibility:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;strong&gt;static:&lt;/strong&gt; visible only inside their compilation unit.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;external:&lt;/strong&gt; potentially visible to any other code built into the kernel.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;exported:&lt;/strong&gt; visible and available to any loadable module.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;So, by quoting the book &lt;em&gt;Linux Kernel Development&lt;/em&gt; (3nd ed.), p. 348:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;When modules are loaded, they are dynamically linked into the kernel. As with userspace, dynamically linked binaries can call only into external functions explicitly &lt;em&gt;exported&lt;/em&gt; for use. In the kernel, this is handled via special directive called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;EXPORT_SYMBOL()&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;EXPORT_SYMBOL_GPL()&lt;/code&gt;.
-Export functions are available for use by modules. Functions not exported cannot be invoked from modules. The linking and invoking rules are much more stringent for modules than code in the core kernel image. Core code can call any nonstatic interface in the kernel because all core source files are linked into a single base image. Exported symbols, of course, must be nonstatic, too. The set of exported kernel symbols are known as the &lt;em&gt;exported kernel interfaces.&lt;/em&gt;&lt;/p&gt;
-
-&lt;/blockquote&gt;
-
-&lt;p&gt;So, at this point, you can already get this statement, as you already understand about linking ;)&lt;/p&gt;
-
-&lt;p&gt;The kernel symbol table can be pretty important in debugging and you can check the list of symbols in a module with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nm&lt;/code&gt; command. Moreover, sometimes you want more than just the symbols from a module, but the symbols from the whole kernel. In this case, you can check the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/proc/kallsyms&lt;/code&gt; file: it contains symbols of dynamically loaded modules as well as symbols from static code.&lt;/p&gt;
-
-&lt;p&gt;Also, during a kernel build, a file named &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Module.symvers&lt;/code&gt; will be generated. This file contains all exported symbols from the kernel and compiled modules. For each symbol, the corresponding CRC value, export type, and namespace are also stored.&lt;/p&gt;
-
-&lt;p&gt;Building an out-of-tree module is not trivial, and you can check the kbuild docs &lt;a href=&quot;https://docs.kernel.org/kbuild/modules.html&quot;&gt;here&lt;/a&gt;, to understand more about symbols, how to install modules, and more.&lt;/p&gt;
-
-&lt;p&gt;Now, you have all the pieces needed to crack this puzzle. But I only gave you separate pieces of this problem. It’s time to bring these pieces together.&lt;/p&gt;
-
-&lt;h2 id=&quot;how-to-solve-this-linking-problem&quot;&gt;How to solve this linking problem?&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Let’s go back to the linking error we got at the test:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Multiple definitions of &apos;init_module&apos;/&apos;cleanup_module&apos; at kunit_test_suites().
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;So, first, we need to understand how we are defining &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;init_module&lt;/code&gt; multiple times. The first definition is at &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kunit_test_suites()&lt;/code&gt;. So, when building a KUnit test as a module, KUnit creates brand new &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;module_init/exit_module&lt;/code&gt; functions.&lt;/p&gt;
-
-&lt;p&gt;But, think for a while with me… The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu&lt;/code&gt; module, linked with our test, already defines a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;module_init&lt;/code&gt; function for the graphics module.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;FYI: the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;module_init&lt;/code&gt; is the module entry point when the module is loaded.&lt;/p&gt;
-
-&lt;/blockquote&gt;
-
-&lt;p&gt;So, we have figured out the problem! We have one &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;init_module&lt;/code&gt; at &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kunit_test_suites()&lt;/code&gt;  and other &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;init_module&lt;/code&gt; at &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu&lt;/code&gt; entry point, which is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu_drv.c&lt;/code&gt;. And, as they are linked together, we have a linking problem!&lt;/p&gt;
-
-&lt;p&gt;And, how can we solve this problem?&lt;/p&gt;
-
-&lt;h3 id=&quot;solutions-inside-the-tests&quot;&gt;Solutions inside the tests&lt;/h3&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Adding &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;EXPORT_SYMBOL&lt;/code&gt; to all tested functions&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;Going back to the idea of the Kernel Symbol Table, we can load the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu&lt;/code&gt; module and expose all the tested functions to any loadable module by adding &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;EXPORT_SYMBOL&lt;/code&gt;. Then, we can compile the test module independently - that said, outside the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu&lt;/code&gt; module - and loaded separately.&lt;/p&gt;
-
-    &lt;p&gt;It feels like an easy fix, right? Not exactly! This would pollute the symbol namespace from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu&lt;/code&gt; module and also pollute the code. Polluting the code means more work to maintain and work with the code. So, this is not a good idea.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Incorporating the tests into the driver stack&lt;/strong&gt;&lt;/p&gt;
-
-    &lt;p&gt;Another idea is to call the tests inside the driver stack. So, inside the AMDGPU’s &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;init_module&lt;/code&gt; function, we can call the KUnit’s private suite execution function and run the tests when the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;amdgpu&lt;/code&gt; module is loaded.&lt;/p&gt;
-
-    &lt;p&gt;It is the strategy that some drivers, such as thunderbolt, were using. But, this introduces some incompatibilities with the KUnit tooling, as it makes it impossible to use the great &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kunit-tool&lt;/code&gt;  and also doesn’t scale pretty well. If I want to have multiple modules with tests for a single driver, it would require the use of many &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;#ifdef&lt;/code&gt; guards and the creation of awful init functions in multiple files.&lt;/p&gt;
-
-    &lt;p&gt;Creating a test should be simple: not a huge structure with preprocessor directives and multiple files.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h3 id=&quot;a-better-solution-changing-how-kunit-calls-modules&quot;&gt;A better solution: changing how KUnit calls modules&lt;/h3&gt;
-
-&lt;p&gt;The previous solutions were a workaround for the real problem: KUnit was stealing &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;module_init&lt;/code&gt; from other modules. For built-in tests,  the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kunit_test_suite()&lt;/code&gt; macro adds a list of suites in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.kunit_test_suites&lt;/code&gt; linker section. However, a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;module_init()&lt;/code&gt; function is used for kernel modules to run the test suites.&lt;/p&gt;
-
-&lt;p&gt;So, after some discussion on the KUnit Mailing List, Jeremy Kerr unified the module and non-module KUnit init formats. David Gow submitted a patch from him removing the KUnit-defined module inits, and instead parsing the KUnit tests from their own section in the module.&lt;/p&gt;
-
-&lt;p&gt;Now, the array of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;struct kunit_suite *&lt;/code&gt; will be placed in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.kunit_test_suites&lt;/code&gt; ELF section and the tests will run on the module load.&lt;/p&gt;
-
-&lt;p&gt;You can check the &lt;a href=&quot;https://lore.kernel.org/linux-kselftest/20220709032001.819487-1-davidgow@google.com/&quot;&gt;version 4&lt;/a&gt; of this patchset.&lt;/p&gt;
-
-&lt;p&gt;Having this structure will make our work on GSoC much easier, and much cleaner! Huge thanks to all KUnit folks working on this great framework!&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Getting this problem is not trivial! When it comes to compilation, linking, and, symbols, many CS students get pretty confused. In contrast, this is a pretty poetic part of computation: seeing these high-level symbols becoming simple assembly instructions and thinking about memory stacks.&lt;/p&gt;
-
-&lt;p&gt;If you are feeling a bit confused over this, I hugely recommend the Tanenbaum books and also &lt;em&gt;Linux Kernel Development&lt;/em&gt; by Robert Love. Although Tanenbaum doesn’t write specifically about compilation, the knowledge of Compute Architecture and Operational Systems is fundamental to understanding the idea of running binaries on a machine.&lt;/p&gt;
-</description>
-                <pubDate>Mon, 11 Jul 2022 00:00:00 +0000</pubDate>
-                <link>https://mairacanal.github.io/kernel-symbol-table-compilation-more/</link>
-                <guid isPermaLink="true">https://mairacanal.github.io/kernel-symbol-table-compilation-more/</guid>
             </item>
         
     </channel>

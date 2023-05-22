@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | May Update: Finishing my Second Igalia CE</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/may-update-finishing-my-second-igalia-ce/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/catppuccin-latte.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/catppuccin-frappe.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>May Update: Finishing my Second Igalia CE</h1>
+      
+      
+        <p>
+          Date: <time datetime="2023-05-22T12:30:00+00:00">22nd May 2023</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#igalia">#igalia</a>
+          
+            <a href="/notes#graphics">#graphics</a>
+          
+        </p>
+      
+    </header>
+
+    <p>After finishing up my first <a href="https://www.igalia.com/coding-experience/" class="external">Igalia Coding Experience</a> in January, I got the amazing opportunity to keep working in the DRI community by extending my Igalia CE to a second round.
+Huge thanks to <a href="https://www.igalia.com/" class="external">Igalia</a> for providing me with this opportunity!</p>
+
+<p>Another four months passed by and here I am completing another milestone with Igalia.
+Previously, in the last final reports, I described GSoC as “an experience to get a better understanding of what open source is” and the first round of the Igalia CE as “an opportunity for me to mature my knowledge of technical concepts”.
+My second round of the Igalia CE was a period for broadening my horizons.</p>
+
+<p>I had the opportunity to deepen my knowledge of a new programming language and learn more about Kernel Mode Setting (KMS).
+I took my time learning more about Vulkan and the Linux graphics stack.
+All of this new knowledge about the DRM infrastructure fascinated me and made me excited to keep developing.</p>
+
+<p>So, this is a summary report of my journey at my second Igalia CE.</p>
+
+<h1 id="wrapping-up">Wrapping Up</h1>
+<hr>
+
+<p>First, I took some time to wrap up the contributions of my previous Igalia CE.
+In my <a href="/january-update-finishing-my-igalia-ce/">January Update</a>, I described the journey to include IGT tests for V3D.
+But at the time, I hadn’t yet sent the final versions of the tests.
+Right when I started my second Igalia CE, I sent the final versions of the V3D tests, which were accepted and merged.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112363/" class="external">[PATCH i-g-t 0/6] V3D Job Submission Tests</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112805/" class="external">[PATCH i-g-t 0/3] V3D Mixed Job Submission Tests</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="rustgem">Rustgem</h1>
+<hr>
+
+<p>The first part of my Igalia CE was focused on rewriting the VGEM driver in Rust.
+VGEM (Virtual GEM Provider) is a minimal non-hardware-backed GEM (Graphics Execution Manager) service.
+It is used with non-native 3D hardware for buffer sharing between the X server and DRI.</p>
+
+<p>The goal of the project was to explore Rust in the DRM subsystem and have a working VGEM driver written in Rust.
+Rust is a blazingly fast and memory-efficient language with its powerful <strong>ownership model</strong>.
+It was really exciting to learn more about Rust and implement from the beginning a DRM driver.</p>
+
+<p>During the project, I wrote two blog posts describing the technical aspects of <code class="language-plaintext highlighter-rouge">rustgem</code> driver.
+If you are interested in this project, check them out!</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Date</th>
+      <th style="text-align: center">Blogpost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">28th February</td>
+      <td style="text-align: center"><a href="/rust-for-vgem/">Rust for VGEM</a></td>
+    </tr>
+    <tr>
+      <td style="text-align: center">22th March</td>
+      <td style="text-align: center"><a href="/adding-timeout-rustgem/">Adding a Timeout feature to Rustgem</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>By the end of the first half of the Igalia CE, I sent an RFC patch with the <code class="language-plaintext highlighter-rouge">rustgem</code> driver.
+Thanks to Asahi Lina, the Rust for Linux folks, and Daniel Vetter for all the feedback provided during the development of the driver.
+I still need to address some feedback and rebase the series on top of the new pin-init API, but I hope to see this driver upstream soon.
+You can check the driver’s current status in this <a href="https://github.com/mairacanal/linux/pull/11" class="external">PR</a>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230317121213.93991-1-mcanal@igalia.com/T/" class="external">[RFC PATCH 0/9] Rust version of the VGEM driver</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Apart from rewriting the VGEM driver, I also sent a couple of improvements to the C version of the VGEM driver and its IGT tests.
+I found a missing <code class="language-plaintext highlighter-rouge">mutex_destroy</code> on the code and also an unused struct.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Patches</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230202125517.427976-1-mcanal@igalia.com/T/" class="external">[PATCH] drm/vgem: add missing mutex_destroy</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230222160617.171429-1-mcanal@igalia.com/T/" class="external">[PATCH] drm/vgem: Drop struct drm_vgem_gem_object</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>On the IGT side, I added some new tests to the VGEM tests.
+I wanted to ensure that my driver returned the correct values for all possible error paths, so I wrote this IGT test.
+Initially, it was just for me, but I decided to submit it upstream.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/114912/" class="external">[PATCH v3 i-g-t 0/2] Add negative tests to VGEM</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="virtual-kernel-mode-setting-vkms">Virtual Kernel Mode Setting (VKMS)</h1>
+<hr>
+
+<p>Focusing on the VKMS was the major goal of the second part of my Igalia CE.
+<a href="https://melissawen.github.io/" class="external">Melissa Wen</a> is one of the maintainers of the VKMS, and she provided me with a fantastic opportunity to learn more about the VKMS.
+So far, I haven’t dealt with displays, and learning new concepts in the graphics stack was great.</p>
+
+<h2 id="rotating-planes">Rotating Planes</h2>
+
+<p>VKMS is a software-only KMS driver that is quite useful for testing and running X (or similar compositors) on headless machines.
+At the time, the driver didn’t have any support for optional plane properties, such as rotation and blend mode.
+Therefore, my goal was to implement the first plane property of the driver: rotation.
+I described the technicalities of this challenge in this <a href="/rotating-planes-vkms/">blog post</a>, but I can say that it was a nice challenge of this mentorship project.</p>
+
+<p>In the end, we have the first plane property implemented for the VKMS and it is already committed.
+Together with the VKMS part, I sent a series to the IGT mailing list with some improvements to the <code class="language-plaintext highlighter-rouge">kms_rotation_crc</code> tests.
+These improvements included adding new tests for rotation with offset and reflection and the isolation of some Intel-specific tests.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230418130525.128733-1-mcanal@igalia.com/T/" class="external">[PATCH v4 0/6] drm/vkms: introduce plane rotation property</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230508220030.434118-1-mcanal@igalia.com/T/" class="external">[PATCH 1/2] drm/vkms: Add kernel-doc to the function vkms_compose_row()</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/116025/" class="external">[PATCH i-g-t 0/4] kms_rotation_crc improvements and generalization</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="improvements">Improvements</h2>
+
+<p>As I was working with the rotation series, I discovered a couple of things that could be improved in the VKMS driver.
+Last year, Igor Torrente sent a series to VKMS that changed the composition work in the driver.
+Before his series, the plane composition was executed on top of the primary plane.
+Now, the plane composition is executed on top of the CRTC.</p>
+
+<p>Although his series was merged, some parts of the code still considered that the composition was executed on top of the primary plane, limiting the VKMS capabilities.
+So I sent a couple of patches to the mailing list, improving the handling of the primary plane and allowing full alpha blending on all planes.</p>
+
+<p>Moreover, I sent a series that added a module parameter to set a background color to the CRTC.
+This work raised an interesting discussion about the need for this property by the user space and whether this parameter should be a KMS property.</p>
+
+<p>Apart from introducing the rotation property to the VKMS driver, I also took my time to implement two other properties: alpha and blend mode.
+This series is still awaiting review, but it would be a nice addition to the VKMS, increasing its IGT test coverage rate.</p>
+
+<p>Finally, I found a bug in the RGB565 conversion.
+The RGB565 conversion to ARGB16161616 involves some fixed-point operations and, when running the <code class="language-plaintext highlighter-rouge">pixel-format</code> IGT test, I verified that the RGB565 test was failing.
+So, some of those fixed-point operations were returning erroneous values.
+I checked that the RGB coefficients weren’t being rounded when converted from fixed-point to integers.
+But, this should happen in order to provided the proper coefficient values.
+Therefore, the fix was: implement a new helper that rounds the fixed-point value when converting it to a integer.</p>
+
+<p>After performing all this work on the VKMS, I sent a patch adding myself as a VKMS maintainer, which was acked by Javier Martinez and Melissa Wen.
+So now, I’m working together with Melissa, <a href="https://siqueira.tech/" class="external">Rodrigo Siqueira</a> and all DRI community to improve and maintain the VKMS driver.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230324164226.256084-1-mcanal@igalia.com/T/" class="external">[PATCH v2 0/2] Update the handling of the primary plane</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230420232228.273340-1-mcanal@igalia.com/T/" class="external">[PATCH v2 1/2] drm/vkms: allow full alpha blending on all planes</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230410125435.128689-1-mcanal@igalia.com/T/" class="external">[PATCH v2] drm/vkms: add module parameter to set background color</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230428122751.24271-1-mcanal@igalia.com/T/" class="external">[PATCH] drm/vkms: Implement all blend mode properties</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230512104044.65034-1-mcanal@igalia.com/T/" class="external">[PATCH v3 1/2] drm: Add fixed-point helper to get rounded integer values</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="virtual-hardware">Virtual Hardware</h2>
+
+<p>A couple of years ago, Sumera Priyadarsini, an Outreachy intern, worked on a Virtual Hardware functionality for the VKMS.
+The idea was to add a Virtual Hardware or vblank-less mode as a kernel parameter to enable VKMS to emulate virtual devices.
+This means no vertical blanking events occur and page flips are completed arbitrarily when required for updating the frame.
+Unfortunately, she wasn’t able to wrap things up and this ended up never being merged into VKMS.</p>
+
+<p>Melissa suggested rebasing this series and now we can have the Virtual Hardware functionality working on the current VKMS.
+This was a great work by Sumera and my work here was just to adapt her changes to the new VKMS code.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230509150501.81875-1-mcanal@igalia.com/T/" class="external">[PATCH 0/2] drm/vkms: Enable Virtual Hardware support</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="bug-fixing">Bug Fixing!</h2>
+
+<p>Finally, I was in the last week of the project, just wrapping things up, when I decided to run the VKMS CI.
+I had recently committed the rotation series and I had run the CI before, but to my surprise, I got the following output:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>root@fedora igt-gpu-tools]# ./build/tests/kms_writeback
+IGT-Version: 1.27.1-gce51f539 <span class="o">(</span>x86_64<span class="o">)</span> <span class="o">(</span>Linux: 6.3.0-rc4-01641-gb8e392245105-dirty x86_64<span class="o">)</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_kms-WARNING: Output Writeback-1 could not be assigned to a pipe
+Starting subtest: writeback-pixel-formats
+Subtest writeback-pixel-formats: SUCCESS <span class="o">(</span>0.000s<span class="o">)</span>
+Starting subtest: writeback-invalid-parameters
+Subtest writeback-invalid-parameters: SUCCESS <span class="o">(</span>0.001s<span class="o">)</span>
+Starting subtest: writeback-fb-id
+Subtest writeback-fb-id: SUCCESS <span class="o">(</span>0.020s<span class="o">)</span>
+Starting subtest: writeback-check-output
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: Test assertion failure <span class="k">function </span>get_and_wait_out_fence, file ../tests/kms_writeback.c:288:
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: Failed assertion: ret <span class="o">==</span> 0
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: Last errno: 38, Function not implemented
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: sync_fence_wait failed: Timer expired
+Stack trace:
+  <span class="c">#0 ../lib/igt_core.c:1963 __igt_fail_assert()</span>
+  <span class="c">#1 [get_and_wait_out_fence+0x83]</span>
+  <span class="c">#2 ../tests/kms_writeback.c:337 writeback_sequence()</span>
+  <span class="c">#3 ../tests/kms_writeback.c:360 __igt_unique____real_main481()</span>
+  <span class="c">#4 ../tests/kms_writeback.c:481 main()</span>
+  <span class="c">#5 ../sysdeps/nptl/libc_start_call_main.h:74 __libc_start_call_main()</span>
+  <span class="c">#6 ../csu/libc-start.c:128 __libc_start_main@@GLIBC_2.34()</span>
+  <span class="c">#7 [_start+0x25]</span>
+Subtest writeback-check-output failed.
+<span class="k">****</span> DEBUG <span class="k">****</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: Test assertion failure <span class="k">function </span>get_and_wait_out_fence, file ../tests/kms_writeback.c:288:
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: Failed assertion: ret <span class="o">==</span> 0
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: Last errno: 38, Function not implemented
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> CRITICAL: sync_fence_wait failed: Timer expired
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO: Stack trace:
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#0 ../lib/igt_core.c:1963 __igt_fail_assert()</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#1 [get_and_wait_out_fence+0x83]</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#2 ../tests/kms_writeback.c:337 writeback_sequence()</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#3 ../tests/kms_writeback.c:360 __igt_unique____real_main481()</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#4 ../tests/kms_writeback.c:481 main()</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#5 ../sysdeps/nptl/libc_start_call_main.h:74 __libc_start_call_main()</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#6 ../csu/libc-start.c:128 __libc_start_main@@GLIBC_2.34()</span>
+<span class="o">(</span>kms_writeback:1590<span class="o">)</span> igt_core-INFO:   <span class="c">#7 [_start+0x25]</span>
+<span class="k">****</span>  END  <span class="k">****</span>
+Subtest writeback-check-output: FAIL <span class="o">(</span>1.047s<span class="o">)</span>
+</code></pre></div></div>
+
+<p>🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠 🫠</p>
+
+<p>Initially, I thought I had introduced the bug with my rotation series.
+Turns out, I just had made it more likely to happen.
+This bug has been hidden in VKMS for a while, but it happened just on rare occasions.
+Yeah, I’m talking about a race condition…
+The kind of bug that just stays hidden in your code for a long while.</p>
+
+<p>When I started to debug, I thought it was a performance issue.
+But then, I increased the timeout to 10 seconds and even then the job wouldn’t finish.
+So, I thought that it could be a deadlock.
+But after inspecting the DRM internal locks and the VKMS locks, it didn’t seem the case.</p>
+
+<p>Melissa pointed me to a hint: there was one framebuffer being leaked when removing the driver.
+I discovered that it was the writeback framebuffer.
+It meant that the writeback job was being queued, but it wasn’t being signaled.
+So, the problem was inside the VKMS locking mechanism.</p>
+
+<p>After tons of GDB and ftrace, I was able to find out that the composer was being set twice without any calls to the composer worker.
+I changed the internal locks a bit and I was able to run the test repeatedly for minutes!
+I sent the fix for review and now I’m just waiting for a Reviewed-by.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Patches</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230515134133.108780-1-mcanal@igalia.com/T/" class="external">[PATCH] drm/vkms: Fix race-condition between the hrtimer and the atomic commit</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>While debugging, I found some things that could be improved in the VKMS writeback file.
+So, I decided to send a series with some minor improvements to the code.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230515135204.115393-1-mcanal@igalia.com/T/" class="external">[PATCH 0/3] drm/vkms: Minor Improvements</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="improving-igt-tests">Improving IGT tests</h1>
+<hr>
+
+<p>If you run all IGT KMS tests on the VKMS driver, you will see that some tests will fail.
+That’s not what we would expect: we would expect that all tests would pass or skip.
+The tests could fail due to errors in the VKMS driver or be wrong exceptions on the IGT side.
+So, on the final part of my Igalia CE, I inspected a couple of IGT failures and sent fixes to address the errors.</p>
+
+<h2 id="linux-kernel">Linux Kernel</h2>
+
+<p>This patch is a revival of a series I sent in January to fix the IGT test <code class="language-plaintext highlighter-rouge">kms_addfb_basic@addfb25-bad-modifier</code>.
+This test also failed in VC4, and I investigated the reason in January.
+I sent a patch to guarantee that the test would pass and after some feedback, I came down to a dead end.
+So, I left this patch aside for a while and decided to recapture it now.
+Now, with this patch being merged, we can guarantee that the test  <code class="language-plaintext highlighter-rouge">kms_addfb_basic@addfb25-bad-modifier</code> is passing for multiple drivers.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Patches</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20230412142923.136707-1-mcanal@igalia.com/T/" class="external">[PATCH] drm/gem: Check for valid formats</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="igt">IGT</h2>
+
+<p>On the IGT side, I sent a couple of improvements to the tests.
+The failure was usually just a scenario that the test didn’t consider.
+For example, the <code class="language-plaintext highlighter-rouge">kms_plane_scaling</code> test was failing in VKMS, because it didn’t consider the case in which the driver did not have the rotation property.
+As VKMS didn’t use to have the rotation property, the tests were failing instead of skipping.
+Therefore, I just developed a path for drivers without the rotation property for the tests to skip.</p>
+
+<p>I sent improvements to the <code class="language-plaintext highlighter-rouge">kms_plane_scaling</code>, <code class="language-plaintext highlighter-rouge">kms_flip</code>, and <code class="language-plaintext highlighter-rouge">kms_plane</code> tests, making the tests pass or skip on all cases for the VKMS.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Patches</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/533643/?series=116907&amp;rev=1" class="external">[PATCH i-g-t] tests/kms_plane_scaling: negative tests can return -EINVAL or -ERANGE</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/533645/?series=116907&amp;rev=1" class="external">[PATCH i-g-t] tests/kms_plane_scaling: fix variable misspelling</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/533644/?series=116907&amp;rev=1" class="external">[PATCH i-g-t] tests/kms_plane_scaling: remove unused parameters</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/117250/" class="external">[PATCH i-g-t] tests/kms_plane_scaling: Only set rotation if rotation != rotate-0</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/117246/" class="external">[PATCH v2 i-g-t] tests/kms_flip: Check if is Intel device before doing all the setup</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/533753/" class="external">[PATCH i-g-t v2] tests/kms_plane: allow pixel-format tests to run on drivers without legacy LUT</a></td>
+      <td style="text-align: center">In Review</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="vkms-ci-list">VKMS CI List</h2>
+
+<p>One important thing to VKMS is creating a baseline of generic KMS tests that should pass.
+This way, we can test new contributions against this baseline and avoid introducing regressions in the codebase.
+I sent a patch to IGT to create a testlist for the VKMS driver with all the KMS tests that must pass on the VKMS driver. This is great for maintenance, as we can run the testlist to ensure that the VKMS functionalities are preserved.</p>
+
+<p>With new features being introduced in VKMS, it is important to keep the test list updated.
+So, I verified the test results and updated this test list during my time at the Igalia CE.
+I intend to keep this list updated as long as I can.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Series</th>
+      <th style="text-align: center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112972/" class="external">[PATCH i-g-t] tests/vkms: Create a testlist to the vkms DRM driver</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/116316/" class="external">[PATCH i-g-t 0/3] tests/vkms: Update VKMS’s testlist</a></td>
+      <td style="text-align: center"><strong>Accepted</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="acknowledgment">Acknowledgment</h1>
+<hr>
+<p>First, I would like to thank my great mentor <a href="https://melissawen.github.io/" class="external">Melissa Wen</a>.
+Melissa and I are completing a year together as mentee and mentor and it has been an amazing journey.
+Since GSoC, Melissa has been helping me by answering every single question I have and providing me with great encouragement.
+I have a lot of admiration for her and I’m really grateful for having her as my mentor during the last year.</p>
+
+<p>Also, I would like to thank <a href="https://www.igalia.com/" class="external">Igalia</a> for giving me this opportunity to keep working in the DRI community and learning more about this fascinating topic.
+Thanks to all Igalians that helped through this journey!</p>
+
+<p>Moreover, I would like to thank the DRI community for reviewing my patches and giving me constructive feedback.
+Especially, I would like to thank Asahi Lina, Daniel Vetter and the Rust for Linux folks for all the help with the <code class="language-plaintext highlighter-rouge">rustgem</code> driver.</p>
+
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/may-update-finishing-my-second-igalia-ce/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>
