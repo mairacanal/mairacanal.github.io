@@ -1,5 +1,5 @@
 name: "Maíra Canal"
-description: "Blogging about development"
+description: "Blogging about graphics development whenever I can"
 
 # URL settings
 domain: "mairacanal.github.io"
@@ -16,7 +16,7 @@ plugins:
   - jekyll-relative-links
 
 extlinks:
-  attributes: 
+  attributes:
     class: external
 
 relative_links:
