@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Maíra Canal</title>
-        <description>Blogging about development</description>
+        <description>Blogging about graphics development whenever I can</description>
         <link>https://mairacanal.github.io</link>
         <atom:link href="https://mairacanal.github.io/atom.xml" rel="self" type="application/rss+xml" />
         <lastBuildDate>Thu, 11 Jan 2024 13:30:00 +0000</lastBuildDate>
