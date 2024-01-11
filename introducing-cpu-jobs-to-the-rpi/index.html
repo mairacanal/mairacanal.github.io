@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Introducing CPU jobs to the Raspberry Pi</title>
+    <meta name="description" content="Blogging about development"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/introducing-cpu-jobs-to-the-rpi/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/catppuccin-latte.css" />
+<link rel="stylesheet" href="https://colors.m7.rs/catppuccin-frappe.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://colors.m7.rs/.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Introducing CPU jobs to the Raspberry Pi</h1>
+      
+      
+        <p>
+          Date: <time datetime="2024-01-11T13:30:00+00:00">11th January 2024</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#igalia">#igalia</a>
+          
+            <a href="/notes#graphics">#graphics</a>
+          
+            <a href="/notes#embedded">#embedded</a>
+          
+        </p>
+      
+    </header>
+
+    <p><a href="https://www.igalia.com" class="external">Igalia</a> is always working hard to improve 3D rendering
+drivers of the Broadcom VideoCore GPU, found in Raspberry Pi devices. One of our
+most recent efforts in this sense was the implementation of CPU jobs from the
+Vulkan driver to the V3D kernel driver.</p>
+
+<h2 id="what-are-cpu-jobs-and-why-do-we-need-them">What are CPU jobs and why do we need them?</h2>
+
+<p>In the V3DV driver, there are some Vulkan commands that cannot be performed by
+the GPU alone, so we implement those as CPU jobs on Mesa. A CPU job is a job
+that requires CPU intervention to be performed. For example, in the Broadcom
+VideoCore GPUs, we don’t have a way to calculate the timestamp. But we need the
+timestamp for Vulkan <a href="https://docs.vulkan.org/samples/latest/samples/api/timestamp_queries/README.html" class="external">timestamp
+queries</a>.
+Therefore, we need to calculate the timestamp on the CPU.</p>
+
+<p>A CPU job in userspace also implies CPU stalling. Sometimes, we need to hold
+part of the command submission flow in order to correctly synchronize their
+execution. This waiting period caused the CPU to stall, thereby preventing the
+continuous submission of jobs to the GPU. To mitigate this issue, we decided to
+move CPU job mechanisms from the V3DV driver to the V3D kernel driver.</p>
+
+<p>In the V3D kernel driver, we have different kinds of jobs: RENDER jobs, BIN
+jobs, CSD jobs, TFU jobs, and CLEAN CACHE jobs. For each of those jobs, we have
+a DRM scheduler instance that helps us to synchronize the jobs.</p>
+
+<blockquote>
+  <p>If you want to know more about the different kinds of V3D jobs, check out this
+<a href="https://mairacanal.github.io/november-update-exploring-v3d/" class="external">November Update: Exploring
+V3D</a> blogpost,
+where I explain more about all the V3D
+<a href="https://en.wikipedia.org/wiki/Ioctl" class="external">IOCTLs</a> and jobs.</p>
+</blockquote>
+
+<p>Jobs of the same kind are submitted, dispatched, and processed in the same order
+they are executed, using a standard first-in-first-out (FIFO) queue system. We
+can synchronize different jobs across different queues using DRM syncobjs. More
+about the V3D synchronization framework and user extensions can be learned in
+<a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" class="external">this two-part blog
+post</a> from Melissa
+Wen.</p>
+
+<blockquote>
+  <p>From the kernel documentation, a DRM syncobj (synchronisation objects) are
+containers for stuff that helps sync up GPU commands. They’re super handy
+because you can use them in your own programs, share them with other programs,
+and even use them across different DRM drivers. Mostly, they’re used for
+making Vulkan fences and semaphores work.</p>
+</blockquote>
+
+<p>By moving the CPU job from userspace to the kernel, we can make use of the DRM
+schedule queues and all the advantages it brings with it. For this, we created a
+new type of job in the V3D kernel driver, a CPU job, which also means creating a
+new DRM scheduler instance and a CPU job queue. Now, instead of stalling the
+submission thread waiting for the GPU to idle, we can use DRM syncobjs to
+synchronize both CPU and GPU jobs in a submission, providing more efficient
+usage of the GPU.</p>
+
+<h2 id="how-did-we-implement-the-cpu-jobs-in-the-kernel-driver">How did we implement the CPU jobs in the kernel driver?</h2>
+
+<p>After we decided to have a CPU job implementation in the kernel space, we could
+think about two possible implementations for this job: creating an IOCTL for
+each type of CPU job or using a user extension to provide a polymorphic behavior
+to a single CPU job IOCTL.</p>
+
+<p>We have different types of CPU jobs (indirect CSD jobs, timestamp query jobs,
+copy query results jobs…) and each of them has a common infrastructure
+of allocation and synchronization but performs different operations. Therefore,
+we decided to go with the option to use user extensions.</p>
+
+<p>On <a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" class="external">Melissa’s blogpost</a>, she digs
+deep into the implementation of generic IOCTL extensions in the V3D kernel
+driver. But, to put it simply, instead of expanding the data struct for each
+IOCTL every time we need to add a new feature, we define a user extension chain
+instead. As we add new optional interfaces to control the IOCTL, we define a new
+extension struct that can be linked to the IOCTL data only when required by the
+user.</p>
+
+<p>Therefore, we created a new IOCTL, <code class="language-plaintext highlighter-rouge">drm_v3d_submit_cpu</code>, which is used to submit
+any type of CPU job. This single IOCTL can be extended by a user extension,
+which allows us to reuse the common infrastructure - avoiding code
+repetition - and yet use the user extension ID to identify the type of job
+and depending on the type of job, perform a certain operation.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">drm_v3d_submit_cpu</span> <span class="p">{</span>
+        <span class="cm">/* Pointer to a u32 array of the BOs that are referenced by the job.
+         *
+         * For DRM_V3D_EXT_ID_CPU_INDIRECT_CSD, it must contain only one BO,
+         * that contains the workgroup counts.
+         *
+         * For DRM_V3D_EXT_ID_TIMESTAMP_QUERY, it must contain only one BO,
+         * that will contain the timestamp.
+         *
+         * For DRM_V3D_EXT_ID_CPU_RESET_TIMESTAMP_QUERY, it must contain only
+         * one BO, that contains the timestamp.
+         *
+         * For DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY, it must contain two
+         * BOs. The first is the BO where the timestamp queries will be written
+         * to. The second is the BO that contains the timestamp.
+         *
+         * For DRM_V3D_EXT_ID_CPU_RESET_PERFORMANCE_QUERY, it must contain no
+         * BOs.
+         *
+         * For DRM_V3D_EXT_ID_CPU_COPY_PERFORMANCE_QUERY, it must contain one
+         * BO, where the performance queries will be written.
+         */</span>
+        <span class="n">__u64</span> <span class="n">bo_handles</span><span class="p">;</span>
+
+        <span class="cm">/* Number of BO handles passed in (size is that times 4). */</span>
+        <span class="n">__u32</span> <span class="n">bo_handle_count</span><span class="p">;</span>
+
+        <span class="n">__u32</span> <span class="n">flags</span><span class="p">;</span>
+
+        <span class="cm">/* Pointer to an array of ioctl extensions*/</span>
+        <span class="n">__u64</span> <span class="n">extensions</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>Now, we can create a CPU job and submit it with a CPU job user extension.</p>
+
+<p>And which extensions are available?</p>
+
+<ol>
+  <li>
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=18b8413b25b7070fa2e55858a2c808e6909581d0" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_INDIRECT_CSD</code></a>:
+this CPU job allows us to submit an indirect CSD job. An indirect CSD job is a
+job that, when executed in the queue, will map an indirect buffer, read the
+dispatch parameters, and submit a regular dispatch. This CPU job is used in
+Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdDispatchIndirect()</code>.</li>
+  <li>
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=9ba0ff3e083f6a4a0b6698f06bfff74805fefa5f" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_TIMESTAMP_QUERY</code></a>:
+this CPU job calculates the query timestamp and updates the query availability
+by signaling a syncobj. This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdWriteTimestamp()</code>.</li>
+  <li>
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=34a101e64296c736b14ce27e647fcebd70cb7bf8" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_RESET_TIMESTAMP_QUERY</code></a>:
+this CPU job resets the timestamp queries based on the value offset of the first
+query. This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdResetQueryPool()</code> for timestamp queries.</li>
+  <li>
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=6745f3e44a20ac18e7e5a40a3c7f62225983d544" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY</code></a>:
+this CPU job copies the complete or partial result of a query to a buffer.
+This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdCopyQueryPoolResults()</code> for timestamp queries.</li>
+  <li>
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=bae7cb5d68001a8d4ceec5964dda74bb9aab7220" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_RESET_PERFORMANCE_QUERY</code></a>:
+this CPU job resets the performance queries by resetting the values of the
+perfmons. This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdResetQueryPool()</code> for performance queries.</li>
+  <li>
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=209e8d2695ee7a67a5b0487bbd1aa75e290d0f41" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_PERFORMANCE_QUERY</code></a>:
+similar to <code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY</code>, this CPU job copies the
+complete or partial result of a query to a buffer. This CPU job is used in Vulkan
+calls like <code class="language-plaintext highlighter-rouge">vkCmdCopyQueryPoolResults()</code> for performance queries.</li>
+</ol>
+
+<p>The CPU job IOCTL structure is similar to any other V3D job. We allocate the job
+struct, parse all the extensions, init the job, look up the BOs and lock its
+reservations, add the proper dependencies, and push the job to the DRM scheduler
+entity.</p>
+
+<p>When running a CPU job, we execute the following code:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="k">const</span> <span class="n">v3d_cpu_job_fn</span> <span class="n">cpu_job_function</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">[</span><span class="n">V3D_CPU_JOB_TYPE_INDIRECT_CSD</span><span class="p">]</span> <span class="o">=</span> <span class="n">v3d_rewrite_csd_job_wg_counts_from_indirect</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">V3D_CPU_JOB_TYPE_TIMESTAMP_QUERY</span><span class="p">]</span> <span class="o">=</span> <span class="n">v3d_timestamp_query</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">V3D_CPU_JOB_TYPE_RESET_TIMESTAMP_QUERY</span><span class="p">]</span> <span class="o">=</span> <span class="n">v3d_reset_timestamp_queries</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">V3D_CPU_JOB_TYPE_COPY_TIMESTAMP_QUERY</span><span class="p">]</span> <span class="o">=</span> <span class="n">v3d_copy_query_results</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">V3D_CPU_JOB_TYPE_RESET_PERFORMANCE_QUERY</span><span class="p">]</span> <span class="o">=</span> <span class="n">v3d_reset_performance_queries</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">V3D_CPU_JOB_TYPE_COPY_PERFORMANCE_QUERY</span><span class="p">]</span> <span class="o">=</span> <span class="n">v3d_copy_performance_query</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="k">struct</span> <span class="n">dma_fence</span> <span class="o">*</span>
+<span class="nf">v3d_cpu_job_run</span><span class="p">(</span><span class="k">struct</span> <span class="n">drm_sched_job</span> <span class="o">*</span><span class="n">sched_job</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">struct</span> <span class="n">v3d_cpu_job</span> <span class="o">*</span><span class="n">job</span> <span class="o">=</span> <span class="n">to_cpu_job</span><span class="p">(</span><span class="n">sched_job</span><span class="p">);</span>
+        <span class="k">struct</span> <span class="n">v3d_dev</span> <span class="o">*</span><span class="n">v3d</span> <span class="o">=</span> <span class="n">job</span><span class="o">-&gt;</span><span class="n">base</span><span class="p">.</span><span class="n">v3d</span><span class="p">;</span>
+
+        <span class="n">v3d</span><span class="o">-&gt;</span><span class="n">cpu_job</span> <span class="o">=</span> <span class="n">job</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">job</span><span class="o">-&gt;</span><span class="n">job_type</span> <span class="o">&gt;=</span> <span class="n">ARRAY_SIZE</span><span class="p">(</span><span class="n">cpu_job_function</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">DRM_DEBUG_DRIVER</span><span class="p">(</span><span class="s">"Unknown CPU job: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">job</span><span class="o">-&gt;</span><span class="n">job_type</span><span class="p">);</span>
+                <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">trace_v3d_cpu_job_begin</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v3d</span><span class="o">-&gt;</span><span class="n">drm</span><span class="p">,</span> <span class="n">job</span><span class="o">-&gt;</span><span class="n">job_type</span><span class="p">);</span>
+
+        <span class="n">cpu_job_function</span><span class="p">[</span><span class="n">job</span><span class="o">-&gt;</span><span class="n">job_type</span><span class="p">](</span><span class="n">job</span><span class="p">);</span>
+
+        <span class="n">trace_v3d_cpu_job_end</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v3d</span><span class="o">-&gt;</span><span class="n">drm</span><span class="p">,</span> <span class="n">job</span><span class="o">-&gt;</span><span class="n">job_type</span><span class="p">);</span>
+
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The interesting thing is that each CPU job type executes a completely different operation.</p>
+
+<p>The complete kernel implementation has already landed in drm-misc-next and can
+be seen right
+<a href="https://lore.kernel.org/dri-devel/20231130164420.932823-2-mcanal@igalia.com/T/" class="external">here</a>.</p>
+
+<h2 id="what-did-we-change-in-mesa-v3dv-to-use-the-new-kernel-v3d-cpu-job">What did we change in Mesa-V3DV to use the new kernel-V3D CPU job?</h2>
+
+<p>After landing the kernel implementation, I needed to accommodate the new CPU job
+approach in the userspace.</p>
+
+<p>A fundamental rule is not to cause regressions, i.e., to keep backwards
+userspace compatibility with old versions of the Linux kernel. This means we
+cannot break new versions of Mesa running in old kernels. Therefore, we needed
+to create two paths: one preserving the old way to perform CPU jobs and the
+other using the kernel to perform CPU jobs.</p>
+
+<p>So, for example, the indirect CSD job used to add two different jobs to the
+queue: a CPU job and a CSD job. Now, if we have the CPU job capability in the
+kernel, we only add a CPU job and the CSD job is dispatched from within the
+kernel.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">-   list_addtail(&amp;csd_job-&gt;list_link, &amp;cmd_buffer-&gt;jobs);
+</span><span class="gi">+
++   /* If we have a CPU queue we submit the CPU job directly to the
++    * queue and the CSD job will be dispatched from within the kernel
++    * queue, otherwise we will have to dispatch the CSD job manually
++    * right after the CPU job by adding it to the list of jobs in the
++    * command buffer.
++    */
++   if (!cmd_buffer-&gt;device-&gt;pdevice-&gt;caps.cpu_queue)
++      list_addtail(&amp;csd_job-&gt;list_link, &amp;cmd_buffer-&gt;jobs);
+</span></code></pre></div></div>
+
+<p>Furthermore, now we can use syncobjs to sync the CPU jobs. For example, in the
+timestamp query CPU job, we used to stall the submission thread and wait for
+completion of all work queued before the timestamp query. Now, we can just add a
+barrier to the CPU job and it will be properly synchronized by the syncobjs
+without stalling the submission thread.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="cm">/* The CPU job should be serialized so it only executes after all previously
+    * submitted work has completed
+    */</span>
+   <span class="n">job</span><span class="o">-&gt;</span><span class="n">serialize</span> <span class="o">=</span> <span class="n">V3DV_BARRIER_ALL</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>We were able to test the implementation using multiple CTS tests, such as
+<code class="language-plaintext highlighter-rouge">dEQP-VK.compute.pipeline.indirect_dispatch.*</code>,
+<code class="language-plaintext highlighter-rouge">dEQP-VK.pipeline.monolithic.timestamp.*</code>, <code class="language-plaintext highlighter-rouge">dEQP-VK.synchronization.*</code>,
+<code class="language-plaintext highlighter-rouge">dEQP-VK.query_pool.*</code> and <code class="language-plaintext highlighter-rouge">dEQP-VK.multiview.*</code>.</p>
+
+<p>The userspace implementation has already landed in Mesa and the full
+implementation can be checked in this
+<a href="https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/26448" class="external">MR</a>.</p>
+
+<hr>
+
+<p>More about the on-going challenges in the Raspberry Pi driver stack can be
+checked during this <a href="https://www.youtube.com/watch?v=Gk49xj4jds4" class="external">XDC 2023 talk</a>
+presented by Iago Toral, Juan Suárez and myself. During this talk, Iago
+mentioned the CPU job work that we have been doing.</p>
+
+<p>Also I cannot finish this post without thanking <a href="https://melissawen.github.io/" class="external">Melissa
+Wen</a> and <a href="https://blogs.igalia.com/itoral/author/itoral/" class="external">Iago
+Toral</a> for all the help while
+developing the CPU jobs for the V3D kernel driver.</p>
+
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>;
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>D902 5017 00AF C8B3 A4F6 7C20</span> B02E E8FD 7678 1ED5
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
+    <a href="https://matrix.to/#/@mairacanal:matrix.org" class="external">Matrix</a>;
+  </p>
+
+  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/introducing-cpu-jobs-to-the-rpi/" class="external">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

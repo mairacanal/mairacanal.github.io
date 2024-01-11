@@ -5,7 +5,267 @@
         <description>Blogging about development</description>
         <link>https://mairacanal.github.io</link>
         <atom:link href="https://mairacanal.github.io/atom.xml" rel="self" type="application/rss+xml" />
-        <lastBuildDate>Mon, 22 May 2023 12:30:00 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 11 Jan 2024 13:30:00 +0000</lastBuildDate>
+        
+            <item>
+                <title>Introducing CPU jobs to the Raspberry Pi</title>
+                
+                <description>&lt;p&gt;&lt;a href=&quot;https://www.igalia.com&quot;&gt;Igalia&lt;/a&gt; is always working hard to improve 3D rendering
+drivers of the Broadcom VideoCore GPU, found in Raspberry Pi devices. One of our
+most recent efforts in this sense was the implementation of CPU jobs from the
+Vulkan driver to the V3D kernel driver.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-are-cpu-jobs-and-why-do-we-need-them&quot;&gt;What are CPU jobs and why do we need them?&lt;/h2&gt;
+
+&lt;p&gt;In the V3DV driver, there are some Vulkan commands that cannot be performed by
+the GPU alone, so we implement those as CPU jobs on Mesa. A CPU job is a job
+that requires CPU intervention to be performed. For example, in the Broadcom
+VideoCore GPUs, we don’t have a way to calculate the timestamp. But we need the
+timestamp for Vulkan &lt;a href=&quot;https://docs.vulkan.org/samples/latest/samples/api/timestamp_queries/README.html&quot;&gt;timestamp
+queries&lt;/a&gt;.
+Therefore, we need to calculate the timestamp on the CPU.&lt;/p&gt;
+
+&lt;p&gt;A CPU job in userspace also implies CPU stalling. Sometimes, we need to hold
+part of the command submission flow in order to correctly synchronize their
+execution. This waiting period caused the CPU to stall, thereby preventing the
+continuous submission of jobs to the GPU. To mitigate this issue, we decided to
+move CPU job mechanisms from the V3DV driver to the V3D kernel driver.&lt;/p&gt;
+
+&lt;p&gt;In the V3D kernel driver, we have different kinds of jobs: RENDER jobs, BIN
+jobs, CSD jobs, TFU jobs, and CLEAN CACHE jobs. For each of those jobs, we have
+a DRM scheduler instance that helps us to synchronize the jobs.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you want to know more about the different kinds of V3D jobs, check out this
+&lt;a href=&quot;https://mairacanal.github.io/november-update-exploring-v3d/&quot;&gt;November Update: Exploring
+V3D&lt;/a&gt; blogpost,
+where I explain more about all the V3D
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Ioctl&quot;&gt;IOCTLs&lt;/a&gt; and jobs.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Jobs of the same kind are submitted, dispatched, and processed in the same order
+they are executed, using a standard first-in-first-out (FIFO) queue system. We
+can synchronize different jobs across different queues using DRM syncobjs. More
+about the V3D synchronization framework and user extensions can be learned in
+&lt;a href=&quot;https://melissawen.github.io/blog/2022/05/10/multisync-p1&quot;&gt;this two-part blog
+post&lt;/a&gt; from Melissa
+Wen.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;From the kernel documentation, a DRM syncobj (synchronisation objects) are
+containers for stuff that helps sync up GPU commands. They’re super handy
+because you can use them in your own programs, share them with other programs,
+and even use them across different DRM drivers. Mostly, they’re used for
+making Vulkan fences and semaphores work.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;By moving the CPU job from userspace to the kernel, we can make use of the DRM
+schedule queues and all the advantages it brings with it. For this, we created a
+new type of job in the V3D kernel driver, a CPU job, which also means creating a
+new DRM scheduler instance and a CPU job queue. Now, instead of stalling the
+submission thread waiting for the GPU to idle, we can use DRM syncobjs to
+synchronize both CPU and GPU jobs in a submission, providing more efficient
+usage of the GPU.&lt;/p&gt;
+
+&lt;h2 id=&quot;how-did-we-implement-the-cpu-jobs-in-the-kernel-driver&quot;&gt;How did we implement the CPU jobs in the kernel driver?&lt;/h2&gt;
+
+&lt;p&gt;After we decided to have a CPU job implementation in the kernel space, we could
+think about two possible implementations for this job: creating an IOCTL for
+each type of CPU job or using a user extension to provide a polymorphic behavior
+to a single CPU job IOCTL.&lt;/p&gt;
+
+&lt;p&gt;We have different types of CPU jobs (indirect CSD jobs, timestamp query jobs,
+copy query results jobs…) and each of them has a common infrastructure
+of allocation and synchronization but performs different operations. Therefore,
+we decided to go with the option to use user extensions.&lt;/p&gt;
+
+&lt;p&gt;On &lt;a href=&quot;https://melissawen.github.io/blog/2022/05/10/multisync-p1&quot;&gt;Melissa’s blogpost&lt;/a&gt;, she digs
+deep into the implementation of generic IOCTL extensions in the V3D kernel
+driver. But, to put it simply, instead of expanding the data struct for each
+IOCTL every time we need to add a new feature, we define a user extension chain
+instead. As we add new optional interfaces to control the IOCTL, we define a new
+extension struct that can be linked to the IOCTL data only when required by the
+user.&lt;/p&gt;
+
+&lt;p&gt;Therefore, we created a new IOCTL, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_v3d_submit_cpu&lt;/code&gt;, which is used to submit
+any type of CPU job. This single IOCTL can be extended by a user extension,
+which allows us to reuse the common infrastructure - avoiding code
+repetition - and yet use the user extension ID to identify the type of job
+and depending on the type of job, perform a certain operation.&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;drm_v3d_submit_cpu&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;cm&quot;&gt;/* Pointer to a u32 array of the BOs that are referenced by the job.
+         *
+         * For DRM_V3D_EXT_ID_CPU_INDIRECT_CSD, it must contain only one BO,
+         * that contains the workgroup counts.
+         *
+         * For DRM_V3D_EXT_ID_TIMESTAMP_QUERY, it must contain only one BO,
+         * that will contain the timestamp.
+         *
+         * For DRM_V3D_EXT_ID_CPU_RESET_TIMESTAMP_QUERY, it must contain only
+         * one BO, that contains the timestamp.
+         *
+         * For DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY, it must contain two
+         * BOs. The first is the BO where the timestamp queries will be written
+         * to. The second is the BO that contains the timestamp.
+         *
+         * For DRM_V3D_EXT_ID_CPU_RESET_PERFORMANCE_QUERY, it must contain no
+         * BOs.
+         *
+         * For DRM_V3D_EXT_ID_CPU_COPY_PERFORMANCE_QUERY, it must contain one
+         * BO, where the performance queries will be written.
+         */&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;__u64&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bo_handles&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+        &lt;span class=&quot;cm&quot;&gt;/* Number of BO handles passed in (size is that times 4). */&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;__u32&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bo_handle_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;__u32&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+        &lt;span class=&quot;cm&quot;&gt;/* Pointer to an array of ioctl extensions*/&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;__u64&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;extensions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now, we can create a CPU job and submit it with a CPU job user extension.&lt;/p&gt;
+
+&lt;p&gt;And which extensions are available?&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cgit.freedesktop.org/drm/drm-misc/commit/?id=18b8413b25b7070fa2e55858a2c808e6909581d0&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DRM_V3D_EXT_ID_CPU_INDIRECT_CSD&lt;/code&gt;&lt;/a&gt;:
+this CPU job allows us to submit an indirect CSD job. An indirect CSD job is a
+job that, when executed in the queue, will map an indirect buffer, read the
+dispatch parameters, and submit a regular dispatch. This CPU job is used in
+Vulkan calls like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vkCmdDispatchIndirect()&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cgit.freedesktop.org/drm/drm-misc/commit/?id=9ba0ff3e083f6a4a0b6698f06bfff74805fefa5f&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DRM_V3D_EXT_ID_CPU_TIMESTAMP_QUERY&lt;/code&gt;&lt;/a&gt;:
+this CPU job calculates the query timestamp and updates the query availability
+by signaling a syncobj. This CPU job is used in Vulkan calls like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vkCmdWriteTimestamp()&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cgit.freedesktop.org/drm/drm-misc/commit/?id=34a101e64296c736b14ce27e647fcebd70cb7bf8&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DRM_V3D_EXT_ID_CPU_RESET_TIMESTAMP_QUERY&lt;/code&gt;&lt;/a&gt;:
+this CPU job resets the timestamp queries based on the value offset of the first
+query. This CPU job is used in Vulkan calls like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vkCmdResetQueryPool()&lt;/code&gt; for timestamp queries.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cgit.freedesktop.org/drm/drm-misc/commit/?id=6745f3e44a20ac18e7e5a40a3c7f62225983d544&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY&lt;/code&gt;&lt;/a&gt;:
+this CPU job copies the complete or partial result of a query to a buffer.
+This CPU job is used in Vulkan calls like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vkCmdCopyQueryPoolResults()&lt;/code&gt; for timestamp queries.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cgit.freedesktop.org/drm/drm-misc/commit/?id=bae7cb5d68001a8d4ceec5964dda74bb9aab7220&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DRM_V3D_EXT_ID_CPU_RESET_PERFORMANCE_QUERY&lt;/code&gt;&lt;/a&gt;:
+this CPU job resets the performance queries by resetting the values of the
+perfmons. This CPU job is used in Vulkan calls like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vkCmdResetQueryPool()&lt;/code&gt; for performance queries.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://cgit.freedesktop.org/drm/drm-misc/commit/?id=209e8d2695ee7a67a5b0487bbd1aa75e290d0f41&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DRM_V3D_EXT_ID_CPU_COPY_PERFORMANCE_QUERY&lt;/code&gt;&lt;/a&gt;:
+similar to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY&lt;/code&gt;, this CPU job copies the
+complete or partial result of a query to a buffer. This CPU job is used in Vulkan
+calls like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vkCmdCopyQueryPoolResults()&lt;/code&gt; for performance queries.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The CPU job IOCTL structure is similar to any other V3D job. We allocate the job
+struct, parse all the extensions, init the job, look up the BOs and lock its
+reservations, add the proper dependencies, and push the job to the DRM scheduler
+entity.&lt;/p&gt;
+
+&lt;p&gt;When running a CPU job, we execute the following code:&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_cpu_job_fn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cpu_job_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;V3D_CPU_JOB_TYPE_INDIRECT_CSD&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_rewrite_csd_job_wg_counts_from_indirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;V3D_CPU_JOB_TYPE_TIMESTAMP_QUERY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_timestamp_query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;V3D_CPU_JOB_TYPE_RESET_TIMESTAMP_QUERY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_reset_timestamp_queries&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;V3D_CPU_JOB_TYPE_COPY_TIMESTAMP_QUERY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_copy_query_results&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;V3D_CPU_JOB_TYPE_RESET_PERFORMANCE_QUERY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_reset_performance_queries&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;V3D_CPU_JOB_TYPE_COPY_PERFORMANCE_QUERY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_copy_performance_query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dma_fence&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;v3d_cpu_job_run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;drm_sched_job&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sched_job&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_cpu_job&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;to_cpu_job&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sched_job&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v3d_dev&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v3d&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v3d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;v3d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cpu_job&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job_type&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ARRAY_SIZE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cpu_job_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;DRM_DEBUG_DRIVER&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Unknown CPU job: %d&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;trace_v3d_cpu_job_begin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v3d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;drm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;cpu_job_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;](&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;trace_v3d_cpu_job_end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v3d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;drm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;job_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The interesting thing is that each CPU job type executes a completely different operation.&lt;/p&gt;
+
+&lt;p&gt;The complete kernel implementation has already landed in drm-misc-next and can
+be seen right
+&lt;a href=&quot;https://lore.kernel.org/dri-devel/20231130164420.932823-2-mcanal@igalia.com/T/&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-did-we-change-in-mesa-v3dv-to-use-the-new-kernel-v3d-cpu-job&quot;&gt;What did we change in Mesa-V3DV to use the new kernel-V3D CPU job?&lt;/h2&gt;
+
+&lt;p&gt;After landing the kernel implementation, I needed to accommodate the new CPU job
+approach in the userspace.&lt;/p&gt;
+
+&lt;p&gt;A fundamental rule is not to cause regressions, i.e., to keep backwards
+userspace compatibility with old versions of the Linux kernel. This means we
+cannot break new versions of Mesa running in old kernels. Therefore, we needed
+to create two paths: one preserving the old way to perform CPU jobs and the
+other using the kernel to perform CPU jobs.&lt;/p&gt;
+
+&lt;p&gt;So, for example, the indirect CSD job used to add two different jobs to the
+queue: a CPU job and a CSD job. Now, if we have the CPU job capability in the
+kernel, we only add a CPU job and the CSD job is dispatched from within the
+kernel.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;-   list_addtail(&amp;amp;csd_job-&amp;gt;list_link, &amp;amp;cmd_buffer-&amp;gt;jobs);
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+
++   /* If we have a CPU queue we submit the CPU job directly to the
++    * queue and the CSD job will be dispatched from within the kernel
++    * queue, otherwise we will have to dispatch the CSD job manually
++    * right after the CPU job by adding it to the list of jobs in the
++    * command buffer.
++    */
++   if (!cmd_buffer-&amp;gt;device-&amp;gt;pdevice-&amp;gt;caps.cpu_queue)
++      list_addtail(&amp;amp;csd_job-&amp;gt;list_link, &amp;amp;cmd_buffer-&amp;gt;jobs);
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Furthermore, now we can use syncobjs to sync the CPU jobs. For example, in the
+timestamp query CPU job, we used to stall the submission thread and wait for
+completion of all work queued before the timestamp query. Now, we can just add a
+barrier to the CPU job and it will be properly synchronized by the syncobjs
+without stalling the submission thread.&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;   &lt;span class=&quot;cm&quot;&gt;/* The CPU job should be serialized so it only executes after all previously
+    * submitted work has completed
+    */&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;job&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;serialize&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;V3DV_BARRIER_ALL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We were able to test the implementation using multiple CTS tests, such as
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dEQP-VK.compute.pipeline.indirect_dispatch.*&lt;/code&gt;,
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dEQP-VK.pipeline.monolithic.timestamp.*&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dEQP-VK.synchronization.*&lt;/code&gt;,
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dEQP-VK.query_pool.*&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dEQP-VK.multiview.*&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The userspace implementation has already landed in Mesa and the full
+implementation can be checked in this
+&lt;a href=&quot;https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/26448&quot;&gt;MR&lt;/a&gt;.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;More about the on-going challenges in the Raspberry Pi driver stack can be
+checked during this &lt;a href=&quot;https://www.youtube.com/watch?v=Gk49xj4jds4&quot;&gt;XDC 2023 talk&lt;/a&gt;
+presented by Iago Toral, Juan Suárez and myself. During this talk, Iago
+mentioned the CPU job work that we have been doing.&lt;/p&gt;
+
+&lt;p&gt;Also I cannot finish this post without thanking &lt;a href=&quot;https://melissawen.github.io/&quot;&gt;Melissa
+Wen&lt;/a&gt; and &lt;a href=&quot;https://blogs.igalia.com/itoral/author/itoral/&quot;&gt;Iago
+Toral&lt;/a&gt; for all the help while
+developing the CPU jobs for the V3D kernel driver.&lt;/p&gt;
+
+</description>
+                <pubDate>Thu, 11 Jan 2024 13:30:00 +0000</pubDate>
+                <link>https://mairacanal.github.io/introducing-cpu-jobs-to-the-rpi/</link>
+                <guid isPermaLink="true">https://mairacanal.github.io/introducing-cpu-jobs-to-the-rpi/</guid>
+            </item>
         
             <item>
                 <title>May Update: Finishing my Second Igalia CE</title>
@@ -2782,188 +3042,6 @@ code, and bad code practices will prove costly one day or another.&lt;/p&gt;
                 <pubDate>Wed, 10 Aug 2022 00:00:00 +0000</pubDate>
                 <link>https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/</link>
                 <guid isPermaLink="true">https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/</guid>
-            </item>
-        
-            <item>
-                <title>From Selftests to KUnit</title>
-                
-                <description>&lt;p&gt;Last week, the &lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t&quot;&gt;series&lt;/a&gt; with DRM Kernel Selftests conversion to KUnit tests was merged into &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm-misc-next&lt;/code&gt; and will probably be on the mainline on 5.20.&lt;/p&gt;
-
-&lt;p&gt;This series was developed during an &lt;a href=&quot;https://lkcamp.dev/&quot;&gt;LKCAMP&lt;/a&gt; hackathon in October 2021 and is the combined effort of seven Linux Kernel beginners. In this hackathon, we learned about the KUnit Framework and also learned a bit about DRM.&lt;/p&gt;
-
-&lt;p&gt;The series took quite a while to come out, as it was just a side-project to most of us, but, in June, I finally prepared the patches and transformed them into a mergeable series.&lt;/p&gt;
-
-&lt;p&gt;So, let’s understand the differences between kselftests and KUnit tests and learn some about the KUnit framework.&lt;/p&gt;
-
-&lt;h2 id=&quot;testing-testing-testing&quot;&gt;Testing… Testing… Testing…&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Tests are not all the same. We create different kinds of tests for different purposes. So, let’s clarify some kinds of tests that will be quoted in this blogpost:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;&lt;strong&gt;Unit Testing:&lt;/strong&gt; tests individual units or components with the purpose to validate each unit of the software code and check whether they are performing as expected. A unit test should be the finest granularity of testing and as such should allow all possible code paths to be tested in the code under test.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Functional Testing:&lt;/strong&gt; validates the software system against functional requirements. So, basically, the system is tested against the function requirement/specification.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Regression Testing:&lt;/strong&gt; tests that ensure that a code change does not affect the functionality of the existing software product.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&quot;what-is-kselftest&quot;&gt;What is Kselftest?&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.kernel.org/dev-tools/kselftest.html&quot;&gt;Linux Kernel Selftests (kselftest)&lt;/a&gt; is a set of features functional and regression tests developed to avoid regressions on the Linux Kernel. The idea is that the developer will find a regression, fix it, and then write a test so that the Kernel won’t have this regression again.&lt;/p&gt;
-
-&lt;p&gt;The kselftests use shell scripts and C programs to load the tests into the kernel and have support for hardware-dependent tests. It doesn’t support workload or application tests, as its idea is primarily to increase the breadth and depth test coverage on the Kernel.&lt;/p&gt;
-
-&lt;p&gt;Although not designed for it, unit tests can also be developed with kselftests. But noticed that it is not a Unit Test Framework, such as JUnit, Google Test, or PyTest.&lt;/p&gt;
-
-&lt;p&gt;kselftest has C interfaces for reporting test results using the Test Anything Protocol (TAP) and a test harness for running tests.&lt;/p&gt;
-
-&lt;h2 id=&quot;what-is-kunit&quot;&gt;What is KUnit?&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.kernel.org/dev-tools/kunit/index.html&quot;&gt;KUnit (Kernel Unit Testing Framework)&lt;/a&gt; is the Unit Testing Framework for the Linux Kernel. KUnit makes it possible to run test suites on kernel boot or load the tests as a module. It reports all test case results through a TAP (Test Anything Protocol) in the kernel log.&lt;/p&gt;
-
-&lt;p&gt;KUnit follows the white-box testing approach, which allows testers to inspect and verify the inner workings of a software system. So, it can test any kernel component and is not restricted to userspace.&lt;/p&gt;
-
-&lt;p&gt;KUnit doesn’t require installing the kernel on a test machine or in a VM. It addresses the problem of being able to run tests without needing a virtual machine or actual hardware with User Mode Linux.&lt;/p&gt;
-
-&lt;p&gt;KUnit provides facilities for defining unit test cases, grouping related test cases into test suites, providing common infrastructure for running tests, and much more.&lt;/p&gt;
-
-&lt;h2 id=&quot;how-to-choose-a-framework&quot;&gt;How to choose a framework?&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Each one of the frameworks has its place and importance, as both kinds of tests are important to improve Kernel’s reliability and robustness.&lt;/p&gt;
-
-&lt;p&gt;The main difference between kselftest and KUnit is that &lt;strong&gt;KUnit is a unit testing framework&lt;/strong&gt; and &lt;strong&gt;kselftest is not&lt;/strong&gt;. kselftest requires installing the kernel on a test machine or in a VM and require tests to be written in userspace and run on the kernel under test. On the other side, KUnit does not.&lt;/p&gt;
-
-&lt;p&gt;So, when it comes to testing a single unit of code in isolation, you’ll definitely go with KUnit. Otherwise, you’ll have to check the kselftests or autotests frameworks.&lt;/p&gt;
-
-&lt;h2 id=&quot;why-drm-selftests-were-plausible-for-a-conversion&quot;&gt;Why DRM selftests were plausible for a conversion?&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;First, I must point out that the DRM selftests are not kselftests. They work very similarly, but the DRM subsystem developed a unique structure for running their unit tests, which was available on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_selftests.h&lt;/code&gt;. For a general idea, they had simple &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FAIL_ON(expression)&lt;/code&gt; assertions, indicating that the test would fail if the expression was true, and each test was a module initialized by &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;run_selftests&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;So, let’s check a DRM selftest function and analyze it to check if it’s plausible for conversion. Take this function from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drivers/gpu/drm/selftests/drm_cmdline_selftests.h&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;drm_cmdline_test_force_D_only_not_digital&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ignored&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;drm_cmdline_mode&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;drm_mode_parse_command_line_for_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;D&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;no_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;refresh_specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bpp_specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cvt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;interlace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;margins&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;FAIL_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;force&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DRM_FORCE_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-	&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;This test function is testing a single function &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_mode_parse_command_line_for_connector&lt;/code&gt; and using test assertion to check if it behaves as expected. Can we agree that this is testing a single unit of code in isolation? So, this is a unit test!&lt;/p&gt;
-
-&lt;p&gt;If you look through the other files, you are going to find out that they are very similar to this function. So, they are all unit tests.&lt;/p&gt;
-
-&lt;p&gt;As they are unit tests, it is more suitable to use a Unit Test Framework, such as KUnit, on these tests. Moreover, converting these tests to KUnit would make them smaller and provide a userspace tool for developers to test with.&lt;/p&gt;
-
-&lt;p&gt;There is also one more reason to convert the DRM selftests. As DRM selftests created a whole structure to run their unit tests, converting the tests would mean deleting this structure and promoting code reuse.&lt;/p&gt;
-
-&lt;h2 id=&quot;converting-the-tests&quot;&gt;Converting the tests&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;KUnit has multiple test expectation expressions. The most used ones are:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KUNIT_EXPECT_TRUE (test, condition)&lt;/code&gt;: causes a test failure when the expression is not true.&lt;/li&gt;
-  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KUNIT_EXPECT_FALSE (test, condition)&lt;/code&gt;: causes a test failure when the expression is not false.&lt;/li&gt;
-  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KUNIT_EXPECT_EQ (test, left, right)&lt;/code&gt;: expects that &lt;strong&gt;left&lt;/strong&gt; and &lt;strong&gt;right&lt;/strong&gt; are equal.&lt;/li&gt;
-  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KUNIT_EXPECT_NE (test, left, right)&lt;/code&gt;: expects that &lt;strong&gt;left&lt;/strong&gt; and &lt;strong&gt;right&lt;/strong&gt; are not equal.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;There are a couple more and all of them can be seen on the &lt;a href=&quot;https://docs.kernel.org/dev-tools/kunit/api/test.html&quot;&gt;KUnit documentation&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Examining again the  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_mode_parse_command_line_for_connector&lt;/code&gt; function, we can see that the test expectation expression used is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FAIL_ON&lt;/code&gt;. This means that the test will fail when the expression inside it is true. Checking the test expectation expressions listed above, we can say the equivalent of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FAIL_ON&lt;/code&gt; is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KUNIT_EXPECT_FALSE&lt;/code&gt;, right?&lt;/p&gt;
-
-&lt;p&gt;So, we can just adjust the function to the KUnit signature and change all &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FAIL_ON&lt;/code&gt; for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KUNIT_EXPECT_FALSE&lt;/code&gt;. The result will be something like this:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;drm_cmdline_test_force_D_only_not_digital&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kunit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;drm_cmdline_mode&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;drm_mode_parse_command_line_for_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;D&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;no_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;refresh_specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bpp_specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cvt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;interlace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;margins&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;force&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DRM_FORCE_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;After this, our test already works with the KUnit tool. But, there is still some improvement to be made. Check out the first assertion:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;drm_mode_parse_command_line_for_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;D&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;no_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Observe that the condition has a logical NOT operator, so, for the condition to be false, the function must return true. So, we can change the assertion to be more readable to:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_TRUE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;drm_mode_parse_command_line_for_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;D&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;no_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;The last assertion can also be changed. We can change the comparative logical operator for the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KUNIT_EXPECT_EQ&lt;/code&gt; expression.&lt;/p&gt;
-
-&lt;p&gt;So, the final look of our unit test would be:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;drm_cmdline_test_force_D_only_not_digital&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;kunit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;drm_cmdline_mode&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_TRUE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;drm_mode_parse_command_line_for_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;D&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;no_connector&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-							   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;refresh_specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bpp_specified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rb&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cvt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;interlace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_FALSE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;margins&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_EQ&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;force&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DRM_FORCE_ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;This is just a small bit of the work done! I and other LKCAMP participants converted tests across nine files. And the result can be seen on this &lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t&quot;&gt;mailing list thread&lt;/a&gt;.&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Working on these tests over the last month was pretty satisfying. The series had five iterations over the mailing list and talking to the maintainers is very rewarding. Also, it was great to remember the Saturday that I spend with three very dear friends (thanks to Arthur, Matheus, and Carlos). Seeing the patches go to the mainline was great!&lt;/p&gt;
-
-&lt;p&gt;After adding the DRM KUnit tests to the upstream, we must maintain it working properly and try checking the reported bugs. For example, Guenter Roeck reported problems running tests on PowerPC, so I worked on a new &lt;a href=&quot;https://lore.kernel.org/dri-devel/20220717184336.1197723-1-mairacanal@riseup.net/T/#u&quot;&gt;patch&lt;/a&gt; to fix it in order to make things run smoothly. So, that’s about it for now!&lt;/p&gt;
-</description>
-                <pubDate>Tue, 19 Jul 2022 00:00:00 +0000</pubDate>
-                <link>https://mairacanal.github.io/from-selftests-to-KUnit/</link>
-                <guid isPermaLink="true">https://mairacanal.github.io/from-selftests-to-KUnit/</guid>
             </item>
         
     </channel>
