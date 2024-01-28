@@ -3,7 +3,8 @@ title: "Linux Kernel Developing with Fedora"
 date: 2022-06-11T00:00:00+00:00
 author: Maíra Canal
 permalink: /kernel-development-fedora/
-tags: [gsoc, linux, kernel]
+categories: [Tech]
+tags: [gsoc, kernel]
 ---
 
 I’m a Fedora fan. I mean: I have two laptops for development, and all of them run Fedora. I also have a deployment machine. Guess what? It runs Fedora. Stickers? The Fedora Logo sticked forever on my laptop.

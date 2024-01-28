@@ -9,8 +9,8 @@ layout: none
         <description>{{ site.description | xml_escape }}</description>
         <link>https://{{ site.domain }}</link>
         <atom:link href="https://{{ site.domain }}{{ page.url }}" rel="self" type="application/rss+xml" />
-        <lastBuildDate>{% for post in site.categories.Tech limit:1 %}{{ post.date | date_to_rfc822 }}{% endfor %}</lastBuildDate>
-        {% for post in site.categories.Tech limit:10 %}
+        <lastBuildDate>{% for post in site.categories.Life limit:1 %}{{ post.date | date_to_rfc822 }}{% endfor %}</lastBuildDate>
+        {% for post in site.categories.Life limit:10 %}
             <item>
                 <title>{{ post.title | xml_escape }}</title>
                 {% if post.author.name %}

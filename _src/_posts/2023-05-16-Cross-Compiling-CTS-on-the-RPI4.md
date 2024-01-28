@@ -3,6 +3,7 @@ title: "Cross-Compiling CTS for the Raspberry Pi 4"
 date: 2023-05-16T09:00:00-03:00
 author: Maíra Canal
 permalink: /cross-compiling-cts-rpi4/
+categories: [Tech]
 tags: [igalia, graphics, embedded]
 ---
 

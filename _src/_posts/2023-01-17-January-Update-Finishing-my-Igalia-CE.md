@@ -3,6 +3,7 @@ title: "January Update: Finishing my Igalia CE"
 date: 2023-01-17
 author: Maíra Canal
 permalink: /january-update-finishing-my-igalia-ce/
+categories: [Tech]
 tags: [igalia, graphics]
 ---
 

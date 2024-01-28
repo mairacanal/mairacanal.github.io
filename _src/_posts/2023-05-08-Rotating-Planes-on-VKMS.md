@@ -3,6 +3,7 @@ title: "Rotating Planes on VKMS"
 date: 2023-05-08
 author: Maíra Canal
 permalink: /rotating-planes-vkms/
+categories: [Tech]
 tags: [igalia, kernel, graphics]
 ---
 

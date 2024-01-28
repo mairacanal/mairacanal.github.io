@@ -3,6 +3,7 @@ title: "May Update: Finishing my Second Igalia CE"
 date: 2023-05-22T09:30:00-03:00
 author: Maíra Canal
 permalink: /may-update-finishing-my-second-igalia-ce/
+categories: [Tech]
 tags: [igalia, graphics]
 ---
 

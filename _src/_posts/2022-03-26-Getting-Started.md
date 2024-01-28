@@ -3,12 +3,13 @@ title: "Getting Started at the Linux Kernel"
 date: 2022-03-28T00:00:00+00:00
 author: Maíra Canal
 permalink: /getting-started/
-tags: [linux, kernel]
+categories: [Tech]
+tags: [kernel]
 ---
 
 I started my journey with the Linux Kernel in October 2021. At that time, I thought it was impossible for a 19-year-old Brazilian girl to have an approved commit at the kernel. Then, I find out about an extracurricular group at Campinas, LKCAMP. And I found out that undergraduate students were able to contribute to the kernel. Although I couldn´t go to the LKCAMP meetings, this really push me forward, cause I saw that I was able to be a part of the kernel community.
 
-I was a Linux user for about two years, and I became passionate about the system. I was eager to contribute to the community and improve the kernel. But, I was in doubt about where to start. 
+I was a Linux user for about two years, and I became passionate about the system. I was eager to contribute to the community and improve the kernel. But, I was in doubt about where to start.
 
 So, I started to fly solo and explore all the kernel TODO lists. I didn't really get many of the tasks on the lists, but one, in particular, attracted me: the DRM TODO list. This list has been categorized into different levels: from starter to expert. I picked up a starter task:
 
@@ -32,7 +33,7 @@ index 17f44ffea586..71b7ff7b7dea 100644
 @@ -13466,22 +13466,13 @@ void intel_display_resume(struct drm_device *dev)
 	if (state)
 		state->acquire_ctx = &ctx;
- 
+
 -	drm_modeset_acquire_init(&ctx, 0);
 -
 -	while (1) {
@@ -43,22 +44,22 @@ index 17f44ffea586..71b7ff7b7dea 100644
 -		drm_modeset_backoff(&ctx);
 -	}
 +	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
- 
+
 	if (!ret)
 		ret = __intel_display_resume(dev, state, &ctx);
- 
+
 	intel_enable_ipc(dev_priv);
 -	drm_modeset_drop_locks(&ctx);
 -	drm_modeset_acquire_fini(&ctx);
 +	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
- 
+
 	if (ret)
 		drm_err(&dev_priv->drm,
 ```
 
-But my next challenge was to find out how to send my patch. 
+But my next challenge was to find out how to send my patch.
 
-I was used to the Pull Request scheme of contribution and didn't really get which mailing list should I send my patch to. After some research, this [tutoral](https://medium.com/@cristianzsh/submitting-your-first-patch-to-the-linux-kernel-e81d2541fac6) introduce me to the `checkpatch.sh` and `get_maintainer.sh` scripts. 
+I was used to the Pull Request scheme of contribution and didn't really get which mailing list should I send my patch to. After some research, this [tutoral](https://medium.com/@cristianzsh/submitting-your-first-patch-to-the-linux-kernel-e81d2541fac6) introduce me to the `checkpatch.sh` and `get_maintainer.sh` scripts.
 
 So, I finally send my first patch to the Linux Kernel... And it was **denied**. Another contributor sent the patch ahead of me. It happens...
 
@@ -259,6 +260,6 @@ struct lp872x_platform_data {
 #endif
 ```
 
-Really recommend to any kernel newbie to start contributing to any subsystem maintained by Mark Brown. He is really helpful and very responsive. 
+Really recommend to any kernel newbie to start contributing to any subsystem maintained by Mark Brown. He is really helpful and very responsive.
 
 So, this was my path to my first approved patch on the kernel. Since then, I had more than 10 patches approved in different kernel subsystems. Currently, I'm thinking of establishing myself in a subsystem, the DRM, so that I can learn more deeply about a subsystem.

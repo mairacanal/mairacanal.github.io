@@ -3,7 +3,8 @@ title: "GSoC Final Report"
 date: 2022-09-07
 author: Maíra Canal
 permalink: /gsoc-final-report/
-tags: [gsoc, linux, kernel]
+categories: [Tech]
+tags: [gsoc, kernel]
 ---
 
 My journey on the Google Summer of Code project passed by so fast… This is my

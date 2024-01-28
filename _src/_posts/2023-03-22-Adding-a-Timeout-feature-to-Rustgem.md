@@ -3,6 +3,7 @@ title: "Adding a Timeout feature to Rustgem"
 date: 2023-03-22
 author: Maíra Canal
 permalink: /adding-timeout-rustgem/
+categories: [Tech]
 tags: [igalia, graphics]
 ---
 

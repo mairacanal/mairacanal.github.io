@@ -3,6 +3,7 @@ title: "Rust for VGEM"
 date: 2023-02-28
 author: Maíra Canal
 permalink: /rust-for-vgem/
+categories: [Tech]
 tags: [igalia, graphics]
 ---
 

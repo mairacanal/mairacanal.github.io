@@ -3,7 +3,8 @@ title: "About Kernel Symbol Table, Compilation, and more"
 date: 2022-07-11T00:00:00+00:00
 author: Maíra Canal
 permalink: /kernel-symbol-table-compilation-more/
-tags: [gsoc, linux, kernel]
+categories: [Tech]
+tags: [gsoc, kernel]
 ---
 
 This week I was planning on talking about Device Mocking with KUnit, as I'm currently working on my first unit test for a physical device, the AMDGPU Radeon RX5700. I would introduce you to the Kernel Unit Testing Framework (KUnit), how it works, how to mock devices with it, and why it is so great to write tests.

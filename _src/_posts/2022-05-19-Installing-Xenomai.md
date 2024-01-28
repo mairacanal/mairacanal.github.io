@@ -3,7 +3,8 @@ title: "Installing Xenomai on the Beaglebone Black"
 date: 2022-05-19T00:00:00+00:00
 author: Maíra Canal
 permalink: /install-xenomai-beaglebone-black/
-tags: [linux, embedded]
+categories: [Tech]
+tags: [embedded]
 ---
 
 There are many ways to bring Real-Time to Linux. A standard Linux distribution can provide a reasonable latency to a soft real-time application. But, if you are dealing with applications with harsh timing restrictions, you might be unsatisfied with the results provided by a standard Linux distro.
@@ -40,7 +41,7 @@ So, let's install Xenomai.
 
 If you already have Debian installed on your Beaglebone Black, then just skip this step.
 
-Otherwise, you can follow the [tutorial](http://derekmolloy.ie/write-a-new-image-to-the-beaglebone-black/) from Derek Molloy on how to write a Debian Image to the Beaglebone Black. 
+Otherwise, you can follow the [tutorial](http://derekmolloy.ie/write-a-new-image-to-the-beaglebone-black/) from Derek Molloy on how to write a Debian Image to the Beaglebone Black.
 
 ### 2. Install the Cobalt Core
 

@@ -3,6 +3,7 @@ title: "November Update: Exploring V3D"
 date: 2022-12-08
 author: Maíra Canal
 permalink: /november-update-exploring-v3d/
+categories: [Tech]
 tags: [igalia, graphics, kernel]
 ---
 

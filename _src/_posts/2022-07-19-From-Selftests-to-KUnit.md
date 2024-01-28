@@ -3,7 +3,8 @@ title: "From Selftests to KUnit"
 date: 2022-07-19
 author: Maíra Canal
 permalink: /from-selftests-to-KUnit/
-tags: [gsoc, linux, kernel, graphics]
+categories: [Tech]
+tags: [gsoc, kernel, graphics]
 ---
 
 Last week, the [series](https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t) with DRM Kernel Selftests conversion to KUnit tests was merged into `drm-misc-next` and will probably be on the mainline on 5.20.

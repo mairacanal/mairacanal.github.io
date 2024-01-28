@@ -3,6 +3,7 @@ title: "Introducing CPU jobs to the Raspberry Pi"
 date: 2024-01-11T10:30:00-03:00
 author: Maíra Canal
 permalink: /introducing-cpu-jobs-to-the-rpi/
+categories: [Tech]
 tags: [igalia, graphics, embedded]
 ---
 

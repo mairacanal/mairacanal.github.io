@@ -3,7 +3,8 @@ title: "Does the Linux Kernel need software engineering?"
 date: 2022-08-10
 author: Maíra Canal
 permalink: /does-the-linux-kernel-need-software-engineering/
-tags: [gsoc, linux, kernel, graphics]
+categories: [Tech]
+tags: [gsoc, kernel, graphics]
 ---
 
 For those looking for a short answer: yes, it does.

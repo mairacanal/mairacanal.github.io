@@ -1,12 +1,12 @@
 ---
-title: Latest Posts
-description: I write a bit of what I'm currently developing
-permalink: /
+title: Life
+description: Apart from my professional life, here I write about my life and being a ND person
+permalink: /life/
 ---
 
-<p><a href="/atom.xml" class="feed">Feed</a></p>
+<p><a href="/atom-life.xml" class="feed">Feed</a></p>
 
-{% for post in site.categories.Tech %}
+{% for post in site.categories.Life %}
   <article>
     <header>
       <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
