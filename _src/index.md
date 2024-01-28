@@ -9,7 +9,7 @@ permalink : /about-me/
 impl AboutMe
 {
     fn getCurrentWorkplace()->& str {
-        "Igalia Coding Experience"
+        "Igalia"
     }
 
     fn getCurrentDegree() -> Degree {
