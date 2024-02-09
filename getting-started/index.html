@@ -50,6 +50,14 @@
       </li>
       
       <li>
+        <a href="/life/">
+          
+            life
+          
+        </a>
+      </li>
+      
+      <li>
         <a href="/cv/">
           
             cv
@@ -75,8 +83,6 @@
       
         <p>
           Tags:
-          
-            <a href="/notes#linux">#linux</a>
           
             <a href="/notes#kernel">#kernel</a>
           
@@ -109,7 +115,7 @@ index 17f44ffea586..71b7ff7b7dea 100644
 @@ -13466,22 +13466,13 @@ void intel_display_resume(struct drm_device *dev)
 	if (state)
 		state-&gt;acquire_ctx = &amp;ctx;
- 
+
 -	drm_modeset_acquire_init(&amp;ctx, 0);
 -
 -	while (1) {
@@ -120,15 +126,15 @@ index 17f44ffea586..71b7ff7b7dea 100644
 -		drm_modeset_backoff(&amp;ctx);
 -	}
 +	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
- 
+
 	if (!ret)
 		ret = __intel_display_resume(dev, state, &amp;ctx);
- 
+
 	intel_enable_ipc(dev_priv);
 -	drm_modeset_drop_locks(&amp;ctx);
 -	drm_modeset_acquire_fini(&amp;ctx);
 +	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
- 
+
 	if (ret)
 		drm_err(&amp;dev_priv-&gt;drm,
 </code></pre></div></div>
