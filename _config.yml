@@ -7,7 +7,7 @@ url: "https://mairacanal.github.io" # Domain Name of host. [username].github.io 
 permalink: pretty
 
 dark_scheme: catppuccin-frappe
-light_scheme: catppuccin-latte
+light_scheme: catppuccin-frappe
 # printing_scheme: tomorrow # Must have #FFFFFF background
 
 
