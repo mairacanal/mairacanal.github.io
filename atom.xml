@@ -65,7 +65,7 @@ Toral&lt;/a&gt; worked on implementing all the kernel
 support needed for the V3D 7.1.x driver.&lt;/p&gt;
 
 &lt;p&gt;With the kernel patches, by the time the RPi 5 was released, it already included
-a fully 3.2 OpenGL ES and Vulkan 1.2 compliant driver implemented by Igalia.&lt;/p&gt;
+a fully 3.1 OpenGL ES and Vulkan 1.2 compliant driver implemented by Igalia.&lt;/p&gt;
 
 &lt;h2 id=&quot;gpu-stats-and-cpu-jobs-for-the-raspberry-pi-45&quot;&gt;GPU stats and CPU jobs for the Raspberry Pi 4/5&lt;/h2&gt;
 
