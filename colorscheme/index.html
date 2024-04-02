@@ -13,9 +13,9 @@
 <link rel="icon" href="data:,">
 
 <link rel="stylesheet" href="/assets/style.css" />
-<link rel="stylesheet" href="https://colors.m7.rs/catppuccin-latte.css" />
-<link rel="stylesheet" href="https://colors.m7.rs/catppuccin-frappe.css" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="https://colors.m7.rs/.css" media="print" />
+<link rel="stylesheet" href="https://m7.rs/colors/catppuccin-frappe.css" />
+<link rel="stylesheet" href="https://m7.rs/colors/catppuccin-frappe.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://m7.rs/colors/.css" media="print" />
 <link rel="stylesheet" id="theme-css" />
 
 <script src="/assets/main.js"></script>
@@ -137,7 +137,7 @@ let scheme_random_button = document.getElementById("scheme-random");
 let scheme_default_button = document.getElementById("scheme-default");
 
 async function fetch_schemes() {
-  var schemes_data = await fetch("https://colors.m7.rs/themes.json");
+  var schemes_data = await fetch("https://m7.rs/colors/themes.json");
   var schemes_json = await schemes_data.json();
   return Object.keys(schemes_json);
 }

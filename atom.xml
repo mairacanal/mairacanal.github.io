@@ -5,7 +5,431 @@
         <description>Blogging about graphics development whenever I can</description>
         <link>https://mairacanal.github.io</link>
         <atom:link href="https://mairacanal.github.io/atom.xml" rel="self" type="application/rss+xml" />
-        <lastBuildDate>Thu, 11 Jan 2024 13:30:00 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 02 Apr 2024 11:00:00 +0000</lastBuildDate>
+        
+            <item>
+                <title>Linux 6.8: AMD HDR and Raspberry Pi 5</title>
+                
+                <description>&lt;p&gt;The Linux kernel 6.8 came out on March 10th, 2024, bringing brand-new features
+and plenty of performance improvements on different subsystems. As part of
+&lt;a href=&quot;https://www.igalia.com/&quot;&gt;Igalia&lt;/a&gt;, I’m happy to be an active part of many
+features that are released in this version, and today I’m going to review some
+of them.&lt;/p&gt;
+
+&lt;p&gt;Linux 6.8 is packed with a lot of great features, performance optimizations, and
+new hardware support. In this release, we can check the Intel Xe DRM driver
+experimentally, further support for AMD Zen 5 and other upcoming AMD hardware,
+initial support for the Qualcomm Snapdragon 8 Gen 3 SoC, the Imagination PowerVR
+DRM kernel driver, support for the Nintendo NSO controllers, and much more.&lt;/p&gt;
+
+&lt;p&gt;Igalia is widely known for its contributions to Web Platforms, Chromium, and
+Mesa. But, we also make significant contributions to the Linux kernel. This
+release shows some of the great work that Igalia is putting into the kernel and
+strengthens our desire to keep working with this great community.&lt;/p&gt;
+
+&lt;p&gt;Let’s take a deep dive into Igalia’s major contributions to the 6.8 release:&lt;/p&gt;
+
+&lt;h2 id=&quot;amd-hdr--color-management&quot;&gt;AMD HDR &amp;amp; Color Management&lt;/h2&gt;
+
+&lt;p&gt;You may have seen the release of a new Steam Deck last year, the Steam Deck
+OLED. What you may not know is that Igalia helped bring this product to life by
+putting some effort into the AMD driver-specific color management properties
+implementation. &lt;a href=&quot;https://www.igalia.com/team/mwen&quot;&gt;Melissa Wen&lt;/a&gt;, together with
+Joshua Ashton (Valve), and Harry Wentland (AMD), implemented several
+driver-specific properties to allow Gamescope to manage color features provided
+by the AMD hardware to fit HDR content and improve gamers’ experience.&lt;/p&gt;
+
+&lt;p&gt;She has explained all features implemented in the AMD display kernel driver in
+two blog posts and a 2023 XDC talk:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://melissawen.github.io/blog/2023/08/21/amd-steamdeck-colors&quot;&gt;AMD Driver-specific Properties for Color Management on Linux (Part 1)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://melissawen.github.io/blog/2023/11/07/amd-steamdeck-colors-p2&quot;&gt;AMD Driver-specific Properties for Color Management on Linux (Part 2)&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://melissawen.github.io/blog/2023/12/20/xdc2023-colors-talk&quot;&gt;The Rainbow Treasure Map Talk: Advanced color management on Linux with AMD/Steam Deck&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;async-flip&quot;&gt;Async Flip&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.igalia.com/team/tonyk&quot;&gt;André Almeida&lt;/a&gt; worked together with Simon
+Ser (SourceHut) to provide support for asynchronous page-flips in the atomic
+API. This feature targets users who want to present a new frame immediately,
+even if after missing a V-blank. This feature is particularly useful for
+applications with high frame rates, such as gaming.&lt;/p&gt;
+
+&lt;h2 id=&quot;raspberry-pi-5&quot;&gt;Raspberry Pi 5&lt;/h2&gt;
+
+&lt;p&gt;Raspberry Pi 5 was officially released on October 2023 and Igalia was ready to
+bring top-notch graphics support for it. Although we still can’t use the RPi 5
+with the mainline kernel, it is superb to see some pieces coming upstream. &lt;a href=&quot;https://www.igalia.com/team/itoral&quot;&gt;Iago
+Toral&lt;/a&gt; worked on implementing all the kernel
+support needed for the V3D 7.1.x driver.&lt;/p&gt;
+
+&lt;p&gt;With the kernel patches, by the time the RPi 5 was released, it already included
+a fully 3.2 OpenGL ES and Vulkan 1.2 compliant driver implemented by Igalia.&lt;/p&gt;
+
+&lt;h2 id=&quot;gpu-stats-and-cpu-jobs-for-the-raspberry-pi-45&quot;&gt;GPU stats and CPU jobs for the Raspberry Pi 4/5&lt;/h2&gt;
+
+&lt;p&gt;Apart from the release of the Raspberry Pi 5, Igalia is still working on
+improving the whole Raspberry Pi environment. I worked, together with &lt;a href=&quot;https://www.igalia.com/team/chema&quot;&gt;José
+Maria “Chema” Casanova&lt;/a&gt;, implementing the
+support for GPU stats on the V3D driver. This means that RPi 4/5 users now can
+access the usage percentage of the GPU and they can access the statistics by
+process or globally.&lt;/p&gt;
+
+&lt;p&gt;I also worked, together with &lt;a href=&quot;https://www.igalia.com/team/mwen&quot;&gt;Melissa&lt;/a&gt;,
+implementing CPU jobs for the V3D driver. As the Broadcom GPU isn’t capable of
+performing some operations, the Vulkan driver uses the CPU to compensate for it.
+In order to avoid stalls in the job submission, now CPU jobs are part of the
+kernel and can be easily synchronized though with synchronization objects.&lt;/p&gt;
+
+&lt;p&gt;If you are curious about the CPU job implementation, you can check this &lt;a href=&quot;https://mairacanal.github.io/introducing-cpu-jobs-to-the-rpi/&quot;&gt;blog
+post&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;other-contributions--fixes&quot;&gt;Other Contributions &amp;amp; Fixes&lt;/h2&gt;
+
+&lt;p&gt;Sometimes we don’t contribute to a major feature in the release, however we can
+help improving documentation and sending fixes.
+&lt;a href=&quot;https://www.igalia.com/team/tonyk&quot;&gt;André&lt;/a&gt; also contributed to this release by
+documenting the different AMD GPU reset methods, making it easier to understand
+by future users.&lt;/p&gt;
+
+&lt;p&gt;During Igalia’s efforts to improve the general users’ experience on the Steam
+Deck, &lt;a href=&quot;https://www.igalia.com/team/gpiccoli&quot;&gt;Guilherme G. Piccoli&lt;/a&gt; noticed a
+message in the kernel log and readily provided a fix for this PCI issue.&lt;/p&gt;
+
+&lt;p&gt;Outside of the Steam Deck world, we can check some of Igalia’s work on the
+Qualcomm Adreno GPUs. Although most of our Adreno-related work is located at the
+user-space, &lt;a href=&quot;https://www.igalia.com/team/dpiliaiev&quot;&gt;Danylo Piliaiev&lt;/a&gt; sent a
+couple of kernel fixes to the msm driver, fixing some hangs and some CTS tests.&lt;/p&gt;
+
+&lt;p&gt;We also had contributions from our 2023 Igalia CE student, Nia Espera. Nia’s
+project was related to mobile Linux and she managed to write a couple of patches
+to the kernel in order to add support for the OnePlus 9 and OnePlus 9 Pro
+devices.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you are a student interested in open-source and would like to have a first
+exposure to the professional world, check if we have openings for the &lt;a href=&quot;https://www.igalia.com/coding-experience/&quot;&gt;Igalia
+Coding Experience&lt;/a&gt;. I was a CE
+student myself and being mentored by a Igalian was a incredible experience.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;check-the-complete-list-of-igalias-contributions-for-the-68-release&quot;&gt;Check the complete list of Igalia’s contributions for the 6.8 release&lt;/h2&gt;
+
+&lt;h3 id=&quot;authored-57&quot;&gt;Authored (57):&lt;/h3&gt;
+
+&lt;h4 id=&quot;andré-almeida-2&quot;&gt;André Almeida (2)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0e26cc72c71cb98e951716a6596060cd04b0ba6b&quot;&gt;drm: Refuse to async flip with atomic prop changes&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=613ecd6563d2716192e69624105fe1939d104663&quot;&gt;drm/amd: Document device reset methods&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;danylo-piliaiev-2&quot;&gt;Danylo Piliaiev (2)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=cf1aaa7d4a719f0bdd9c246c0fac8247cb54ddd7&quot;&gt;drm/msm/a6xx: Add missing BIT(7) to REG_A6XX_UCHE_CLIENT_PF&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=07e6de738aa6f0e873463e9ca88bdb7081c4bfd4&quot;&gt;drm/msm/a690: Fix reg values for a690&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;guilherme-g-piccoli-1&quot;&gt;Guilherme G. Piccoli (1)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e585a37e5061f6d5060517aed1ca4ccb2e56a34c&quot;&gt;PCI: Only override AMD USB controller if required&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;iago-toral-quiroga-4&quot;&gt;Iago Toral Quiroga (4)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1118d10f5e5ab544c489fad4da373f9988416ece&quot;&gt;drm/v3d: update UAPI to match user-space for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0ad5bc1ce4634ce9b5eaf017b01399ec5e49a03d&quot;&gt;drm/v3d: fix up register addresses for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=ebb2f6eea688b9ffa46527c3e7570b2c347497b8&quot;&gt;dt-bindings: gpu: v3d: Add BCM2712’s compatible&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6fd9487147c4f18ad77eea00bd8c9189eec74a3e&quot;&gt;drm/v3d: add brcm,2712-v3d as a compatible V3D device&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;maíra-canal-17&quot;&gt;Maíra Canal (17)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=79d94360d50fcd487edcfe118a47a2881534923f&quot;&gt;drm/v3d: wait for all jobs to finish before unregistering&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=09a93cc4f7d1893777f6b788bffe60d64e4d5df7&quot;&gt;drm/v3d: Implement show_fdinfo() callback for GPU usage stats&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=509433d8146c64ca9e0bcc370ec910821fffe80c&quot;&gt;drm/v3d: Expose the total GPU usage stats on sysfs&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c400eb4d6f5f603f4f3f6cc4b6fdacd416ff142e&quot;&gt;MAINTAINERS: Add Maira to V3D maintainers&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6893deb881ab7da1691bd05045ffcc0c806319b9&quot;&gt;drm/v3d: Don’t allow two multisync extensions in the same job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=464c61e76de851a216e667c91332172c68ffed54&quot;&gt;drm/v3d: Decouple job allocation from job initiation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c5195d001f4c122032a9ce90c6b88d772673fa35&quot;&gt;drm/v3d: Use v3d_get_extensions() to parse CPU job data&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1fe0879efc8f623816c7a825d853d2140c88cb2d&quot;&gt;drm/v3d: Create tracepoints to track the CPU job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=7c13132c4073628b5fe23b5188ac583a2882a6b0&quot;&gt;drm/v3d: Enable BO mapping&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=18b8413b25b7070fa2e55858a2c808e6909581d0&quot;&gt;drm/v3d: Create a CPU job extension for a indirect CSD job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9ba0ff3e083f6a4a0b6698f06bfff74805fefa5f&quot;&gt;drm/v3d: Create a CPU job extension for the timestamp query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=34a101e64296c736b14ce27e647fcebd70cb7bf8&quot;&gt;drm/v3d: Create a CPU job extension for the reset timestamp job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6745f3e44a20ac18e7e5a40a3c7f62225983d544&quot;&gt;drm/v3d: Create a CPU job extension to copy timestamp query to a buffer&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=bae7cb5d68001a8d4ceec5964dda74bb9aab7220&quot;&gt;drm/v3d: Create a CPU job extension for the reset performance query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=209e8d2695ee7a67a5b0487bbd1aa75e290d0f41&quot;&gt;drm/v3d: Create a CPU job extension for the copy performance query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=89fe46019a62bc1d0cb49c9615cb3520096c4bc1&quot;&gt;drm/v3d: Fix support for register debugging on the RPi 4&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=2ad62d16cd24b5e2f18318e97e1f06bef9f1ce7d&quot;&gt;drm/v3d: Free the job and assign it to NULL if initialization fails&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;melissa-wen-27&quot;&gt;Melissa Wen (27)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=780b9463ce66a9efb18e3b5d35cd011fb918d741&quot;&gt;drm/v3d: Remove unused function header&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=a8ad9d63a160f6b93f6958a5a0ded1a6abb15815&quot;&gt;drm/v3d: Move wait BO ioctl to the v3d_bo file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9032d5f633ed7b5c726971dc7e2372045bf27f40&quot;&gt;drm/v3d: Detach job submissions IOCTLs to a new specific file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8288faaa8b3817c2fcdbacc720527bb8df2b57b1&quot;&gt;drm/v3d: Simplify job refcount handling&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=aafc1a2bea67460c41a289e8bb1e4dc6d016fe11&quot;&gt;drm/v3d: Add a CPU job submission&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=369b05961731925e4a43608ea1e7884df200f0bd&quot;&gt;drm/v3d: Detach the CSD job BO setup&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1e13c5644c443dee727ac1330bc118c909a1cf07&quot;&gt;drm/drm_mode_object: increase max objects to accommodate new color props&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=601603105325ad4ec62db95c9bc428202ece2c8f&quot;&gt;drm/drm_property: make replace_property_blob_from_id a DRM helper&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=24013b9301349881c9fcd27e7edacc672e0bf6d3&quot;&gt;drm/drm_plane: track color mgmt changes per plane&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9342a9ae54ef299ffe5e4ce3d0be6a4da5edba0e&quot;&gt;drm/amd/display: add driver-specific property for plane degamma LUT&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=5a3b965b5810bd602d2c7d8ea79ffe8c6e81268d&quot;&gt;drm/amd/display: explicitly define EOTF and inverse EOTF&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e4cddd51bfab2a40529a4af35bd2c912b5a0c239&quot;&gt;drm/amd/display: document AMDGPU pre-defined transfer functions&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=671994e3bf33a414dc6a8c147969dae3a15ba9de&quot;&gt;drm/amd/display: add plane 3D LUT driver-specific properties&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=f545d82479b46368bf00d0bfecf33fa914bd5f8f&quot;&gt;drm/amd/display: add plane shaper LUT and TF driver-specific properties&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0f5afa190b890052cae187496f660699f00067ef&quot;&gt;drm/amd/display: add CRTC gamma TF driver-specific property&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=98fbb52772063ad2547d6d1b80ff99bc26761e79&quot;&gt;drm/amd/display: add comments to describe DM crtc color mgmt behavior&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8b6b3f668f31a24b5406661388b9a69202e83e9d&quot;&gt;drm/amd/display: encapsulate atomic regamma operation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=73e5ea616a9f8c261d07e63b421947949ad6cbce&quot;&gt;drm/amd/display: decouple steps for mapping CRTC degamma to DC plane&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=ef113a3b1964b40dd87287806865b947d70f7df5&quot;&gt;drm/amd/display: reject atomic commit if setting both plane and CRTC degamma&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=aba8b76baabde681ab4ff686452005d80d949345&quot;&gt;drm/amd/display: add plane shaper LUT support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=99de686115b00e765a5e9345e10c9d7312e4c7ea&quot;&gt;drm/amd/display: add plane shaper TF support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=486c95af5d76047d5cb50727270b1961dacb9380&quot;&gt;drm/amd/display: add plane 3D LUT support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c6ef0a2265c518aa6699b64d10a7e5a9049ac96a&quot;&gt;drm/amd/display: fix documentation for dm_crtc_additional_color_mgmt()&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=3a0fa3bc245ef92838a8296e0055569b8dff94c4&quot;&gt;drm/amd/display: fix bandwidth validation failure on DCN 2.1&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=7075893d1d68b2b3517be250a02d86e76554ed22&quot;&gt;drm/amd/display: cleanup inconsistent indenting in amdgpu_dm_color&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9671761792156f2339627918bafcd713a8a6f777&quot;&gt;drm/amd/display: fix null-pointer dereference on edid reading&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e9098cc9aef13bd56e821f628c83f709d3347af1&quot;&gt;drm/amd/display: check dc_link before dereferencing&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;nia-espera-4&quot;&gt;Nia Espera (4)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=7bf421f44549cd0bca32bd0b4cf6e4cfe5b4f865&quot;&gt;dt-bindings: iio: adc: qcom: Add Qualcomm smb139x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=01a9e9eb6cdbce175ddea3cbe1163daed6d54344&quot;&gt;arm64: dts: qcom: sm8350: Fix DMA0 address&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e70537717146b380e18f0c92669d968af4acb8a7&quot;&gt;arm64: dts: qcom: pm8350k: Remove hanging whitespace&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=54ee322f845c7f25fbf6e43e11147b6cae8eff56&quot;&gt;arm64: dts: qcom: sm8350: Fix remoteproc interrupt type&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;signed-off-by-88&quot;&gt;Signed-off-by (88):&lt;/h3&gt;
+
+&lt;h4 id=&quot;andré-almeida-4&quot;&gt;André Almeida (4)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0e26cc72c71cb98e951716a6596060cd04b0ba6b&quot;&gt;drm: Refuse to async flip with atomic prop changes&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=4b4af74ab9719d17538a97f43137e93296ec7437&quot;&gt;drm: allow DRM_MODE_PAGE_FLIP_ASYNC for atomic commits&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e4d983acffff270ccee417445a69b9ed198658b1&quot;&gt;drm: introduce DRM_CAP_ATOMIC_ASYNC_PAGE_FLIP&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=613ecd6563d2716192e69624105fe1939d104663&quot;&gt;drm/amd: Document device reset methods&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;danylo-piliaiev-2-1&quot;&gt;Danylo Piliaiev (2)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=cf1aaa7d4a719f0bdd9c246c0fac8247cb54ddd7&quot;&gt;drm/msm/a6xx: Add missing BIT(7) to REG_A6XX_UCHE_CLIENT_PF&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=07e6de738aa6f0e873463e9ca88bdb7081c4bfd4&quot;&gt;drm/msm/a690: Fix reg values for a690&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;guilherme-g-piccoli-1-1&quot;&gt;Guilherme G. Piccoli (1)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e585a37e5061f6d5060517aed1ca4ccb2e56a34c&quot;&gt;PCI: Only override AMD USB controller if required&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;iago-toral-quiroga-4-1&quot;&gt;Iago Toral Quiroga (4)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1118d10f5e5ab544c489fad4da373f9988416ece&quot;&gt;drm/v3d: update UAPI to match user-space for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0ad5bc1ce4634ce9b5eaf017b01399ec5e49a03d&quot;&gt;drm/v3d: fix up register addresses for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=ebb2f6eea688b9ffa46527c3e7570b2c347497b8&quot;&gt;dt-bindings: gpu: v3d: Add BCM2712’s compatible&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6fd9487147c4f18ad77eea00bd8c9189eec74a3e&quot;&gt;drm/v3d: add brcm,2712-v3d as a compatible V3D device&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;jose-maria-casanova-crespo-2&quot;&gt;Jose Maria Casanova Crespo (2)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=09a93cc4f7d1893777f6b788bffe60d64e4d5df7&quot;&gt;drm/v3d: Implement show_fdinfo() callback for GPU usage stats&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=509433d8146c64ca9e0bcc370ec910821fffe80c&quot;&gt;drm/v3d: Expose the total GPU usage stats on sysfs&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;maíra-canal-28&quot;&gt;Maíra Canal (28)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=79d94360d50fcd487edcfe118a47a2881534923f&quot;&gt;drm/v3d: wait for all jobs to finish before unregistering&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1118d10f5e5ab544c489fad4da373f9988416ece&quot;&gt;drm/v3d: update UAPI to match user-space for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0ad5bc1ce4634ce9b5eaf017b01399ec5e49a03d&quot;&gt;drm/v3d: fix up register addresses for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=ebb2f6eea688b9ffa46527c3e7570b2c347497b8&quot;&gt;dt-bindings: gpu: v3d: Add BCM2712’s compatible&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6fd9487147c4f18ad77eea00bd8c9189eec74a3e&quot;&gt;drm/v3d: add brcm,2712-v3d as a compatible V3D device&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=09a93cc4f7d1893777f6b788bffe60d64e4d5df7&quot;&gt;drm/v3d: Implement show_fdinfo() callback for GPU usage stats&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=509433d8146c64ca9e0bcc370ec910821fffe80c&quot;&gt;drm/v3d: Expose the total GPU usage stats on sysfs&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=89d04995f76ce8318fe752feb33b1a45893b1a38&quot;&gt;MAINTAINERS: Drop Emma Anholt from all M lines.&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c400eb4d6f5f603f4f3f6cc4b6fdacd416ff142e&quot;&gt;MAINTAINERS: Add Maira to V3D maintainers&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=780b9463ce66a9efb18e3b5d35cd011fb918d741&quot;&gt;drm/v3d: Remove unused function header&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=a8ad9d63a160f6b93f6958a5a0ded1a6abb15815&quot;&gt;drm/v3d: Move wait BO ioctl to the v3d_bo file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9032d5f633ed7b5c726971dc7e2372045bf27f40&quot;&gt;drm/v3d: Detach job submissions IOCTLs to a new specific file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8288faaa8b3817c2fcdbacc720527bb8df2b57b1&quot;&gt;drm/v3d: Simplify job refcount handling&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6893deb881ab7da1691bd05045ffcc0c806319b9&quot;&gt;drm/v3d: Don’t allow two multisync extensions in the same job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=464c61e76de851a216e667c91332172c68ffed54&quot;&gt;drm/v3d: Decouple job allocation from job initiation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=aafc1a2bea67460c41a289e8bb1e4dc6d016fe11&quot;&gt;drm/v3d: Add a CPU job submission&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c5195d001f4c122032a9ce90c6b88d772673fa35&quot;&gt;drm/v3d: Use v3d_get_extensions() to parse CPU job data&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1fe0879efc8f623816c7a825d853d2140c88cb2d&quot;&gt;drm/v3d: Create tracepoints to track the CPU job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=369b05961731925e4a43608ea1e7884df200f0bd&quot;&gt;drm/v3d: Detach the CSD job BO setup&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=7c13132c4073628b5fe23b5188ac583a2882a6b0&quot;&gt;drm/v3d: Enable BO mapping&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=18b8413b25b7070fa2e55858a2c808e6909581d0&quot;&gt;drm/v3d: Create a CPU job extension for a indirect CSD job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9ba0ff3e083f6a4a0b6698f06bfff74805fefa5f&quot;&gt;drm/v3d: Create a CPU job extension for the timestamp query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=34a101e64296c736b14ce27e647fcebd70cb7bf8&quot;&gt;drm/v3d: Create a CPU job extension for the reset timestamp job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6745f3e44a20ac18e7e5a40a3c7f62225983d544&quot;&gt;drm/v3d: Create a CPU job extension to copy timestamp query to a buffer&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=bae7cb5d68001a8d4ceec5964dda74bb9aab7220&quot;&gt;drm/v3d: Create a CPU job extension for the reset performance query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=209e8d2695ee7a67a5b0487bbd1aa75e290d0f41&quot;&gt;drm/v3d: Create a CPU job extension for the copy performance query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=89fe46019a62bc1d0cb49c9615cb3520096c4bc1&quot;&gt;drm/v3d: Fix support for register debugging on the RPi 4&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=2ad62d16cd24b5e2f18318e97e1f06bef9f1ce7d&quot;&gt;drm/v3d: Free the job and assign it to NULL if initialization fails&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;melissa-wen-43&quot;&gt;Melissa Wen (43)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=780b9463ce66a9efb18e3b5d35cd011fb918d741&quot;&gt;drm/v3d: Remove unused function header&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=a8ad9d63a160f6b93f6958a5a0ded1a6abb15815&quot;&gt;drm/v3d: Move wait BO ioctl to the v3d_bo file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9032d5f633ed7b5c726971dc7e2372045bf27f40&quot;&gt;drm/v3d: Detach job submissions IOCTLs to a new specific file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8288faaa8b3817c2fcdbacc720527bb8df2b57b1&quot;&gt;drm/v3d: Simplify job refcount handling&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=aafc1a2bea67460c41a289e8bb1e4dc6d016fe11&quot;&gt;drm/v3d: Add a CPU job submission&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=369b05961731925e4a43608ea1e7884df200f0bd&quot;&gt;drm/v3d: Detach the CSD job BO setup&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=18b8413b25b7070fa2e55858a2c808e6909581d0&quot;&gt;drm/v3d: Create a CPU job extension for a indirect CSD job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1e13c5644c443dee727ac1330bc118c909a1cf07&quot;&gt;drm/drm_mode_object: increase max objects to accommodate new color props&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=601603105325ad4ec62db95c9bc428202ece2c8f&quot;&gt;drm/drm_property: make replace_property_blob_from_id a DRM helper&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=24013b9301349881c9fcd27e7edacc672e0bf6d3&quot;&gt;drm/drm_plane: track color mgmt changes per plane&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9342a9ae54ef299ffe5e4ce3d0be6a4da5edba0e&quot;&gt;drm/amd/display: add driver-specific property for plane degamma LUT&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=d5a348d96e4e2b924fa83e729f8791c03a4f8e24&quot;&gt;drm/amd/display: add plane degamma TF driver-specific property&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=5a3b965b5810bd602d2c7d8ea79ffe8c6e81268d&quot;&gt;drm/amd/display: explicitly define EOTF and inverse EOTF&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e4cddd51bfab2a40529a4af35bd2c912b5a0c239&quot;&gt;drm/amd/display: document AMDGPU pre-defined transfer functions&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=ec7b2a55463ea50401a8146793b61ee590255a45&quot;&gt;drm/amd/display: add plane HDR multiplier driver-specific property&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=671994e3bf33a414dc6a8c147969dae3a15ba9de&quot;&gt;drm/amd/display: add plane 3D LUT driver-specific properties&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=f545d82479b46368bf00d0bfecf33fa914bd5f8f&quot;&gt;drm/amd/display: add plane shaper LUT and TF driver-specific properties&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0ef47454dc82358b62a424b37c7520a84f307edb&quot;&gt;drm/amd/display: add plane blend LUT and TF driver-specific properties&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0f5afa190b890052cae187496f660699f00067ef&quot;&gt;drm/amd/display: add CRTC gamma TF driver-specific property&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=98fbb52772063ad2547d6d1b80ff99bc26761e79&quot;&gt;drm/amd/display: add comments to describe DM crtc color mgmt behavior&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8b6b3f668f31a24b5406661388b9a69202e83e9d&quot;&gt;drm/amd/display: encapsulate atomic regamma operation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6bd20f0f165f444c1d8184ebd238dd92966c9dca&quot;&gt;drm/amd/display: add CRTC gamma TF support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=88d26ea639a8e9d314e6bffef5f382167e7203e2&quot;&gt;drm/amd/display: set sdr_ref_white_level to 80 for out_transfer_func&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6bed9d550e51534415a56f8de33f5b9d4e728e53&quot;&gt;drm/amd/display: mark plane as needing reset if color props change&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=73e5ea616a9f8c261d07e63b421947949ad6cbce&quot;&gt;drm/amd/display: decouple steps for mapping CRTC degamma to DC plane&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=980f8710075acaeb226a94cde6dda8ffad30123c&quot;&gt;drm/amd/display: add plane degamma TF and LUT support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=ef113a3b1964b40dd87287806865b947d70f7df5&quot;&gt;drm/amd/display: reject atomic commit if setting both plane and CRTC degamma&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=889044f9e04f0829dd92640c551941bbe77bc0ea&quot;&gt;drm/amd/display: add dc_fixpt_from_s3132 helper&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=4bc59ddf57c1f68ea035c4f242108f29d91797fd&quot;&gt;drm/amd/display: add HDR multiplier support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=aba8b76baabde681ab4ff686452005d80d949345&quot;&gt;drm/amd/display: add plane shaper LUT support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=99de686115b00e765a5e9345e10c9d7312e4c7ea&quot;&gt;drm/amd/display: add plane shaper TF support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=486c95af5d76047d5cb50727270b1961dacb9380&quot;&gt;drm/amd/display: add plane 3D LUT support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8d26795ae61a5f64ba7db4f3240dc9ab2138d361&quot;&gt;drm/amd/display: handle empty LUTs in __set_input_tf&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=783ed4460fe55b01ff32a7c6ad8239974874a16a&quot;&gt;drm/amd/display: add plane blend LUT and TF support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=f81996637000a050477d597ef99e832079f99bd2&quot;&gt;drm/amd/display: allow newer DC hardware to use degamma ROM for PQ/HLG&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=cb19dc4a64598ffbfd4354083f809fae082fa4c3&quot;&gt;drm/amd/display: copy 3D LUT settings from crtc state to stream_update&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=b8b92c1bd7788b1f13d547ee2ce8a93baf55b814&quot;&gt;drm/amd/display: add plane CTM driver-specific property&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=3dad69090743c5f4642aeb628b8542a1e335dded&quot;&gt;drm/amd/display: add plane CTM support&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c6ef0a2265c518aa6699b64d10a7e5a9049ac96a&quot;&gt;drm/amd/display: fix documentation for dm_crtc_additional_color_mgmt()&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=3a0fa3bc245ef92838a8296e0055569b8dff94c4&quot;&gt;drm/amd/display: fix bandwidth validation failure on DCN 2.1&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=7075893d1d68b2b3517be250a02d86e76554ed22&quot;&gt;drm/amd/display: cleanup inconsistent indenting in amdgpu_dm_color&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9671761792156f2339627918bafcd713a8a6f777&quot;&gt;drm/amd/display: fix null-pointer dereference on edid reading&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e9098cc9aef13bd56e821f628c83f709d3347af1&quot;&gt;drm/amd/display: check dc_link before dereferencing&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;nia-espera-4-1&quot;&gt;Nia Espera (4)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=7bf421f44549cd0bca32bd0b4cf6e4cfe5b4f865&quot;&gt;dt-bindings: iio: adc: qcom: Add Qualcomm smb139x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=01a9e9eb6cdbce175ddea3cbe1163daed6d54344&quot;&gt;arm64: dts: qcom: sm8350: Fix DMA0 address&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e70537717146b380e18f0c92669d968af4acb8a7&quot;&gt;arm64: dts: qcom: pm8350k: Remove hanging whitespace&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=54ee322f845c7f25fbf6e43e11147b6cae8eff56&quot;&gt;arm64: dts: qcom: sm8350: Fix remoteproc interrupt type&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;acked-by-4&quot;&gt;Acked-by (4):&lt;/h3&gt;
+
+&lt;h4 id=&quot;jose-maria-casanova-crespo-2-1&quot;&gt;Jose Maria Casanova Crespo (2)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=09a93cc4f7d1893777f6b788bffe60d64e4d5df7&quot;&gt;drm/v3d: Implement show_fdinfo() callback for GPU usage stats&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=509433d8146c64ca9e0bcc370ec910821fffe80c&quot;&gt;drm/v3d: Expose the total GPU usage stats on sysfs&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;maíra-canal-1&quot;&gt;Maíra Canal (1)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=89d04995f76ce8318fe752feb33b1a45893b1a38&quot;&gt;MAINTAINERS: Drop Emma Anholt from all M lines.&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;melissa-wen-1&quot;&gt;Melissa Wen (1)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c400eb4d6f5f603f4f3f6cc4b6fdacd416ff142e&quot;&gt;MAINTAINERS: Add Maira to V3D maintainers&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;reviewed-by-30&quot;&gt;Reviewed-by (30):&lt;/h3&gt;
+
+&lt;h4 id=&quot;andré-almeida-1&quot;&gt;André Almeida (1)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=e4d983acffff270ccee417445a69b9ed198658b1&quot;&gt;drm: introduce DRM_CAP_ATOMIC_ASYNC_PAGE_FLIP&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;christian-gmeiner-1&quot;&gt;Christian Gmeiner (1)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=d437dab5b06e3dc73f6a58a6c9fd0b13d1ed80e1&quot;&gt;drm/etnaviv: Convert to platform remove callback returning void&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;iago-toral-quiroga-20&quot;&gt;Iago Toral Quiroga (20)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=79d94360d50fcd487edcfe118a47a2881534923f&quot;&gt;drm/v3d: wait for all jobs to finish before unregistering&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=780b9463ce66a9efb18e3b5d35cd011fb918d741&quot;&gt;drm/v3d: Remove unused function header&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=a8ad9d63a160f6b93f6958a5a0ded1a6abb15815&quot;&gt;drm/v3d: Move wait BO ioctl to the v3d_bo file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9032d5f633ed7b5c726971dc7e2372045bf27f40&quot;&gt;drm/v3d: Detach job submissions IOCTLs to a new specific file&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8288faaa8b3817c2fcdbacc720527bb8df2b57b1&quot;&gt;drm/v3d: Simplify job refcount handling&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6893deb881ab7da1691bd05045ffcc0c806319b9&quot;&gt;drm/v3d: Don’t allow two multisync extensions in the same job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=464c61e76de851a216e667c91332172c68ffed54&quot;&gt;drm/v3d: Decouple job allocation from job initiation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=aafc1a2bea67460c41a289e8bb1e4dc6d016fe11&quot;&gt;drm/v3d: Add a CPU job submission&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=c5195d001f4c122032a9ce90c6b88d772673fa35&quot;&gt;drm/v3d: Use v3d_get_extensions() to parse CPU job data&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1fe0879efc8f623816c7a825d853d2140c88cb2d&quot;&gt;drm/v3d: Create tracepoints to track the CPU job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=369b05961731925e4a43608ea1e7884df200f0bd&quot;&gt;drm/v3d: Detach the CSD job BO setup&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=7c13132c4073628b5fe23b5188ac583a2882a6b0&quot;&gt;drm/v3d: Enable BO mapping&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=18b8413b25b7070fa2e55858a2c808e6909581d0&quot;&gt;drm/v3d: Create a CPU job extension for a indirect CSD job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=9ba0ff3e083f6a4a0b6698f06bfff74805fefa5f&quot;&gt;drm/v3d: Create a CPU job extension for the timestamp query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=34a101e64296c736b14ce27e647fcebd70cb7bf8&quot;&gt;drm/v3d: Create a CPU job extension for the reset timestamp job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6745f3e44a20ac18e7e5a40a3c7f62225983d544&quot;&gt;drm/v3d: Create a CPU job extension to copy timestamp query to a buffer&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=bae7cb5d68001a8d4ceec5964dda74bb9aab7220&quot;&gt;drm/v3d: Create a CPU job extension for the reset performance query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=209e8d2695ee7a67a5b0487bbd1aa75e290d0f41&quot;&gt;drm/v3d: Create a CPU job extension for the copy performance query job&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=89fe46019a62bc1d0cb49c9615cb3520096c4bc1&quot;&gt;drm/v3d: Fix support for register debugging on the RPi 4&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=2ad62d16cd24b5e2f18318e97e1f06bef9f1ce7d&quot;&gt;drm/v3d: Free the job and assign it to NULL if initialization fails&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;maíra-canal-4&quot;&gt;Maíra Canal (4)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=1118d10f5e5ab544c489fad4da373f9988416ece&quot;&gt;drm/v3d: update UAPI to match user-space for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=0ad5bc1ce4634ce9b5eaf017b01399ec5e49a03d&quot;&gt;drm/v3d: fix up register addresses for V3D 7.x&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=ebb2f6eea688b9ffa46527c3e7570b2c347497b8&quot;&gt;dt-bindings: gpu: v3d: Add BCM2712’s compatible&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=6fd9487147c4f18ad77eea00bd8c9189eec74a3e&quot;&gt;drm/v3d: add brcm,2712-v3d as a compatible V3D device&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;melissa-wen-4&quot;&gt;Melissa Wen (4)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=09a93cc4f7d1893777f6b788bffe60d64e4d5df7&quot;&gt;drm/v3d: Implement show_fdinfo() callback for GPU usage stats&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=509433d8146c64ca9e0bcc370ec910821fffe80c&quot;&gt;drm/v3d: Expose the total GPU usage stats on sysfs&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=dce94061f0d02f5ab355390a6e63d3dbea938b72&quot;&gt;drm/v3d: Fix missing error code in v3d_submit_cpu_ioctl()&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=8b881b5d6fe9ebb7736097f37103c9b07ea45642&quot;&gt;drm/amd/display: fix documentation for amdgpu_dm_verify_lut3d_size()&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;tested-by-1&quot;&gt;Tested-by (1):&lt;/h3&gt;
+
+&lt;h4 id=&quot;guilherme-g-piccoli-1-2&quot;&gt;Guilherme G. Piccoli (1)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?h=v6.8&amp;amp;id=d49270a04623ce3c0afddbf3e984cb245aa48e9c&quot;&gt;pstore/ram: Fix crash when setting number of cpus to an odd number&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                <pubDate>Tue, 02 Apr 2024 11:00:00 +0000</pubDate>
+                <link>https://mairacanal.github.io/linux-6-8-AMD-HDR-and-raspberry-pi-5/</link>
+                <guid isPermaLink="true">https://mairacanal.github.io/linux-6-8-AMD-HDR-and-raspberry-pi-5/</guid>
+            </item>
         
             <item>
                 <title>Introducing CPU jobs to the Raspberry Pi</title>
@@ -2730,318 +3154,6 @@ companions to solve problems this summer and to share knowledge.&lt;/p&gt;
                 <pubDate>Wed, 07 Sep 2022 00:00:00 +0000</pubDate>
                 <link>https://mairacanal.github.io/gsoc-final-report/</link>
                 <guid isPermaLink="true">https://mairacanal.github.io/gsoc-final-report/</guid>
-            </item>
-        
-            <item>
-                <title>Does the Linux Kernel need software engineering?</title>
-                
-                <description>&lt;p&gt;For those looking for a short answer: yes, it does.&lt;/p&gt;
-
-&lt;p&gt;Now, we can dive into a more elaborate answer.&lt;/p&gt;
-
-&lt;p&gt;Software engineering is a more systematic approach to software development,
-which involves the definition, implementation, measurement, management, change,
-and improvement of the software lifecycle. When we think about software through
-this lens, we must also think about software requirements, design, construction,
-testing, and &lt;strong&gt;maintenance.&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;Software engineering improves software maintainability, scalability, and
-security. Moreover, makes it easier to add testing to the software stack. This
-approach makes the software &lt;strong&gt;more robust&lt;/strong&gt;.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;A little glossary for some software engineering terms: &lt;br /&gt;
-&lt;strong&gt;- Maintainability:&lt;/strong&gt; how easy is it to repair, improve or understand a
-software artifact? After finishing your product, you must continue to fix bugs,
-optimize functionalities and refactor code to avoid future problems. &lt;br /&gt;
-&lt;strong&gt;- Scalability:&lt;/strong&gt; how easy is it to grow or shrink a software artifact? &lt;br /&gt;
-&lt;strong&gt;- Testability:&lt;/strong&gt; how easy is it to test a software artifact? Does the function
-has suitable hooks for testing?&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Many people might believe that it is not possible to do software engineering on
-the Linux Kernel, or even that software engineering is not needed. From what I
-see, these beliefs come from two statements:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;&lt;strong&gt;It is not possible to apply software engineering with C:&lt;/strong&gt; sometimes
-software engineering is only associated with Object-Oriented Programming
-languages.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Software engineering is not needed as we are working with drivers:&lt;/strong&gt; as
-drivers are theoretically finite, we don’t have to think about their
-expansion and maintainability.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;If we follow those beliefs, we might end up with poorly designed code. And,
-when badly designed code grows, I assure you that we are going to see code
-repetition, dead code, insanely large functions, and bugs.&lt;/p&gt;
-
-&lt;p&gt;But, the worst of all: when we have a huge codebase with lots of bad code
-practices, maintainability becomes hard and software quality will decrease
-more and more.&lt;/p&gt;
-
-&lt;p&gt;So, let’s first understand why those two beliefs are false.&lt;/p&gt;
-
-&lt;h2 id=&quot;software-engineering-with-c&quot;&gt;Software Engineering with C&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;You might say: how can I use my fancy design patterns, avoid code repetition,
-and make beautiful polymorphism when I don’t have classes?&lt;/p&gt;
-
-&lt;p&gt;And okay, you are right! Design Patterns in C++ are much easier and more
-natural to understand and implement. In C++ you can create a hierarchy
-to represent a family of devices, and this feature comes out of the box.
-But we can translate those concepts to C.&lt;/p&gt;
-
-&lt;p&gt;C is a &lt;em&gt;structured language,&lt;/em&gt; but we can write object-oriented programs in C. In
-this sense, libraries and structs are your main allies. Moreover, you can use
-function pointers to create polymorphism in C.&lt;/p&gt;
-
-&lt;p&gt;For example, if I want to write a simple queue in C, I can use the following
-approach:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#ifndef QUEUE_H_
-#define QUEUE_H_
-&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;head&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isFull&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isEmpty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;insert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;remove&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-
-&lt;span class=&quot;cm&quot;&gt;/* Constructor and destructors */&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_Init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isFullFunction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
-	&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isEmptyFunction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSizeFunction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
-	&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;insertFunction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;removeFunction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
-
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_Cleanup&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;cm&quot;&gt;/* Operations */&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_isFull&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_isEmpty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_getSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_insert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_remove&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Queue_Create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Queue_Destroy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;cp&quot;&gt;#endif
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Notice that I can have polymorphism using this approach. As I can create a new
-struct that inherits Queue, such as:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-	&lt;span class=&quot;cm&quot;&gt;/* new attributes */&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numberElementsOnDisk&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-	&lt;span class=&quot;cm&quot;&gt;/* aggregation in subclass */&lt;/span&gt;
-	&lt;span class=&quot;n&quot;&gt;Queue&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;outputQueue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-	&lt;span class=&quot;cm&quot;&gt;/* inherited virtual function */&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isFull&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isEmpty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;insert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;remove&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-
-	&lt;span class=&quot;cm&quot;&gt;/* new virtual functions */&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flush&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-	&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;load&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CachedQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;me&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Okay, this is incredible! It is &lt;strong&gt;POLYMORPHISM&lt;/strong&gt; in C. And there is much more on
-this topic in the book &lt;a href=&quot;https://www.amazon.com.br/Design-Patterns-Embedded-Systems-Engineering/dp/1856177076&quot;&gt;“Design Patterns for Embedded Systems in C”&lt;/a&gt;,
-by Bruce Powel Douglass. I love this book and I learned a lot from with it. Moreover,
-there is an awesome talk by Renato Geh and Matheus Tavares in the Linux Developer
-Conference Brazil 2019 about &lt;a href=&quot;https://www.youtube.com/watch?v=x0ELqk2lCcI&quot;&gt;“Object Oriented Techniques in C: A Case Study on
-Git and Linux”&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;So, you can see that fancy software architecture can be done on C. And don’t get
-me wrong, there are some beautiful abstractions in Linux that use these
-concepts, such as the Virtual File System (VFS). Moreover, some libraries
-provide great APIs, such as the DRM subsystem.&lt;/p&gt;
-
-&lt;p&gt;But sometimes this is not used in the implementation of drivers. And this takes
-us to the next point: yes, drivers need to be properly designed on the software
-side.&lt;/p&gt;
-
-&lt;h2 id=&quot;drivers-should-be-designed-as-pieces-of-software&quot;&gt;Drivers should be designed as pieces of software&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Here I must say that: my opinion is extremely biased by the Display Mode VBA
-library. For the last month, I have been writing unit tests for this library as
-part of my GSoC project. I got quite impressed (maybe not in a good way) with
-the amount of code repetition in the code and also with the &lt;strong&gt;huge&lt;/strong&gt; functions.&lt;/p&gt;
-
-&lt;p&gt;And this is not a roast on AMDGPU code: AMD does a great job for the free
-software community and it is incredible that we have an open-source driver for a
-major graphics retailer. Moreover, I’m sure that this problem also exists in
-other parts of the kernel, so, I believe it is a good point to discuss.&lt;/p&gt;
-
-&lt;p&gt;Let’s start from the premise that drivers are finite: you can grab the
-datasheet, code the hardware to the end of its features and finish the driver.
-And I might even say that you are right: drivers are finite. But, hardware
-companies don’t usually create one single product with singular characteristics:
-they usually create a product line, and sometimes product lines have children:
-another product line with some upgrades on the previous one.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;💡 Product lines having children… For an OOP programmer, this sounds like a
-beautiful case for inheritance.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;So, if you have a product line, are you going to create a file for each product?
-And for the product with a couple of features added, are you going to paste the
-previous driver and change a couple of hundreds of lines? This doesn’t seem like
-a great option, for a couple of reasons:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;&lt;strong&gt;Duplicate Code:&lt;/strong&gt; you are duplicating the code and &lt;strong&gt;the bugs as well&lt;/strong&gt;.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Test Coverage:&lt;/strong&gt; are you going to duplicate the tests also?&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Maintainability:&lt;/strong&gt; especially in the maintenance phase of a project, the
-less code the better.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;You see, it all comes down to &lt;strong&gt;maintainability.&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;As a great example of code reuse, you can check out the IIO subsystem.
-Hardware manufacturers such as Maxim and Analog Devices Inc usually have
-chips that share the same register map or share functionalities. Instead of
-creating a driver for each chip, developers write one single driver and add
-the compatible device IDs on the Device Table. For example, you can check the
-Maxim MAX1027 ADC driver, which is compatible with the MAX1027, MAX1029,
-MAX1031, MAX1227, MAX1229, and MAX1231. So we have one single driver for six
-devices: this is great for maintainability!&lt;/p&gt;
-
-&lt;p&gt;In this case, if I find a bug, I can make one single modification, and send
-one single patch, the maintainer will review one single time, and all runs
-smoothly.&lt;/p&gt;
-
-&lt;p&gt;Now, let’s take a look at the DML folder from the AMD’s Display Core, more
-specifically the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba&lt;/code&gt; files from DCN20 and DCN21. See that
-these product lines are pretty similar, so maybe we can reuse a lot of the
-code.&lt;/p&gt;
-
-&lt;p&gt;But, if you check the directory, you can see that we have three different
-files: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba_20.c&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba_20v2.c&lt;/code&gt; and
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba_21.c&lt;/code&gt;.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;💡  You can check the difference between the files through: &lt;br /&gt;
-	  &lt;strong&gt;$ diff drivers/gpu/drm/amd/display/dc/dml/dcn20/display_mode_vba_20.c drivers/gpu/drm/amd/display/dc/dml/dcn20/display_mode_vba_20v2.c&lt;/strong&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;And much of the code is identical: I mean there are functions that don’t
-change a line! This hits pretty hard on maintainability.&lt;/p&gt;
-
-&lt;p&gt;Now, if I find a bug, I need to make three modifications. Moreover, I might
-not even know that the code is duplicated, so I might only fix the bug in one
-place and leave the other files untouched. Then another developer might find
-the same bug once again, and will have to send it to the maintainer, who will
-have to review it one more time. &lt;strong&gt;This is a lot of rework!&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;And if I could guess a reason for AMD to copy and paste the code so many
-times, I would point out another maintainability issue: &lt;strong&gt;the functions are
-huge!&lt;/strong&gt; Some functions from the VBA files have more than a thousand lines.&lt;/p&gt;
-
-&lt;p&gt;These huge functions from the VBA files implicate that if you want to change
-a couple of lines for your new product lines you need to copy and paste the
-whole function.&lt;/p&gt;
-
-&lt;p&gt;Ideally, from the principles of the Clean Code book, we would like to have
-small functions that should be simple and do one thing only. And I know: this
-is not applicable in 100% of the cases, but I cannot find a good reason for a
-function to be so huge and have dozens of parameters.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;💡 Other than the readability, those huge functions also hurt the stack pretty badly.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Huge functions really hurt the readability, understandability, and testability
-of the code. Moreover, they make it difficult to avoid code duplication as the
-function has dozens of side effects.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;More glossary for some software engineering terms: &lt;br /&gt;
-&lt;strong&gt;- Readability:&lt;/strong&gt; how easily a software artifact can be read? &lt;br /&gt;
-&lt;strong&gt;- Understandability:&lt;/strong&gt; how easily a software artifact can be comprehend?&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;But this is not a dead end for the AMDGPU’s DML code: I mean, the AMDGPU driver
-works awesomely on Linux, and code refactoring is always an option.&lt;/p&gt;
-
-&lt;h2 id=&quot;we-can-think-about-software&quot;&gt;We can think about software!&lt;/h2&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;At this moment, we might conclude that as the AMDGPU driver is open-source, then
-we can fix those issues in the code. But it is definitely not safe to simply
-tear down the code and rewrite it in one single patch set, as the AMDGPU driver
-has to remain functional on Linux.&lt;/p&gt;
-
-&lt;p&gt;One way to fix this is through unit testing to ensure the code is properly
-refactored. Though, throughout my GSoC project, I ended up noticing that it is
-not possible to write a unit test for a thousand-line function. A huge function
-has many side effects and testing each one of them is not feasible.&lt;/p&gt;
-
-&lt;p&gt;Maybe for Display Mode VBA unit testing is not the only way to go. We probably
-could first break the functions into smaller, self-contained pieces, as this
-will help to create better tests, to improve readability, and to reduce the
-stack size.&lt;/p&gt;
-
-&lt;p&gt;Now with smaller functions, it is more feasible to share code across the &lt;a href=&quot;https://docs.kernel.org/gpu/amdgpu/display/dcn-overview.html&quot;&gt;DCNs&lt;/a&gt;
-and create a common interface for them.&lt;/p&gt;
-
-&lt;p&gt;This refactor can lead to the use of those design patterns I talked about
-earlier and make the DML more maintainable and readable. We can think about the
-use of inheritance where we have a base library, from which DCN20 can extend,
-and then DCN21 can extend from DCN20. And this is how those three huge files can
-become three small files.&lt;/p&gt;
-
-&lt;p&gt;And this refactor can start piece by piece:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;&lt;strong&gt;Unifying the parameters:&lt;/strong&gt; don’t pass the parameters by copying if the
-parameters are in the common struct. The stack will thank this change!&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Splitting the functions:&lt;/strong&gt; make smaller, more readable functions.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Writing tests for the functions&lt;/strong&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Creating a common interface:&lt;/strong&gt; here is where the design patterns come
-in.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;This way we can make a safer refactor as unit testing is not viable. This
-doesn’t mean that we are not going to introduce any bugs in the process, but
-having a structured plan will help us avoid them.&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;I must say: this is the opinion of someone that came straight out of the
-university, thinking about well-structured code. So, I might be utopian about
-software engineering. I understand that the developers at AMD are doing their
-best and are working hard to provide the best features for us, Linux users.&lt;/p&gt;
-
-&lt;p&gt;But thinking of software is the best way to ensure the maintainability of our
-code, and bad code practices will prove costly one day or another.&lt;/p&gt;
-</description>
-                <pubDate>Wed, 10 Aug 2022 00:00:00 +0000</pubDate>
-                <link>https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/</link>
-                <guid isPermaLink="true">https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/</guid>
             </item>
         
     </channel>
