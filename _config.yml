@@ -1,27 +1,19 @@
 name: "Maíra Canal"
 description: "Blogging about graphics development whenever I can"
-
-# URL settings
 domain: "mairacanal.github.io"
 url: "https://mairacanal.github.io" # Domain Name of host. [username].github.io for github pages
+
 permalink: pretty
 
 dark_scheme: catppuccin-frappe
 light_scheme: catppuccin-frappe
 # printing_scheme: tomorrow # Must have #FFFFFF background
 
-
 plugins:
-  - jekyll-extlinks
-  - jekyll-relative-links
+  - jekyll-target-blank
 
-extlinks:
-  attributes:
-    class: external
-
-relative_links:
-  enabled: true
-  collections: true
+target-blank:
+  add_css_classes: external
 
 sass:
   style: compact

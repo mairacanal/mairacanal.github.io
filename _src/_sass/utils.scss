@@ -16,7 +16,7 @@
   @return unquote(map-get($map, $position));
 }
 // Make the element be an icon
-@mixin set-icon($icon-name, $size: 1.5rem, $margin: $size / 10, $align: "middle") {
+@mixin set-icon($icon-name, $size: 1.5rem, $margin: calc($size / 10), $align: "middle") {
   $icon: url("icons/#{$icon-name}.svg");
 
   background-color: currentColor;
@@ -33,7 +33,7 @@
 }
 
 // Adds an icon after or before something
-@mixin add-icon($icon-name, $position: "right", $size: 1rem, $margin: $size / 10, $align: "top", $float: false) {
+@mixin add-icon($icon-name, $position: "right", $size: 1rem, $margin: calc($size / 10), $align: "top", $float: false) {
   $icon: url("icons/#{$icon-name}.svg");
   &:#{position-to-location($position)} {
     background-color: currentColor;
@@ -52,7 +52,7 @@
 }
 
 // Specialiazed version, for labels with one text input
-@mixin add-icon-label($icon-name, $size: 1.4rem, $margin: $size / 2, $position: left) {
+@mixin add-icon-label($icon-name, $size: 1.4rem, $margin: calc($size / 2), $position: left) {
   @include add-icon($icon-name, $size: $size, $margin: $margin, $position: $position);
 
   &:#{position-to-location($position)} {
@@ -63,13 +63,13 @@
   input {
     padding-#{$position}: $size + (2 * $margin);
     #{opposite-position($position)}: $size + $margin;
-    margin-#{opposite-position($position)}: - $size - ($margin / 2);
+    margin-#{opposite-position($position)}: - $size - calc($margin / 2);
     position: relative;
   }
 }
 
 // Specialized version, for buttons
-@mixin add-icon-button($icon-name, $size: 1.2rem, $margin: $size / 5, $position: left) {
+@mixin add-icon-button($icon-name, $size: 1.2rem, $margin: calc($size / 5), $position: left) {
   @include add-icon($icon-name, $size: $size, $margin: $margin, $position: $position);
 
   &:#{position-to-location($position)} {
