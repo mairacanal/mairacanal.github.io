@@ -94,7 +94,7 @@
       
     </header>
 
-    <p><a href="https://www.igalia.com" class="external">Igalia</a> is always working hard to improve 3D rendering
+    <p><a href="https://www.igalia.com" target="_blank" rel="noopener noreferrer" class="external">Igalia</a> is always working hard to improve 3D rendering
 drivers of the Broadcom VideoCore GPU, found in Raspberry Pi devices. One of our
 most recent efforts in this sense was the implementation of CPU jobs from the
 Vulkan driver to the V3D kernel driver.</p>
@@ -105,7 +105,7 @@ Vulkan driver to the V3D kernel driver.</p>
 the GPU alone, so we implement those as CPU jobs on Mesa. A CPU job is a job
 that requires CPU intervention to be performed. For example, in the Broadcom
 VideoCore GPUs, we don’t have a way to calculate the timestamp. But we need the
-timestamp for Vulkan <a href="https://docs.vulkan.org/samples/latest/samples/api/timestamp_queries/README.html" class="external">timestamp
+timestamp for Vulkan <a href="https://docs.vulkan.org/samples/latest/samples/api/timestamp_queries/README.html" target="_blank" rel="noopener noreferrer" class="external">timestamp
 queries</a>.
 Therefore, we need to calculate the timestamp on the CPU.</p>
 
@@ -121,17 +121,17 @@ a DRM scheduler instance that helps us to synchronize the jobs.</p>
 
 <blockquote>
   <p>If you want to know more about the different kinds of V3D jobs, check out this
-<a href="https://mairacanal.github.io/november-update-exploring-v3d/" class="external">November Update: Exploring
+<a href="https://mairacanal.github.io/november-update-exploring-v3d/">November Update: Exploring
 V3D</a> blogpost,
 where I explain more about all the V3D
-<a href="https://en.wikipedia.org/wiki/Ioctl" class="external">IOCTLs</a> and jobs.</p>
+<a href="https://en.wikipedia.org/wiki/Ioctl" target="_blank" rel="noopener noreferrer" class="external">IOCTLs</a> and jobs.</p>
 </blockquote>
 
 <p>Jobs of the same kind are submitted, dispatched, and processed in the same order
 they are executed, using a standard first-in-first-out (FIFO) queue system. We
 can synchronize different jobs across different queues using DRM syncobjs. More
 about the V3D synchronization framework and user extensions can be learned in
-<a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" class="external">this two-part blog
+<a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" target="_blank" rel="noopener noreferrer" class="external">this two-part blog
 post</a> from Melissa
 Wen.</p>
 
@@ -163,7 +163,7 @@ copy query results jobs…) and each of them has a common infrastructure
 of allocation and synchronization but performs different operations. Therefore,
 we decided to go with the option to use user extensions.</p>
 
-<p>On <a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" class="external">Melissa’s blogpost</a>, she digs
+<p>On <a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" target="_blank" rel="noopener noreferrer" class="external">Melissa’s blogpost</a>, she digs
 deep into the implementation of generic IOCTL extensions in the V3D kernel
 driver. But, to put it simply, instead of expanding the data struct for each
 IOCTL every time we need to add a new feature, we define a user extension chain
@@ -217,29 +217,29 @@ and depending on the type of job, perform a certain operation.</p>
 
 <ol>
   <li>
-<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=18b8413b25b7070fa2e55858a2c808e6909581d0" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_INDIRECT_CSD</code></a>:
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=18b8413b25b7070fa2e55858a2c808e6909581d0" target="_blank" rel="noopener noreferrer" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_INDIRECT_CSD</code></a>:
 this CPU job allows us to submit an indirect CSD job. An indirect CSD job is a
 job that, when executed in the queue, will map an indirect buffer, read the
 dispatch parameters, and submit a regular dispatch. This CPU job is used in
 Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdDispatchIndirect()</code>.</li>
   <li>
-<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=9ba0ff3e083f6a4a0b6698f06bfff74805fefa5f" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_TIMESTAMP_QUERY</code></a>:
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=9ba0ff3e083f6a4a0b6698f06bfff74805fefa5f" target="_blank" rel="noopener noreferrer" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_TIMESTAMP_QUERY</code></a>:
 this CPU job calculates the query timestamp and updates the query availability
 by signaling a syncobj. This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdWriteTimestamp()</code>.</li>
   <li>
-<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=34a101e64296c736b14ce27e647fcebd70cb7bf8" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_RESET_TIMESTAMP_QUERY</code></a>:
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=34a101e64296c736b14ce27e647fcebd70cb7bf8" target="_blank" rel="noopener noreferrer" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_RESET_TIMESTAMP_QUERY</code></a>:
 this CPU job resets the timestamp queries based on the value offset of the first
 query. This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdResetQueryPool()</code> for timestamp queries.</li>
   <li>
-<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=6745f3e44a20ac18e7e5a40a3c7f62225983d544" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY</code></a>:
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=6745f3e44a20ac18e7e5a40a3c7f62225983d544" target="_blank" rel="noopener noreferrer" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY</code></a>:
 this CPU job copies the complete or partial result of a query to a buffer.
 This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdCopyQueryPoolResults()</code> for timestamp queries.</li>
   <li>
-<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=bae7cb5d68001a8d4ceec5964dda74bb9aab7220" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_RESET_PERFORMANCE_QUERY</code></a>:
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=bae7cb5d68001a8d4ceec5964dda74bb9aab7220" target="_blank" rel="noopener noreferrer" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_RESET_PERFORMANCE_QUERY</code></a>:
 this CPU job resets the performance queries by resetting the values of the
 perfmons. This CPU job is used in Vulkan calls like <code class="language-plaintext highlighter-rouge">vkCmdResetQueryPool()</code> for performance queries.</li>
   <li>
-<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=209e8d2695ee7a67a5b0487bbd1aa75e290d0f41" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_PERFORMANCE_QUERY</code></a>:
+<a href="https://cgit.freedesktop.org/drm/drm-misc/commit/?id=209e8d2695ee7a67a5b0487bbd1aa75e290d0f41" target="_blank" rel="noopener noreferrer" class="external"><code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_PERFORMANCE_QUERY</code></a>:
 similar to <code class="language-plaintext highlighter-rouge">DRM_V3D_EXT_ID_CPU_COPY_TIMESTAMP_QUERY</code>, this CPU job copies the
 complete or partial result of a query to a buffer. This CPU job is used in Vulkan
 calls like <code class="language-plaintext highlighter-rouge">vkCmdCopyQueryPoolResults()</code> for performance queries.</li>
@@ -288,7 +288,7 @@ entity.</p>
 
 <p>The complete kernel implementation has already landed in drm-misc-next and can
 be seen right
-<a href="https://lore.kernel.org/dri-devel/20231130164420.932823-2-mcanal@igalia.com/T/" class="external">here</a>.</p>
+<a href="https://lore.kernel.org/dri-devel/20231130164420.932823-2-mcanal@igalia.com/T/" target="_blank" rel="noopener noreferrer" class="external">here</a>.</p>
 
 <h2 id="what-did-we-change-in-mesa-v3dv-to-use-the-new-kernel-v3d-cpu-job">What did we change in Mesa-V3DV to use the new kernel-V3D CPU job?</h2>
 
@@ -337,17 +337,17 @@ without stalling the submission thread.</p>
 
 <p>The userspace implementation has already landed in Mesa and the full
 implementation can be checked in this
-<a href="https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/26448" class="external">MR</a>.</p>
+<a href="https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/26448" target="_blank" rel="noopener noreferrer" class="external">MR</a>.</p>
 
 <hr>
 
 <p>More about the on-going challenges in the Raspberry Pi driver stack can be
-checked during this <a href="https://www.youtube.com/watch?v=Gk49xj4jds4" class="external">XDC 2023 talk</a>
+checked during this <a href="https://www.youtube.com/watch?v=Gk49xj4jds4" target="_blank" rel="noopener noreferrer" class="external">XDC 2023 talk</a>
 presented by Iago Toral, Juan Suárez and myself. During this talk, Iago
 mentioned the CPU job work that we have been doing.</p>
 
-<p>Also I cannot finish this post without thanking <a href="https://melissawen.github.io/" class="external">Melissa
-Wen</a> and <a href="https://blogs.igalia.com/itoral/author/itoral/" class="external">Iago
+<p>Also I cannot finish this post without thanking <a href="https://melissawen.github.io/" target="_blank" rel="noopener noreferrer" class="external">Melissa
+Wen</a> and <a href="https://blogs.igalia.com/itoral/author/itoral/" target="_blank" rel="noopener noreferrer" class="external">Iago
 Toral</a> for all the help while
 developing the CPU jobs for the V3D kernel driver.</p>
 
@@ -371,16 +371,16 @@ developing the CPU jobs for the V3D kernel driver.</p>
 
   <p>
     Social:
-    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
-    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
-    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
-    <a rel="me" href="https://fosstodon.org/@mairacanal" class="external">Mastodon</a>
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
   </p>
 
-  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
 </address>
 
-<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/introducing-cpu-jobs-to-the-rpi/" class="external">my website</a>.</small></p>
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/introducing-cpu-jobs-to-the-rpi/">my website</a>.</small></p>
 
 </footer>
 

@@ -116,14 +116,14 @@ somehow related to my project, but they are not exactly unit tests for AMDGPU.</
 
 <h3 id="kworkflow">kworkflow</h3>
 
-<p><a href="https://github.com/kworkflow/kworkflow" class="external">kworkflow</a> is a tool for reducing the
+<p><a href="https://github.com/kworkflow/kworkflow" target="_blank" rel="noopener noreferrer" class="external">kworkflow</a> is a tool for reducing the
 environment and setup overhead of developing for Linux, which is maintained by
 my mentor Rodrigo Siqueira. I use it to manage my config files, deploy to my
 testing machine, check code style, and more. Initially, kw didn’t have support
 to deploy for Fedora-based machines.</p>
 
 <p>During the Community Bonding Period, I added support to deploy Fedora-based
-machines and I wrote a bit about this story in this <a href="https://mairacanal.github.io/kernel-development-fedora/" class="external">blog
+machines and I wrote a bit about this story in this <a href="https://mairacanal.github.io/kernel-development-fedora/">blog
 post</a>.  Moreover, I
 fixed a couple of bugs that I spotted while using it.</p>
 
@@ -136,19 +136,19 @@ fixed a couple of bugs that I spotted while using it.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/601" class="external">docs: dependencies: Add pv to Fedora dependencies</a></td>
+      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/601" target="_blank" rel="noopener noreferrer" class="external">docs: dependencies: Add pv to Fedora dependencies</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/602" class="external">src: kwlib: check if the context is inside a git worktree</a></td>
+      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/602" target="_blank" rel="noopener noreferrer" class="external">src: kwlib: check if the context is inside a git worktree</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/613" class="external">Add deploy support to Fedora-based systems</a></td>
+      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/613" target="_blank" rel="noopener noreferrer" class="external">Add deploy support to Fedora-based systems</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/649" class="external">src: help: Fix renaming of configm to kernel-config-manager</a></td>
+      <td style="text-align: left"><a href="https://github.com/kworkflow/kworkflow/pull/649" target="_blank" rel="noopener noreferrer" class="external">src: help: Fix renaming of configm to kernel-config-manager</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
   </tbody>
@@ -156,11 +156,11 @@ fixed a couple of bugs that I spotted while using it.</p>
 
 <h3 id="igt">IGT</h3>
 
-<p><a href="https://gitlab.freedesktop.org/drm/igt-gpu-tools" class="external">IGT GPU Tools</a> is a
+<p><a href="https://gitlab.freedesktop.org/drm/igt-gpu-tools" target="_blank" rel="noopener noreferrer" class="external">IGT GPU Tools</a> is a
 collection of tools for the development and testing of DRM drivers. During GSoC,
 I ran the AMDGPU suite a couple of times on my testing machine with a single
 display connected through HDMI. With this setup, I was able to detect a couple
-of failures on the IGT tests and I reported some of those issues on the <a href="https://gitlab.freedesktop.org/drm/amd/-/issues" class="external">AMD bug
+of failures on the IGT tests and I reported some of those issues on the <a href="https://gitlab.freedesktop.org/drm/amd/-/issues" target="_blank" rel="noopener noreferrer" class="external">AMD bug
 tracker</a>, but also I sent two
 patches fixing a couple of failures on the test.</p>
 
@@ -173,11 +173,11 @@ patches fixing a couple of failures on the test.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/495078/" class="external">[i-g-t,v2] tests/amdgpu: Skip multihead MPO tests on single display</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/495078/" target="_blank" rel="noopener noreferrer" class="external">[i-g-t,v2] tests/amdgpu: Skip multihead MPO tests on single display</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/497794/" class="external">[i-g-t,v2] tests/amdgpu/amd_bypass: skip if connector is not DisplayPort</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/497794/" target="_blank" rel="noopener noreferrer" class="external">[i-g-t,v2] tests/amdgpu/amd_bypass: skip if connector is not DisplayPort</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
   </tbody>
@@ -185,7 +185,7 @@ patches fixing a couple of failures on the test.</p>
 
 <h3 id="linux-kernel---kunit">Linux Kernel - KUnit</h3>
 
-<p><a href="https://docs.kernel.org/dev-tools/kunit/" class="external">KUnit</a> is the Kernel Unit Testing
+<p><a href="https://docs.kernel.org/dev-tools/kunit/" target="_blank" rel="noopener noreferrer" class="external">KUnit</a> is the Kernel Unit Testing
 Framework. It is the framework we used for creating unit tests for the AMDGPU
 drivers. My patches to KUnit are based on problems that I noticed I could
 improve while I was writing unit tests for VBA. First, I fixed a simple
@@ -214,19 +214,19 @@ work on their feedback.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220720185719.273630-1-mairacanal@riseup.net/T/#u" class="external">Documentation: KUnit: Fix example with compilation error</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220720185719.273630-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">Documentation: KUnit: Fix example with compilation error</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220808125237.277126-2-mairacanal@riseup.net/" class="external">kunit: Introduce KUNIT_EXPECT_MEMEQ and KUNIT_EXPECT_MEMNEQ macros</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220808125237.277126-2-mairacanal@riseup.net/" target="_blank" rel="noopener noreferrer" class="external">kunit: Introduce KUNIT_EXPECT_MEMEQ and KUNIT_EXPECT_MEMNEQ macros</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220808125237.277126-3-mairacanal@riseup.net/" class="external">kunit: Add KUnit memory block assertions to the example_all_expect_macros_test</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220808125237.277126-3-mairacanal@riseup.net/" target="_blank" rel="noopener noreferrer" class="external">kunit: Add KUnit memory block assertions to the example_all_expect_macros_test</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220808125237.277126-4-mairacanal@riseup.net/" class="external">kunit: Use KUNIT_EXPECT_MEMEQ macro</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/linux-kselftest/20220808125237.277126-4-mairacanal@riseup.net/" target="_blank" rel="noopener noreferrer" class="external">kunit: Use KUNIT_EXPECT_MEMEQ macro</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
   </tbody>
@@ -236,13 +236,13 @@ work on their feedback.</p>
 
 <p>In the DRM subsystem, I contributed to the DRM unit tests, which used to be
 selftests and I converted them to KUnit during an LKCamp hackathon with other
-students. I explained more about those tests in this <a href="https://mairacanal.github.io/from-selftests-to-KUnit/" class="external">blog
+students. I explained more about those tests in this <a href="https://mairacanal.github.io/from-selftests-to-KUnit/">blog
 post</a>.  After those
 patches were merged, I dedicated myself to some janitorial duties on the tests
 folders: fixing stack warnings, refactoring some tests, and making the naming
 more consistent.</p>
 
-<p>Also, this summer, I <a href="https://gitlab.freedesktop.org/freedesktop/freedesktop/-/issues/450" class="external">applied for commit
+<p>Also, this summer, I <a href="https://gitlab.freedesktop.org/freedesktop/freedesktop/-/issues/450" target="_blank" rel="noopener noreferrer" class="external">applied for commit
 rights</a> on
 the drm-misc repository and it was approved. I got pretty glad to have commit
 rights, although I believe it is such a huge responsibility and I plan to use
@@ -260,55 +260,55 @@ about dim).</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m3e0a2a318c5e1689c6a984d2bd4a5679e858eeff" class="external">drm: selftest: convert drm_damage_helper selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m3e0a2a318c5e1689c6a984d2bd4a5679e858eeff" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_damage_helper selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#mf58d435b607096449365fd5d3819302d3ca548c6" class="external">drm: selftest: convert drm_cmdline_parser selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#mf58d435b607096449365fd5d3819302d3ca548c6" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_cmdline_parser selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m5f3b4cbaa011ea730d7017fcd193e6b1b7d7bae8" class="external">drm: selftest: convert drm_rect selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m5f3b4cbaa011ea730d7017fcd193e6b1b7d7bae8" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_rect selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m5725eabec8f19609ed68bce362da7239a10e3ff2" class="external">drm: selftest: convert drm_format selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m5725eabec8f19609ed68bce362da7239a10e3ff2" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_format selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m32d0d32fac5f1ef5a67c5844acc6e1793e0b4d53" class="external">drm: selftest: convert drm_plane_helper selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m32d0d32fac5f1ef5a67c5844acc6e1793e0b4d53" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_plane_helper selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m0434c83b951ad9db5d6cf99abdb7244191246ebd" class="external">drm: selftest: convert drm_dp_mst_helper selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m0434c83b951ad9db5d6cf99abdb7244191246ebd" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_dp_mst_helper selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m35dddb45de1ee298e1076c44334af736cc881a38" class="external">drm: selftest: convert drm_framebuffer selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m35dddb45de1ee298e1076c44334af736cc881a38" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_framebuffer selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m54ddcbd30df811ef9ec704cc70fa04c24e0f7f8c" class="external">drm: selftest: convert drm_buddy selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m54ddcbd30df811ef9ec704cc70fa04c24e0f7f8c" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_buddy selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m25364c46c57f6513cd1c04588fb8c7e35c0eaa63" class="external">drm: selftest: convert drm_mm selftest to KUnit</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m25364c46c57f6513cd1c04588fb8c7e35c0eaa63" target="_blank" rel="noopener noreferrer" class="external">drm: selftest: convert drm_mm selftest to KUnit</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220729124726.748221-1-mairacanal@riseup.net/T/#u" class="external">drm/tests: Split up test cases in igt_check_drm_format_min_pitch</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220729124726.748221-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/tests: Split up test cases in igt_check_drm_format_min_pitch</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220828182543.155415-1-mairacanal@riseup.net/T/#u" class="external">drm/mm: Reduce stack frame usage in __igt_reserve</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220828182543.155415-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/mm: Reduce stack frame usage in __igt_reserve</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220901124210.591994-1-mairacanal@riseup.net/T/#mf7a08ad198b95199a4beec1cdbe4c25b24771f72" class="external">drm/tests: Split drm_framebuffer_create_test into parameterized tests</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220901124210.591994-1-mairacanal@riseup.net/T/#mf7a08ad198b95199a4beec1cdbe4c25b24771f72" target="_blank" rel="noopener noreferrer" class="external">drm/tests: Split drm_framebuffer_create_test into parameterized tests</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220901124210.591994-1-mairacanal@riseup.net/T/#mfded29eaff1d5209f5a9c27ab952a367121520d4" class="external">drm/tests: Change “igt_” prefix to “test_drm_”</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220901124210.591994-1-mairacanal@riseup.net/T/#mfded29eaff1d5209f5a9c27ab952a367121520d4" target="_blank" rel="noopener noreferrer" class="external">drm/tests: Change “igt_” prefix to “test_drm_”</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
   </tbody>
@@ -320,7 +320,7 @@ about dim).</p>
 unit tests on VBA. The <code class="language-plaintext highlighter-rouge">display_mode_vba</code> files were automatically generated,
 which means that the code might not be the most readable one. During the summer,
 I had a couple of ideas for cleaning up a bit of the VBA files and some of those
-ideas are documented in this <a href="https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/" class="external">blog
+ideas are documented in this <a href="https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/">blog
 post</a>.
 And most of my patches are related to this matter.</p>
 
@@ -331,7 +331,7 @@ big changes might not be suitable for them.</p>
 
 <p>Moreover, there are a couple of fixes. My favorite one is the <code class="language-plaintext highlighter-rouge">drm/amdgpu: Fix
 use-after-free on amdgpu_bo_list mutex</code>, which was a fix to a use-after-free
-problem that appeared in the <a href="https://lore.kernel.org/dri-devel/CABXGCsM58-8fxVKAVkwsshg+33B_1_t_WesG160AtVBe1ZvKiw@mail.gmail.com/" class="external">mailing
+problem that appeared in the <a href="https://lore.kernel.org/dri-devel/CABXGCsM58-8fxVKAVkwsshg+33B_1_t_WesG160AtVBe1ZvKiw@mail.gmail.com/" target="_blank" rel="noopener noreferrer" class="external">mailing
 list</a>.
 It was fun to read the output provided in the mailing-list and then track the
 bug based on the trace. Also, it was a really nice interaction with other
@@ -346,91 +346,91 @@ developers on the mailing list.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220630185005.908140-1-mairacanal@riseup.net/T/#u" class="external">drm/amd/display: Remove return value of Calculate256BBlockSizes</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220630185005.908140-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove return value of Calculate256BBlockSizes</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220630201741.991501-1-mairacanal@riseup.net/T/#u" class="external">drm/amd/display: Remove duplicate code across dcn30 and dcn31</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220630201741.991501-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove duplicate code across dcn30 and dcn31</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220630215316.1078841-1-mairacanal@riseup.net/T/#u" class="external">drm/amd/display: Remove unused variables from vba_vars_st</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220630215316.1078841-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused variables from vba_vars_st</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m329c95bbd613b7d3368a7a675a1dd90b3cce70af" class="external">drm/amdgpu: Write masked value to control register</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m329c95bbd613b7d3368a7a675a1dd90b3cce70af" target="_blank" rel="noopener noreferrer" class="external">drm/amdgpu: Write masked value to control register</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m4c0a16330b7574782a201f10b67d5ea744b601a4" class="external">drm/amd/display: Change get_pipe_idx function scope</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m4c0a16330b7574782a201f10b67d5ea744b601a4" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Change get_pipe_idx function scope</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#mcfd965e613d064800a6a82a54e064e8e3e949cc3" class="external">drm/amd/display: Remove unused clk_src variable</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#mcfd965e613d064800a6a82a54e064e8e3e949cc3" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused clk_src variable</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m1f2614742170fe4b2238427cf36dcb98f06b05e5" class="external">drm/amd/display: Remove unused dml32_CalculatedoublePipeDPPCLKAndSCLThroughput function</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m1f2614742170fe4b2238427cf36dcb98f06b05e5" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused dml32_CalculatedoublePipeDPPCLKAndSCLThroughput function</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m2eb569fdabada2d7ae430770bd84ae5c5021cef5" class="external">drm/amd/display: Remove unused NumberOfStates variable</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m2eb569fdabada2d7ae430770bd84ae5c5021cef5" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused NumberOfStates variable</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#mf1cd1a70ece1c995a9fef2481a0d4524df92ee3f" class="external">drm/amd/display: Remove unused variables from dml_rq_dlg_get_dlg_params</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#mf1cd1a70ece1c995a9fef2481a0d4524df92ee3f" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused variables from dml_rq_dlg_get_dlg_params</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m96df7c5e1ee5fcbb05c157cce660540920d42579" class="external">drm/amd/display: Remove unused value0 variable</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m96df7c5e1ee5fcbb05c157cce660540920d42579" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused value0 variable</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m5406d98a3e27102d07028c2059a151be8bff04d5" class="external">drm/amd/display: Remove unused variables from dcn10_stream_encoder</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m5406d98a3e27102d07028c2059a151be8bff04d5" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused variables from dcn10_stream_encoder</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m4dbd50a2e1006e0544da24d523c8fd9b4efa22b4" class="external">drm/amd/display: Remove unused MaxUsedBW variable</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m4dbd50a2e1006e0544da24d523c8fd9b4efa22b4" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused MaxUsedBW variable</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m64fe69263faf9c3d434c4d757857e3e8937272f2" class="external">drm/amd/display: Remove parameters from dml30_CalculateWriteBackDISPCLK</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m64fe69263faf9c3d434c4d757857e3e8937272f2" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove parameters from dml30_CalculateWriteBackDISPCLK</a></td>
       <td style="text-align: center">Rejected</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m1a29f8055054a95f03d47932ac3f303ab24ce7c1" class="external">drm/amd/display: Drop dm_sw_gfx7_2d_thin_l_vp and dm_sw_gfx7_2d_thin_gl</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m1a29f8055054a95f03d47932ac3f303ab24ce7c1" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Drop dm_sw_gfx7_2d_thin_l_vp and dm_sw_gfx7_2d_thin_gl</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m2738ab7461b351dd06e74f2787ddd9134c5a9388" class="external">drm/amd/display: Remove duplicated CalculateWriteBackDISPCLK</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m2738ab7461b351dd06e74f2787ddd9134c5a9388" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove duplicated CalculateWriteBackDISPCLK</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m9e24bbe5084ccc37117a58e72e2afd6d2a419f1f" class="external">drm/amd/display: Remove parameters from rq_dlg_get_dlg_reg</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m9e24bbe5084ccc37117a58e72e2afd6d2a419f1f" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove parameters from rq_dlg_get_dlg_reg</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#ma7a739d910814895f6d98c6374d1f1dca24ee1b4" class="external">drm/amd/display: Rewrite CalculateWriteBackDISPCLK function</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#ma7a739d910814895f6d98c6374d1f1dca24ee1b4" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Rewrite CalculateWriteBackDISPCLK function</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/13140020-8139-64f9-51b1-2b71c9b673af@amd.com/T/#m81d3f8826c1247bd0b737f3469943881f0d6484f" class="external">drm/amd/display: Remove unused struct freesync_context</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/13140020-8139-64f9-51b1-2b71c9b673af@amd.com/T/#m81d3f8826c1247bd0b737f3469943881f0d6484f" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Remove unused struct freesync_context</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220728182047.264825-1-mairacanal@riseup.net/T/#m50433ff9ec6f795bf0564ac0edb90c1a8d7e56e4" class="external">[PATCH 00/16] Remove entries from struct vba_vars_st</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220728182047.264825-1-mairacanal@riseup.net/T/#m50433ff9ec6f795bf0564ac0edb90c1a8d7e56e4" target="_blank" rel="noopener noreferrer" class="external">[PATCH 00/16] Remove entries from struct vba_vars_st</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220801124006.89027-1-mairacanal@riseup.net/T/#u" class="external">drm/amd/display: Drop XFCEnabled parameter from CalculatePrefetchSchedule</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220801124006.89027-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Drop XFCEnabled parameter from CalculatePrefetchSchedule</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220815113931.53226-1-mairacanal@riseup.net/T/#u" class="external">drm/amdgpu: Fix use-after-free on amdgpu_bo_list mutex</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/amd-gfx/20220815113931.53226-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/amdgpu: Fix use-after-free on amdgpu_bo_list mutex</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220818132730.399334-1-mairacanal@riseup.net/T/#u" class="external">drm/amd/display: Include missing header</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220818132730.399334-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Include missing header</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
   </tbody>
@@ -510,23 +510,23 @@ to run the tests and how to add more tests to the AMDGPU driver.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m3a62416af08cd8cef240508798f6072722200573" class="external">drm/amd/display: Introduce KUnit tests to the bw_fixed library</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m3a62416af08cd8cef240508798f6072722200573" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Introduce KUnit tests to the bw_fixed library</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m55ea9a62f44c3dcf65542078e1c3acbc03dd792d" class="external">drm/amd/display: Introduce KUnit tests to the display_mode_vba library</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m55ea9a62f44c3dcf65542078e1c3acbc03dd792d" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Introduce KUnit tests to the display_mode_vba library</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#mcc325378f9ff07c2666f3a0b4d0eb4160d9d8ace" class="external">drm/amd/display: Introduce KUnit to dcn20/display_mode_vba_20 library</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#mcc325378f9ff07c2666f3a0b4d0eb4160d9d8ace" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Introduce KUnit to dcn20/display_mode_vba_20 library</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#mbd33411310664d71abe907c6b21688c498e8e680" class="external">drm/amd/display: Introduce KUnit tests to dc_dmub_srv library</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#mbd33411310664d71abe907c6b21688c498e8e680" target="_blank" rel="noopener noreferrer" class="external">drm/amd/display: Introduce KUnit tests to dc_dmub_srv library</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m9973c9d5a7f45ce223fc9724fa548e7ef570a0d1" class="external">Documentation/gpu: Add Display Core Unit Test documentation</a></td>
+      <td style="text-align: left"><a href="https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m9973c9d5a7f45ce223fc9724fa548e7ef570a0d1" target="_blank" rel="noopener noreferrer" class="external">Documentation/gpu: Add Display Core Unit Test documentation</a></td>
       <td style="text-align: center">On Review</td>
     </tr>
   </tbody>
@@ -553,23 +553,23 @@ interesting in my journey. All blog posts are listed here:</p>
   <tbody>
     <tr>
       <td style="text-align: center">May 26, 2022</td>
-      <td style="text-align: center"><a href="https://mairacanal.github.io/gsoc-22/" class="external">I’m in GSoC ‘22</a></td>
+      <td style="text-align: center"><a href="https://mairacanal.github.io/gsoc-22/">I’m in GSoC ‘22</a></td>
     </tr>
     <tr>
       <td style="text-align: center">Jun 11, 2022</td>
-      <td style="text-align: center"><a href="https://mairacanal.github.io/kernel-development-fedora/" class="external">Linux Kernel Developing with Fedora</a></td>
+      <td style="text-align: center"><a href="https://mairacanal.github.io/kernel-development-fedora/">Linux Kernel Developing with Fedora</a></td>
     </tr>
     <tr>
       <td style="text-align: center">Jul 11, 2022</td>
-      <td style="text-align: center"><a href="https://mairacanal.github.io/kernel-symbol-table-compilation-more/" class="external">About Kernel Symbol Table, Compilation, and more</a></td>
+      <td style="text-align: center"><a href="https://mairacanal.github.io/kernel-symbol-table-compilation-more/">About Kernel Symbol Table, Compilation, and more</a></td>
     </tr>
     <tr>
       <td style="text-align: center">Jul 19, 2022</td>
-      <td style="text-align: center"><a href="https://mairacanal.github.io/from-selftests-to-KUnit/" class="external">From Selftests to KUnit</a></td>
+      <td style="text-align: center"><a href="https://mairacanal.github.io/from-selftests-to-KUnit/">From Selftests to KUnit</a></td>
     </tr>
     <tr>
       <td style="text-align: center">Aug 10, 2022</td>
-      <td style="text-align: center"><a href="https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/" class="external">Does the Linux Kernel need software engineering?</a></td>
+      <td style="text-align: center"><a href="https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/">Does the Linux Kernel need software engineering?</a></td>
     </tr>
   </tbody>
 </table>
@@ -602,24 +602,24 @@ the more relevant ones:</p>
 <strong>My first Tested-by:</strong> This was after some interaction with David Gow on the
 AMDGPU Unit Tests RFC. I stated the need for enabling tests to link to the
 AMDGPU module and this culminated in some patches for it, where I sent my
-<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3d6e44623841c8b82c2157f2f749019803fb238a" class="external">Tested-by</a>.
-Also this discussion was the inspiration for this <a href="https://mairacanal.github.io/kernel-symbol-table-compilation-more/" class="external">blog
+<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3d6e44623841c8b82c2157f2f749019803fb238a" target="_blank" rel="noopener noreferrer" class="external">Tested-by</a>.
+Also this discussion was the inspiration for this <a href="https://mairacanal.github.io/kernel-symbol-table-compilation-more/">blog
 post</a>.</li>
   <li>
 <strong>Documentation Reviews on KUnit:</strong> I reviewed a couple of KUnit
 documentation patches, such as
-<a href="https://lore.kernel.org/lkml/Yt+wq+xo2Tp6oEF%2F@debian.me/T/" class="external">1</a> and
-<a href="https://lore.kernel.org/all/20220822022646.98581-1-tales.aparecida@gmail.com/" class="external">2</a>.</li>
+<a href="https://lore.kernel.org/lkml/Yt+wq+xo2Tp6oEF%2F@debian.me/T/" target="_blank" rel="noopener noreferrer" class="external">1</a> and
+<a href="https://lore.kernel.org/all/20220822022646.98581-1-tales.aparecida@gmail.com/" target="_blank" rel="noopener noreferrer" class="external">2</a>.</li>
   <li>
-<strong>Spot an error in an IGT patch:</strong> This is a <a href="https://patchwork.freedesktop.org/patch/491515/" class="external">simple
+<strong>Spot an error in an IGT patch:</strong> This is a <a href="https://patchwork.freedesktop.org/patch/491515/" target="_blank" rel="noopener noreferrer" class="external">simple
 one</a>, but it make me realize
 that I was about to help with my reviews.</li>
   <li>
 <strong>Reported a failing KUnit test:</strong> I was checking LKFT some day, and I
-realized that some KUnit tests were failing in all architectures. So, I <a href="https://lore.kernel.org/all/346cb279-8e75-24b0-7d12-9803f2b41c73@riseup.net/" class="external">sent
+realized that some KUnit tests were failing in all architectures. So, I <a href="https://lore.kernel.org/all/346cb279-8e75-24b0-7d12-9803f2b41c73@riseup.net/" target="_blank" rel="noopener noreferrer" class="external">sent
 an
 email</a>
-reporting the failure to the tests’s author and <a href="https://lore.kernel.org/all/cover.1661234636.git.sander@svanheule.net/" class="external">he fixed the
+reporting the failure to the tests’s author and <a href="https://lore.kernel.org/all/cover.1661234636.git.sander@svanheule.net/" target="_blank" rel="noopener noreferrer" class="external">he fixed the
 tests</a>.</li>
   <li>
 <strong>PowerPC Compilation Fixes:</strong> On the same day I sent a patch fixing a
@@ -627,12 +627,12 @@ PowerPC warning on the DRM tests, Melissa asked me how I cross-compiled for
 PPC on IRC as she was working on a PPC warning. I was happy I could help her
 with this <del>after some hours of failing to cross-compile for PPC.</del> This resulted
 in other
-<a href="https://lore.kernel.org/lkml/20220720193208.1131493-1-mwen@igalia.com/T/" class="external">review</a>
+<a href="https://lore.kernel.org/lkml/20220720193208.1131493-1-mwen@igalia.com/T/" target="_blank" rel="noopener noreferrer" class="external">review</a>
 and also a great interaction.</li>
 </ol>
 
 <p>Moreover, I also
-<a href="https://cgit.freedesktop.org/drm/drm-misc/log/?qt=committer&amp;q=Ma%C3%ADra+Canal" class="external">committed</a>
+<a href="https://cgit.freedesktop.org/drm/drm-misc/log/?qt=committer&amp;q=Ma%C3%ADra+Canal" target="_blank" rel="noopener noreferrer" class="external">committed</a>
 two patches on <code class="language-plaintext highlighter-rouge">drm-misc-next</code>. I reviewed to patches for improving the DRM
 KUnit tests and by the end of the review, I usually wait for someone to push the
 patches into <code class="language-plaintext highlighter-rouge">drm-misc-next</code>, but as those patches were on the list for a while,
@@ -643,7 +643,7 @@ all went fine with a bit of help from Melissa.</p>
 <hr>
 
 <p>Well, I’m pretty excited about the next couple of months for many reasons.
-First, I, <a href="https://magalilemes.github.io/" class="external">Magali Lemes</a>, and <a href="https://crosscat.me/" class="external">Isabella
+First, I, <a href="https://magalilemes.github.io/" target="_blank" rel="noopener noreferrer" class="external">Magali Lemes</a>, and <a href="https://crosscat.me/" target="_blank" rel="noopener noreferrer" class="external">Isabella
 Basso</a> will be attending XDC 2022. It is going to be very
 exciting to participate in an in-place conference and also to make a
 presentation on the main track.</p>
@@ -661,7 +661,7 @@ related to janitorial duties and I would like to contribute to implementing new
 features on the DRM or improving the DRM core.</p>
 
 <p>Finally, by the end of GSoC, I’ll be joining another mentorship project on the
-Linux Graphics Stack, the <a href="https://www.igalia.com/coding-experience/" class="external">Igalia Coding
+Linux Graphics Stack, the <a href="https://www.igalia.com/coding-experience/" target="_blank" rel="noopener noreferrer" class="external">Igalia Coding
 Experience</a>, in which I will be learning
 more about the DRM subsystem and IGT in the next months. This is making me very
 excited, as I will continue to contribute with open source, especially the Linux
@@ -713,16 +713,16 @@ companions to solve problems this summer and to share knowledge.</p>
 
   <p>
     Social:
-    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
-    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
-    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
-    <a rel="me" href="https://fosstodon.org/@mairacanal" class="external">Mastodon</a>
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
   </p>
 
-  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
 </address>
 
-<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/gsoc-final-report/" class="external">my website</a>.</small></p>
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/gsoc-final-report/">my website</a>.</small></p>
 
 </footer>
 

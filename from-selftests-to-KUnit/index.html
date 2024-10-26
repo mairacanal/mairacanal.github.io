@@ -94,9 +94,9 @@
       
     </header>
 
-    <p>Last week, the <a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t" class="external">series</a> with DRM Kernel Selftests conversion to KUnit tests was merged into <code class="language-plaintext highlighter-rouge">drm-misc-next</code> and will probably be on the mainline on 5.20.</p>
+    <p>Last week, the <a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t" target="_blank" rel="noopener noreferrer" class="external">series</a> with DRM Kernel Selftests conversion to KUnit tests was merged into <code class="language-plaintext highlighter-rouge">drm-misc-next</code> and will probably be on the mainline on 5.20.</p>
 
-<p>This series was developed during an <a href="https://lkcamp.dev/" class="external">LKCAMP</a> hackathon in October 2021 and is the combined effort of seven Linux Kernel beginners. In this hackathon, we learned about the KUnit Framework and also learned a bit about DRM.</p>
+<p>This series was developed during an <a href="https://lkcamp.dev/" target="_blank" rel="noopener noreferrer" class="external">LKCAMP</a> hackathon in October 2021 and is the combined effort of seven Linux Kernel beginners. In this hackathon, we learned about the KUnit Framework and also learned a bit about DRM.</p>
 
 <p>The series took quite a while to come out, as it was just a side-project to most of us, but, in June, I finally prepared the patches and transformed them into a mergeable series.</p>
 
@@ -121,7 +121,7 @@
 
 <hr>
 
-<p><a href="https://docs.kernel.org/dev-tools/kselftest.html" class="external">Linux Kernel Selftests (kselftest)</a> is a set of features functional and regression tests developed to avoid regressions on the Linux Kernel. The idea is that the developer will find a regression, fix it, and then write a test so that the Kernel won’t have this regression again.</p>
+<p><a href="https://docs.kernel.org/dev-tools/kselftest.html" target="_blank" rel="noopener noreferrer" class="external">Linux Kernel Selftests (kselftest)</a> is a set of features functional and regression tests developed to avoid regressions on the Linux Kernel. The idea is that the developer will find a regression, fix it, and then write a test so that the Kernel won’t have this regression again.</p>
 
 <p>The kselftests use shell scripts and C programs to load the tests into the kernel and have support for hardware-dependent tests. It doesn’t support workload or application tests, as its idea is primarily to increase the breadth and depth test coverage on the Kernel.</p>
 
@@ -133,7 +133,7 @@
 
 <hr>
 
-<p><a href="https://docs.kernel.org/dev-tools/kunit/index.html" class="external">KUnit (Kernel Unit Testing Framework)</a> is the Unit Testing Framework for the Linux Kernel. KUnit makes it possible to run test suites on kernel boot or load the tests as a module. It reports all test case results through a TAP (Test Anything Protocol) in the kernel log.</p>
+<p><a href="https://docs.kernel.org/dev-tools/kunit/index.html" target="_blank" rel="noopener noreferrer" class="external">KUnit (Kernel Unit Testing Framework)</a> is the Unit Testing Framework for the Linux Kernel. KUnit makes it possible to run test suites on kernel boot or load the tests as a module. It reports all test case results through a TAP (Test Anything Protocol) in the kernel log.</p>
 
 <p>KUnit follows the white-box testing approach, which allows testers to inspect and verify the inner workings of a software system. So, it can test any kernel component and is not restricted to userspace.</p>
 
@@ -205,7 +205,7 @@
 <code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_NE (test, left, right)</code>: expects that <strong>left</strong> and <strong>right</strong> are not equal.</li>
 </ul>
 
-<p>There are a couple more and all of them can be seen on the <a href="https://docs.kernel.org/dev-tools/kunit/api/test.html" class="external">KUnit documentation</a>.</p>
+<p>There are a couple more and all of them can be seen on the <a href="https://docs.kernel.org/dev-tools/kunit/api/test.html" target="_blank" rel="noopener noreferrer" class="external">KUnit documentation</a>.</p>
 
 <p>Examining again the  <code class="language-plaintext highlighter-rouge">drm_mode_parse_command_line_for_connector</code> function, we can see that the test expectation expression used is <code class="language-plaintext highlighter-rouge">FAIL_ON</code>. This means that the test will fail when the expression inside it is true. Checking the test expectation expressions listed above, we can say the equivalent of <code class="language-plaintext highlighter-rouge">FAIL_ON</code> is <code class="language-plaintext highlighter-rouge">KUNIT_EXPECT_FALSE</code>, right?</p>
 
@@ -267,13 +267,13 @@
 <span class="p">}</span>
 </code></pre></div></div>
 
-<p>This is just a small bit of the work done! I and other LKCAMP participants converted tests across nine files. And the result can be seen on this <a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t" class="external">mailing list thread</a>.</p>
+<p>This is just a small bit of the work done! I and other LKCAMP participants converted tests across nine files. And the result can be seen on this <a href="https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#t" target="_blank" rel="noopener noreferrer" class="external">mailing list thread</a>.</p>
 
 <hr>
 
 <p>Working on these tests over the last month was pretty satisfying. The series had five iterations over the mailing list and talking to the maintainers is very rewarding. Also, it was great to remember the Saturday that I spend with three very dear friends (thanks to Arthur, Matheus, and Carlos). Seeing the patches go to the mainline was great!</p>
 
-<p>After adding the DRM KUnit tests to the upstream, we must maintain it working properly and try checking the reported bugs. For example, Guenter Roeck reported problems running tests on PowerPC, so I worked on a new <a href="https://lore.kernel.org/dri-devel/20220717184336.1197723-1-mairacanal@riseup.net/T/#u" class="external">patch</a> to fix it in order to make things run smoothly. So, that’s about it for now!</p>
+<p>After adding the DRM KUnit tests to the upstream, we must maintain it working properly and try checking the reported bugs. For example, Guenter Roeck reported problems running tests on PowerPC, so I worked on a new <a href="https://lore.kernel.org/dri-devel/20220717184336.1197723-1-mairacanal@riseup.net/T/#u" target="_blank" rel="noopener noreferrer" class="external">patch</a> to fix it in order to make things run smoothly. So, that’s about it for now!</p>
 
 
   </article>
@@ -294,16 +294,16 @@
 
   <p>
     Social:
-    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
-    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
-    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
-    <a rel="me" href="https://fosstodon.org/@mairacanal" class="external">Mastodon</a>
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
   </p>
 
-  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
 </address>
 
-<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/from-selftests-to-KUnit/" class="external">my website</a>.</small></p>
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/from-selftests-to-KUnit/">my website</a>.</small></p>
 
 </footer>
 

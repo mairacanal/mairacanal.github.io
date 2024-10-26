@@ -94,10 +94,10 @@
       
     </header>
 
-    <p>In my last blog post, I described a bit of my previous work on the <code class="language-plaintext highlighter-rouge">rustgem</code> project, and after that, as I had finished the VGEM features, I sent a <a href="https://lore.kernel.org/dri-devel/20230317121213.93991-1-mcanal@igalia.com/T/" class="external">RFC</a> to the mailing list.
+    <p>In my last blog post, I described a bit of my previous work on the <code class="language-plaintext highlighter-rouge">rustgem</code> project, and after that, as I had finished the VGEM features, I sent a <a href="https://lore.kernel.org/dri-devel/20230317121213.93991-1-mcanal@igalia.com/T/" target="_blank" rel="noopener noreferrer" class="external">RFC</a> to the mailing list.
 Although I still need to work on some <code class="language-plaintext highlighter-rouge">rustgem</code> feedback, I started to explore more of the KMS (Kernel Mode Setting) and its properties.</p>
 
-<p>I talked to my mentor <a href="https://melissawen.github.io/" class="external">Melissa Wen</a>, one of the VKMS maintainers, and she proposed implementing plane rotation capabilities to VKMS.
+<p>I talked to my mentor <a href="https://melissawen.github.io/" target="_blank" rel="noopener noreferrer" class="external">Melissa Wen</a>, one of the VKMS maintainers, and she proposed implementing plane rotation capabilities to VKMS.
 The VKMS (Virtual Kernel Mode Setting) is a software-only KMS driver that is quite useful for testing and running X (or similar compositors) on headless machines.
 It sounded like a great idea, as I would like to explore a bit more of the KMS side of things.</p>
 
@@ -105,7 +105,7 @@ It sounded like a great idea, as I would like to explore a bit more of the KMS s
 <hr>
 <p>In order to have an image on a display, we need to go through the whole Kernel Mode Setting (KMS) Display Pipeline.
 The pipeline has a couple of different objects, such as framebuffers, planes, and CRTCs, and the relationship between them can be quite complicated.
-If you are interested in the KMS Display Pipeline, I recommend reading the great <a href="https://docs.kernel.org/gpu/drm-kms.html" class="external">KMS documentation</a>.
+If you are interested in the KMS Display Pipeline, I recommend reading the great <a href="https://docs.kernel.org/gpu/drm-kms.html" target="_blank" rel="noopener noreferrer" class="external">KMS documentation</a>.
 But here we are focused in only one of those abstractions, the plane.</p>
 
 <p>In the context of graphics processing, a plane refers to an image source that can be superimposed or blended on top of a CRTC during the scanout process.
@@ -216,11 +216,11 @@ Basically, what it does is:</p>
 See that even for a case like <code class="language-plaintext highlighter-rouge">rotate-90</code>, it is just a matter of changing the point of view and reading the lines differently.</p>
 
 <hr>
-<p>The complete implementation of all rotation modes is available <a href="https://patchwork.freedesktop.org/series/116189/" class="external">here</a>.
+<p>The complete implementation of all rotation modes is available <a href="https://patchwork.freedesktop.org/series/116189/" target="_blank" rel="noopener noreferrer" class="external">here</a>.
 Together with the rotation feature, I sent a patch to reduce the code repetition in the code by isolating the pixel conversion functionality.
 This patch was already merged, but the rest of the series is still pending a Reviewed-by.</p>
 
-<p>Rotating planes on VKMS was a fun challenge of my <a href="https://www.igalia.com/coding-experience/" class="external">Igalia Coding Experience</a> and I hope to keep working on VKMS to bring more and more features.</p>
+<p>Rotating planes on VKMS was a fun challenge of my <a href="https://www.igalia.com/coding-experience/" target="_blank" rel="noopener noreferrer" class="external">Igalia Coding Experience</a> and I hope to keep working on VKMS to bring more and more features.</p>
 
 
   </article>
@@ -241,16 +241,16 @@ This patch was already merged, but the rest of the series is still pending a Rev
 
   <p>
     Social:
-    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
-    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
-    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
-    <a rel="me" href="https://fosstodon.org/@mairacanal" class="external">Mastodon</a>
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
   </p>
 
-  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
 </address>
 
-<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/rotating-planes-vkms/" class="external">my website</a>.</small></p>
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/rotating-planes-vkms/">my website</a>.</small></p>
 
 </footer>
 

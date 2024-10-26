@@ -94,19 +94,19 @@
       
     </header>
 
-    <p>It has been a busy couple of months. As I pointed on my last blog post, I finished GSoC and joined the <a href="https://www.igalia.com/coding-experience/" class="external">Igalia Coding Experience</a> mentorship project. In October, I also traveled to Minneapolis for XDC 2022 where I presented to the Linux Graphics community our AMD/KUnit work with my colleagues. So, let’s make a summary of the last couple of months.</p>
+    <p>It has been a busy couple of months. As I pointed on my last blog post, I finished GSoC and joined the <a href="https://www.igalia.com/coding-experience/" target="_blank" rel="noopener noreferrer" class="external">Igalia Coding Experience</a> mentorship project. In October, I also traveled to Minneapolis for XDC 2022 where I presented to the Linux Graphics community our AMD/KUnit work with my colleagues. So, let’s make a summary of the last couple of months.</p>
 
 <h1 id="xdc-2022">XDC 2022</h1>
 
 <hr>
 
-<p>Just a small thank you note to X.Org Foundation for sponsoring my travel to Minneapolis. XDC 2022 was a great experience, and I learned quite a lot during the talks. Although I was a newcomer, all developers were very nice to me, and it was great to talk to experienced developers (and meet my mentors in person). Also, I presented the GSoC/XOrg work on the first day of the conference and this talk is available on <a href="https://www.youtube.com/watch?v=nbRbM-Ld-44&amp;t=3s&amp;pp=ugMICgJwdBABGAE%3D" class="external">YouTube</a>.</p>
+<p>Just a small thank you note to X.Org Foundation for sponsoring my travel to Minneapolis. XDC 2022 was a great experience, and I learned quite a lot during the talks. Although I was a newcomer, all developers were very nice to me, and it was great to talk to experienced developers (and meet my mentors in person). Also, I presented the GSoC/XOrg work on the first day of the conference and this talk is available on <a href="https://www.youtube.com/watch?v=nbRbM-Ld-44&amp;t=3s&amp;pp=ugMICgJwdBABGAE%3D" target="_blank" rel="noopener noreferrer" class="external">YouTube</a>.</p>
 
 <h1 id="working-with-the-raspberry-pi-4">Working with the Raspberry Pi 4</h1>
 
 <hr>
 
-<p>As I mentioned in my last blog post, GSoC was a great learning experience and I’m willing to keep learning about the Linux graphics stack. Fortunately, when I started the Igalia CE, <a href="https://melissawen.github.io/" class="external">Melissa Wen</a> pitched me a project to increase IGT test coverage on DRM/V3D kernel driver. I was pretty glad to hear about the project as it allowed me to learn more about how a GPU works.</p>
+<p>As I mentioned in my last blog post, GSoC was a great learning experience and I’m willing to keep learning about the Linux graphics stack. Fortunately, when I started the Igalia CE, <a href="https://melissawen.github.io/" target="_blank" rel="noopener noreferrer" class="external">Melissa Wen</a> pitched me a project to increase IGT test coverage on DRM/V3D kernel driver. I was pretty glad to hear about the project as it allowed me to learn more about how a GPU works.</p>
 
 <h2 id="the-project">The Project</h2>
 
@@ -120,9 +120,9 @@
 
 <p>Next, there are Performance Monitor (perfmon) related-ioctls: <code class="language-plaintext highlighter-rouge">v3d_perfmon_create</code>, <code class="language-plaintext highlighter-rouge">v3d_perfmon_destroy</code>, and <code class="language-plaintext highlighter-rouge">v3d_perfmon_get_values</code>. Performance Monitors are basically registers that are used for monitoring the performance of the V3D engine. So, tests were designed to assure that the driver was creating perfmons properly and was resilient to incorrect requests, such as trying to get a value from a non-existent perfmon.</p>
 
-<p>And finally, the most interesting type of ioctls: the job submission ioctls. You can use the <code class="language-plaintext highlighter-rouge">v3d_submit_cl</code> ioctl to submit commands to the 3D engine, which is a tiled engine. When I think about tiled rendering, I always think about a <a href="https://www.youtube.com/@RGMechEx" class="external">Super Nintendo</a>, but things can get a bit more complicated than a SNES as you can see <a href="https://developer.samsung.com/galaxy-gamedev/resources/articles/gpu-framebuffer.html" class="external">here</a>. The 3D engine is composed of a bin and render pipelines, each has its command list. The binning step maps the tile to a piece of the frame and the rendering step renders the tile based on its mapping.</p>
+<p>And finally, the most interesting type of ioctls: the job submission ioctls. You can use the <code class="language-plaintext highlighter-rouge">v3d_submit_cl</code> ioctl to submit commands to the 3D engine, which is a tiled engine. When I think about tiled rendering, I always think about a <a href="https://www.youtube.com/@RGMechEx" target="_blank" rel="noopener noreferrer" class="external">Super Nintendo</a>, but things can get a bit more complicated than a SNES as you can see <a href="https://developer.samsung.com/galaxy-gamedev/resources/articles/gpu-framebuffer.html" target="_blank" rel="noopener noreferrer" class="external">here</a>. The 3D engine is composed of a bin and render pipelines, each has its command list. The binning step maps the tile to a piece of the frame and the rendering step renders the tile based on its mapping.</p>
 
-<p>By testing the v3d_submit_cl ioctl, it is possible to test syncing between jobs and also the <a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" class="external">V3D multisync ability</a>.</p>
+<p>By testing the v3d_submit_cl ioctl, it is possible to test syncing between jobs and also the <a href="https://melissawen.github.io/blog/2022/05/10/multisync-p1" target="_blank" rel="noopener noreferrer" class="external">V3D multisync ability</a>.</p>
 
 <p>Moreover, the V3D has also a TFU (texture formatting unit), and a CSD (compute shader dispatch), which has their ioctls: <code class="language-plaintext highlighter-rouge">v3d_submit_tfu</code> and <code class="language-plaintext highlighter-rouge">v3d_submit_csd</code>. The TFU makes format conversions and generated mipmaps and the CSD is responsible for dispatching a compute shader.</p>
 
@@ -140,7 +140,7 @@
 
 <h2 id="series-submitted">Series Submitted</h2>
 
-<p>Although my noop job has not landed yet, so far, I was able to submit two series to IGT: <a href="https://patchwork.freedesktop.org/series/110681/" class="external">one for the V3D driver</a> and <a href="https://patchwork.freedesktop.org/series/110948/" class="external">the other for the VC4 driver</a>.</p>
+<p>Although my noop job has not landed yet, so far, I was able to submit two series to IGT: <a href="https://patchwork.freedesktop.org/series/110681/" target="_blank" rel="noopener noreferrer" class="external">one for the V3D driver</a> and <a href="https://patchwork.freedesktop.org/series/110948/" target="_blank" rel="noopener noreferrer" class="external">the other for the VC4 driver</a>.</p>
 
 <p>Apart from cleanups in the drivers, I added tests for the <code class="language-plaintext highlighter-rouge">v3d_create_bo</code> ioctl and the V3D’s and VC4’s perfmon ioctls. Moreover, as I was running the VC4 tests on the Raspberry Pi 4, I realized that most of the VC4 tests were failing on V3D, considering the VC4 doesn’t have rendering abilities on the Raspberry Pi 4. So, I also created checks to assure that the VC4 tests are not running on V3D.</p>
 
@@ -175,16 +175,16 @@
 
   <p>
     Social:
-    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
-    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
-    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
-    <a rel="me" href="https://fosstodon.org/@mairacanal" class="external">Mastodon</a>
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
   </p>
 
-  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
 </address>
 
-<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/november-update-exploring-v3d/" class="external">my website</a>.</small></p>
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/november-update-exploring-v3d/">my website</a>.</small></p>
 
 </footer>
 

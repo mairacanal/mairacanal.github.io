@@ -274,7 +274,7 @@ operation.</p>
 
 <p>With all these problems pointed out, it is time to fix them! I could have
 reimplemented my safe abstraction, but the RfL folks pointed me to a Timer
-abstraction that they are developing in a <a href="https://github.com/fbq/linux-rust/commits/rust-dev" class="external">downstream
+abstraction that they are developing in a <a href="https://github.com/fbq/linux-rust/commits/rust-dev" target="_blank" rel="noopener noreferrer" class="external">downstream
 tree</a>. Therefore, I decided
 to use their Timer abstraction.</p>
 
@@ -341,7 +341,7 @@ closure, because it wasn’t encapsulated inside a smart pointer. So, I used an
 </code></pre></div></div>
 
 <p>You can observe in this code that the initialization of the <code class="language-plaintext highlighter-rouge">FnTimer</code> uses an
-<code class="language-plaintext highlighter-rouge">unsafe</code> operation. This happens because we still don’t have <a href="https://y86-dev.github.io/blog/safe-pinned-initialization/overview.html" class="external">Safe Pinned
+<code class="language-plaintext highlighter-rouge">unsafe</code> operation. This happens because we still don’t have <a href="https://y86-dev.github.io/blog/safe-pinned-initialization/overview.html" target="_blank" rel="noopener noreferrer" class="external">Safe Pinned
 Initialization</a>.
 But the RfL folks are working hard to land this feature and improve ergonomics
 when using <code class="language-plaintext highlighter-rouge">Pin</code>.</p>
@@ -365,7 +365,7 @@ bypass this problem without adding a dummy IOCTL as 0x00, but I hope to get a
 solution to it soon.</p>
 
 <p>The progress of this project can be followed in this
-<a href="https://github.com/mairacanal/linux/pull/11" class="external">PR</a> and I hope to see this project
+<a href="https://github.com/mairacanal/linux/pull/11" target="_blank" rel="noopener noreferrer" class="external">PR</a> and I hope to see this project
 being integrated upstream in the future.</p>
 
 
@@ -387,16 +387,16 @@ being integrated upstream in the future.</p>
 
   <p>
     Social:
-    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
-    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
-    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
-    <a rel="me" href="https://fosstodon.org/@mairacanal" class="external">Mastodon</a>
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
   </p>
 
-  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
 </address>
 
-<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/adding-timeout-rustgem/" class="external">my website</a>.</small></p>
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/adding-timeout-rustgem/">my website</a>.</small></p>
 
 </footer>
 

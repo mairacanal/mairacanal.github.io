@@ -93,7 +93,7 @@
     </header>
 
     <p>2022 really passed by fast and after I completed the GSoC 2022, I’m now
-completing another milestone: my project in the <a href="https://www.igalia.com/coding-experience/" class="external">Igalia Coding
+completing another milestone: my project in the <a href="https://www.igalia.com/coding-experience/" target="_blank" rel="noopener noreferrer" class="external">Igalia Coding
 Experience</a> and I
 had the best experience during those four months. I learned tremendously about
 the Linux graphics stack and now I can say for sure that I would love to keep
@@ -106,7 +106,7 @@ technical concepts.</p>
 <p>So, this is a summary report of my journey at the Igalia CE.</p>
 
 <h1 id="igt-tests-to-v3d">
-<a href="https://gitlab.freedesktop.org/drm/igt-gpu-tools" class="external">IGT</a> tests to V3D</h1>
+<a href="https://gitlab.freedesktop.org/drm/igt-gpu-tools" target="_blank" rel="noopener noreferrer" class="external">IGT</a> tests to V3D</h1>
 <hr>
 
 <p>Initially, V3D only had three basic IGT tests: <code class="language-plaintext highlighter-rouge">v3d_get_bo_offset</code>,
@@ -151,7 +151,7 @@ appropriately the <code class="language-plaintext highlighter-rouge">wayland-sca
 <code class="language-plaintext highlighter-rouge">wayland-scanner</code> executable available in the target sysroot. This was fixed
 with this simple patch:</p>
 
-<p><a href="https://github.com/KhronosGroup/VK-GL-CTS/commit/6dfa0b69b46e69bdabd213ec2cf915bcd6e689f3" class="external"><strong>Allow override of wayland_scanner executable</strong></a></p>
+<p><a href="https://github.com/KhronosGroup/VK-GL-CTS/commit/6dfa0b69b46e69bdabd213ec2cf915bcd6e689f3" target="_blank" rel="noopener noreferrer" class="external"><strong>Allow override of wayland_scanner executable</strong></a></p>
 
 <p>When I finally got a successful no-op job, I was able to write the tests for the
 <code class="language-plaintext highlighter-rouge">v3d_submit_cl</code> and <code class="language-plaintext highlighter-rouge">v3d_wait_bo</code> ioctls. On these tests, I tested primarily job
@@ -183,29 +183,29 @@ synchronization, and the proper behavior of the functionalities.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110681/" class="external">[PATCH 0/7] V3D IGT Tests Updates</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110681/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/7] V3D IGT Tests Updates</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112215/" class="external">[PATCH 0/2] Tests for V3D/VC4 Mmap BO IOCTLs</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112215/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/2] Tests for V3D/VC4 Mmap BO IOCTLs</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112370/" class="external">[PATCH 0/4] Make sure v3d/vc4 support performance monitor</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112370/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/4] Make sure v3d/vc4 support performance monitor</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112363/" class="external">[PATCH 0/6] V3D Job Submission Tests</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112363/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/6] V3D Job Submission Tests</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112805/" class="external">[PATCH 0/3] V3D Mixed Job Submission Tests</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112805/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/3] V3D Mixed Job Submission Tests</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
   </tbody>
 </table>
 
-<h2 id="mesa"><a href="https://gitlab.freedesktop.org/mesa/mesa" class="external">Mesa</a></h2>
+<h2 id="mesa"><a href="https://gitlab.freedesktop.org/mesa/mesa" target="_blank" rel="noopener noreferrer" class="external">Mesa</a></h2>
 
 <p>Apart from reading a lot of kernel code, I also started to explore some of the
 Mesa code, especially the <code class="language-plaintext highlighter-rouge">v3dv</code> driver. On Mesa, I was trying to understand the
@@ -223,18 +223,18 @@ handling.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://gitlab.freedesktop.org/mesa/mesa/-/commit/d34f3a1db594c778e0c6bae7a5798742edb9635d" class="external">v3dv: fix multiple typos</a></td>
+      <td style="text-align: left"><a href="https://gitlab.freedesktop.org/mesa/mesa/-/commit/d34f3a1db594c778e0c6bae7a5798742edb9635d" target="_blank" rel="noopener noreferrer" class="external">v3dv: fix multiple typos</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://gitlab.freedesktop.org/mesa/mesa/-/commit/a2252adde8235d5c4d78d9347527cd7914bb905a" class="external">v3dv: initialize fd variable for proper error handling</a></td>
+      <td style="text-align: left"><a href="https://gitlab.freedesktop.org/mesa/mesa/-/commit/a2252adde8235d5c4d78d9347527cd7914bb905a" target="_blank" rel="noopener noreferrer" class="external">v3dv: initialize fd variable for proper error handling</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
   </tbody>
 </table>
 
 <h1 id="igt-tests-to-vc4">
-<a href="https://gitlab.freedesktop.org/drm/igt-gpu-tools" class="external">IGT</a> tests to VC4</h1>
+<a href="https://gitlab.freedesktop.org/drm/igt-gpu-tools" target="_blank" rel="noopener noreferrer" class="external">IGT</a> tests to VC4</h1>
 <hr>
 
 <p>VC4 and V3D share some similarities in their basic 3D rendering implementation.
@@ -257,25 +257,25 @@ skip the VC4 tests if they are running on a Raspberry Pi 4.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110948/" class="external">[PATCH 0/5] VC4 IGT Tests Updates</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110948/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/5] VC4 IGT Tests Updates</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112215/" class="external">[PATCH 0/2] Tests for V3D/VC4 Mmap BO IOCTLs</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112215/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/2] Tests for V3D/VC4 Mmap BO IOCTLs</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112370/" class="external">[PATCH 0/4] Make sure v3d/vc4 support performance monitor</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112370/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/4] Make sure v3d/vc4 support performance monitor</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/516737/" class="external">tests/vc4_purgeable_bo: Fix conditional assertion</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/516737/" target="_blank" rel="noopener noreferrer" class="external">tests/vc4_purgeable_bo: Fix conditional assertion</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
   </tbody>
 </table>
 
-<h1 id="linux-kernel"><a href="https://cgit.freedesktop.org/drm/drm-misc/" class="external">Linux Kernel</a></h1>
+<h1 id="linux-kernel"><a href="https://cgit.freedesktop.org/drm/drm-misc/" target="_blank" rel="noopener noreferrer" class="external">Linux Kernel</a></h1>
 <hr>
 
 <h2 id="v3dvc4-drivers">V3D/VC4 drivers</h2>
@@ -295,15 +295,15 @@ open-coded implementations with their DRM counterparts.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110634/" class="external">drm/v3d: switch to drmm_mutex_init</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110634/" target="_blank" rel="noopener noreferrer" class="external">drm/v3d: switch to drmm_mutex_init</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110634/" class="external">drm/v3d: add missing mutex_destroy</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/110634/" target="_blank" rel="noopener noreferrer" class="external">drm/v3d: add missing mutex_destroy</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112257/" class="external">drm/v3d: replace open-coded implementation of drm_gem_object_lookup</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112257/" target="_blank" rel="noopener noreferrer" class="external">drm/v3d: replace open-coded implementation of drm_gem_object_lookup</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
   </tbody>
@@ -324,15 +324,15 @@ some study about the KMS locking system.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112299/" class="external">drm/vc4: drop all currently held locks if deadlock happens</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112299/" target="_blank" rel="noopener noreferrer" class="external">drm/vc4: drop all currently held locks if deadlock happens</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/516491/?series=112347&amp;rev=1" class="external">drm/vc4: replace drm_gem_dma_object for drm_gem_object in vc4_exec_info</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/516491/?series=112347&amp;rev=1" target="_blank" rel="noopener noreferrer" class="external">drm/vc4: replace drm_gem_dma_object for drm_gem_object in vc4_exec_info</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/516490/?series=112347&amp;rev=1" class="external">drm/vc4: replace obj lookup steps with drm_gem_objects_lookup</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/516490/?series=112347&amp;rev=1" target="_blank" rel="noopener noreferrer" class="external">drm/vc4: replace obj lookup steps with drm_gem_objects_lookup</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
   </tbody>
@@ -367,23 +367,23 @@ this series.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/111216/" class="external">[PATCH 0/7] Introduce debugfs device-centered functions</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/111216/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/7] Introduce debugfs device-centered functions</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/517186/?series=112451&amp;rev=1" class="external">drm/debugfs: use octal permissions instead of symbolic permissions</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/517186/?series=112451&amp;rev=1" target="_blank" rel="noopener noreferrer" class="external">drm/debugfs: use octal permissions instead of symbolic permissions</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/517185/?series=112451&amp;rev=1" class="external">drm/debugfs: add descriptions to struct parameters</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/517185/?series=112451&amp;rev=1" target="_blank" rel="noopener noreferrer" class="external">drm/debugfs: add descriptions to struct parameters</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112233/" class="external">[PATCH 0/7] Convert drivers to the new debugfs device-centered functions</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112233/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/7] Convert drivers to the new debugfs device-centered functions</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112684/" class="external">[PATCH 0/13] drm/debugfs: Create a debugfs infrastructure for kms objects</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112684/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/13] drm/debugfs: Create a debugfs infrastructure for kms objects</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
   </tbody>
@@ -416,23 +416,23 @@ about the display side of things.</p>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/505760/?series=109345&amp;rev=1" class="external">drm/tests: Split drm_test_dp_mst_calc_pbn_mode into parameterized tests</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/505760/?series=109345&amp;rev=1" target="_blank" rel="noopener noreferrer" class="external">drm/tests: Split drm_test_dp_mst_calc_pbn_mode into parameterized tests</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/505761/?series=109345&amp;rev=1" class="external">drm/tests: Split drm_test_dp_mst_sideband_msg_req_decode into parameterized tests</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/patch/505761/?series=109345&amp;rev=1" target="_blank" rel="noopener noreferrer" class="external">drm/tests: Split drm_test_dp_mst_sideband_msg_req_decode into parameterized tests</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/516047/" class="external">tests/kms_addfb_basic: Avoid open-coded expressions</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/516047/" target="_blank" rel="noopener noreferrer" class="external">tests/kms_addfb_basic: Avoid open-coded expressions</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112546/" class="external">[PATCH 0/3] Check for valid framebuffer’s format</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112546/" target="_blank" rel="noopener noreferrer" class="external">[PATCH 0/3] Check for valid framebuffer’s format</a></td>
       <td style="text-align: center">In Review</td>
     </tr>
     <tr>
-      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112487/" class="external">drm/vkms: reintroduce prepare_fb and cleanup_fb functions</a></td>
+      <td style="text-align: left"><a href="https://patchwork.freedesktop.org/series/112487/" target="_blank" rel="noopener noreferrer" class="external">drm/vkms: reintroduce prepare_fb and cleanup_fb functions</a></td>
       <td style="text-align: center"><strong>Accepted</strong></td>
     </tr>
   </tbody>
@@ -457,8 +457,8 @@ in Rust and maybe contribute to other open-source projects, like Mesa.</p>
 <h1 id="acknowledgment">Acknowledgment</h1>
 <hr>
 
-<p>I would like to thank my great mentors <a href="https://melissawen.github.io/" class="external">Melissa
-Wen</a> and <a href="https://andrealmeid.com/" class="external">André
+<p>I would like to thank my great mentors <a href="https://melissawen.github.io/" target="_blank" rel="noopener noreferrer" class="external">Melissa
+Wen</a> and <a href="https://andrealmeid.com/" target="_blank" rel="noopener noreferrer" class="external">André
 Almeida</a> for helping me through this journey. I
 wouldn’t be able to develop this project without their great support and
 encouragement. They were an amazing duo of mentors and I thank them for
@@ -491,16 +491,16 @@ provide me constructive feedback.</p>
 
   <p>
     Social:
-    <a href="https://github.com/mairacanal" class="external">GitHub</a>;
-    <a href="https://gitlab.freedesktop.org/mairacanal" class="external">GitLab</a>;
-    <a href="https://linkedin.com/in/mairacanal" class="external">LinkedIn</a>;
-    <a rel="me" href="https://fosstodon.org/@mairacanal" class="external">Mastodon</a>
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
   </p>
 
-  <p class="copyleft">Copyleft <a href="https://m7.rs/" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" class="external">Source Code</a>)</p>
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
 </address>
 
-<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/january-update-finishing-my-igalia-ce/" class="external">my website</a>.</small></p>
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/january-update-finishing-my-igalia-ce/">my website</a>.</small></p>
 
 </footer>
 
