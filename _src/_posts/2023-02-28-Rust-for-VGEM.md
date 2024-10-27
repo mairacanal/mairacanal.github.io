@@ -81,7 +81,7 @@ as VGEM is not a usual hotplugged device, we need to use the legacy platform
 device initialization. This made me develop my first binding for legacy
 registration:
 
-```
+```rust
 /// Add a platform-level device and its resources
 pub fn register(name: &'static CStr, id: i32) -> Result<Self> {
 	let pdev = from_kernel_err_ptr(unsafe {
@@ -101,7 +101,7 @@ For sure, the registration must follow the unregistration of the device, so I
 implemented a Drop trait for the struct Device in order to guarantee the proper
 device removal without explicitly calling it.
 
-```
+```rust
 impl Drop for Device {
 	fn drop(&mut self) {
 		if self.is_registered {
@@ -133,7 +133,7 @@ earlier attached to a VGEM handle.
 In order to add a fence, bindings to DMA reservation are needed. So, I started
 by creating a safe abstraction for `struct dma_resv`.
 
-```
+```rust
 /// A generic DMA Resv Object
 ///
 /// # Invariants

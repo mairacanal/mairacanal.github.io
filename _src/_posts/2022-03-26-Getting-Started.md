@@ -17,7 +17,7 @@ So, I started to fly solo and explore all the kernel TODO lists. I didn't really
 
 With a lot of git grep, I found a drm_lock boilerplate and code my first Linux Kernel patch. It was small, but it was my first patch and I was extremely excited.
 
-```
+```diff
 As requested in GPU Driver Developers Guide TODO list, replaces all
 drm_lock boilerplates for DRM_MODESET_LOCK_ALL_* helpers.
 
@@ -79,7 +79,7 @@ So, I git grep `#include <linux/of_gpio.h>` and choose the `media/i2c/s5c73m3/s5
 
 So, I picked up the `regulator/lp872x.c` driver and converted also. Then, on my fourth try, **my patch was finally approved**. Mark Brown approved my patch and applied. My patch was merged to the mainstream in Linux v5.17.
 
-```
+```diff
 Removing all linux/gpio.h and linux/of_gpio.h dependencies and replacing
 them with the gpiod interface
 

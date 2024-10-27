@@ -47,13 +47,13 @@ Otherwise, you can follow the [tutorial](http://derekmolloy.ie/write-a-new-image
 
 First, we need to access the Beaglebone Black through SSH.
 
-```
+```bash
 ssh debian@192.168.7.2
 ```
 
 In order to keep the repositories and packages updated before we start the Cobalt core installation, we can run:
 
-```
+```bash
 sudo apt update
 sudo apt upgrade
 ```
@@ -62,26 +62,26 @@ To install the Cobalt core, first, we need to know the version of the Linux imag
 
 After deciding on the kernel version, we can just run the following command to install and update the kernel.
 
-```
+```bash
 sudo apt install linux-image-{KERNEL TAGFORM}
 ```
 
 I installed the 4.19.94-ti-xenomai-r64 version, so I ran:
 
-```
+```bash
 sudo apt install linux-image-4.19.94-ti-xenomai-r64
 ```
 
 To load the new kernel, we need to reboot the machine and reconnect through SSH.
 
-```
+```bash
 sudo reboot
 ssh debian@192.168.7.2
 ```
 
 To check that the kernel was properly installed, we can check the kernel version with:
 
-```
+```bash
 uname -r
 ```
 
@@ -89,7 +89,7 @@ The output must be the kernel tag form that you selected previously. In my case,
 
 We can also check the kernel log and search for Xenomai references. Looking at `dmesg`, we will find something like this:
 
-```
+```bash
 debian@beaglebone:~$ dmesg | grep -i xenomai
 [    0.000000] Linux version 4.19.94-ti-xenomai-r64 (voodoo@rpi4b4g-06) (gcc version 8.3.0 (Debian 8.3.0-6)) #1buster SMP PREEMPT Sat May 22 01:02:28 UTC 2021
 [    1.220506] [Xenomai] scheduling class idle registered.
@@ -105,7 +105,7 @@ Look that we are running Cobalt v3.1 and this version is extremely important to 
 
 First, we need to install the appropriate Xenomai bindings. From the kernel log, I could check that I'm running Cobalt v3.1, so I'm going to download the Xenomai 3.1 tarball.
 
-```
+```bash
 wget https://xenomai.org/downloads/xenomai/stable/xenomai-3.1.tar.bz2
 ```
 
@@ -113,14 +113,14 @@ If you are running another version of Cobalt, you can just change the version ta
 
 Next, we can decompress the tarball and get inside the Xenomai folder.
 
-```
+```bash
 tar xf xenomai-3.1.tar.bz2
 cd xenomai-3.1
 ```
 
 Now, it is time to build and install the Xenomai binding. First, we need to configure the built environment by running:
 
-```
+```bash
 ./configure --enable-smp
 ```
 
@@ -128,7 +128,7 @@ Although the Beaglebone Black has a single-core processor, the flag `--enable-sm
 
 Then, finally, we can build and install Xenomai.
 
-```
+```bash
 make
 sudo make install
 ```
@@ -137,14 +137,14 @@ And then, you are done!
 
 You can test the real-time system by running:
 
-```
+```bash
 sudo su
 /usr/xenomai/bin/latency
 ```
 
 The output will be similar to this:
 
-```
+```plain
 == Sampling period: 1000 us
 == Test mode: periodic user-mode task
 == All results in microseconds
