@@ -5,7 +5,600 @@
         <description>Blogging about graphics development whenever I can</description>
         <link>https://mairacanal.github.io</link>
         <atom:link href="https://mairacanal.github.io/atom.xml" rel="self" type="application/rss+xml" />
-        <lastBuildDate>Tue, 02 Apr 2024 11:00:00 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 28 Oct 2024 12:00:00 +0000</lastBuildDate>
+        
+            <item>
+                <title>Unleashing Power: Enabling Super Pages on the RPi</title>
+                
+                <description>&lt;p&gt;Unleashing the power of 3D graphics in the Raspberry Pi is a key commitment for
+&lt;a href=&quot;https://www.igalia.com&quot;&gt;Igalia&lt;/a&gt; through its collaboration with &lt;a href=&quot;https://www.raspberrypi.com&quot;&gt;Raspberry
+Pi&lt;/a&gt;. The introduction of Super Pages for the
+Raspberry Pi 4 and 5 marks another step in this journey, offering some
+performance enhancements and more efficient memory usage. In this post, we’ll
+dive deep into the technical details of Super Pages, discuss the challenges we
+faced during implementation, and illustrate the benefits this feature brings to
+the Raspberry Pi ecosystem.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-are-super-pages&quot;&gt;What are Super Pages?&lt;/h2&gt;
+
+&lt;p&gt;A Memory Management Unit (MMU) is a hardware component responsible for handling
+memory access at the system level. It translates virtual addresses used by
+programs into physical addresses in main memory, enabling efficient memory
+management and protection. The MMU allows the operating system to allocate
+memory dynamically, isolating processes from one another to prevent them from
+interfering with each other’s memory.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;Recommendation:&lt;/strong&gt; 📚 &lt;em&gt;Structured computer organization&lt;/em&gt; by Andrew Tanenbaum&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;The V3D MMU, which is part of the Broadcom GPU found in the Raspberry Pi 4 and
+5, is responsible for translating 32-bit virtual addresses (VA) used by V3D into
+40-bit physical addresses used externally to V3D. The MMU relies on a page
+table, stored in physical memory, which maps virtual addresses to their
+corresponding physical addresses. The operating system manages this page table,
+and the MMU uses it to perform address translation during memory access.&lt;/p&gt;
+
+&lt;p&gt;A fundamental principle of modern operating systems is that memory is not stored
+contiguously. Instead, a contiguous block of memory is divided into smaller
+blocks, called “pages”, which are scattered across the entire address space.
+These pages are typically 4KB in size. This approach enables more efficient
+memory management and allows for features like virtual memory and memory
+protection.&lt;/p&gt;
+
+&lt;p&gt;Over the years, the amount of available memory in computers has increased
+dramatically. An early IBM PC had up to 640 KiB of RAM, whereas the ThinkPad I’m
+typing on right now has 32 GB of RAM. Naturally, memory demands have grown
+alongside this increase. Today, it’s common for web browsers to consume several
+gigabytes of RAM, and a single shader can take up multiple megabytes.&lt;/p&gt;
+
+&lt;p&gt;As memory usage grows, a 4KB page size may become inefficient for managing large
+memory blocks. Handling a large number of small pages for a single block means
+the MMU must perform multiple address translations, which increases overhead.
+This can reduce the effectiveness of the Translation Lookaside Buffer (TLB), as
+it must store and handle more entries, potentially leading to more cache misses
+and reduced overall performance.&lt;/p&gt;
+
+&lt;p&gt;This is why many CPU manufacturers have introduced support for larger page
+sizes. For instance, x86 CPUs typically support 4KB and 2MB pages, with 1GB
+pages available if supported by the hardware. Similarly, ARM64 CPUs can support
+4KB, 16KB, and 64KB page sizes. These larger page sizes help reduce the number
+of pages the MMU needs to manage, improving performance by reducing the overhead
+of address translation and making more efficient use of the TLB.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;So, if CPUs are using bigger sizes, why shouldn’t GPUs do the same?&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;By default, V3D supports 4KB pages. However, by setting specific bits in the
+page table entry, it is possible to create 64KB “Big Pages” and 1MB “Super
+Pages.” The issue is that the current V3D driver available in Linux does not
+enable the use of Big or Super Pages, meaning this hardware feature is currently
+unused.&lt;/p&gt;
+
+&lt;p&gt;The advantage of enabling Big and Super Pages is that once an entry for any page
+within a Big or Super Page is cached in the MMU, it can be used to translate all
+virtual addresses within that page’s range without needing to fetch additional
+entries. In theory, this should result in improved performance, especially for
+applications with high memory demands, such as those using multiple large buffer
+objects (BOs).&lt;/p&gt;
+
+&lt;p&gt;As Igalia continually strives to enhance the experience for Raspberry Pi users,
+we decided to implement this feature in the upstream kernel. But before diving
+into the implementation details, let’s take a look at the real-world results and
+see if the theoretical benefits of Super Pages have translated into measurable
+improvements for Raspberry Pi users.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-does-this-feature-mean-for-rpi-users&quot;&gt;What Does This Feature Mean for RPi Users?&lt;/h2&gt;
+
+&lt;p&gt;With Super Pages implemented, let’s now explore the actual performance
+improvements observed on the Raspberry Pi and see how impactful this feature is
+for users.&lt;/p&gt;
+
+&lt;h3 id=&quot;benchmarking-super-pages-traces-and-fps-improvements&quot;&gt;Benchmarking Super Pages: Traces and FPS Improvements&lt;/h3&gt;
+
+&lt;p&gt;To measure the impact of Super Pages, we tested a variety of games and demos
+traces on the Raspberry Pi 4 and 5, covering genres from action to racing. On
+average, we observed a +1.40% FPS improvement on the Raspberry Pi 4 and a +1.30%
+improvement on the Raspberry Pi 5.&lt;/p&gt;
+
+&lt;p&gt;For instance, on the Raspberry Pi 4, &lt;em&gt;Warzone 2100&lt;/em&gt; saw an 8.36% FPS increase,
+and on the Raspberry Pi 5, &lt;em&gt;Quake II&lt;/em&gt; enjoyed a 3.62% boost. These examples
+demonstrate the benefits of Super Pages in resource-demanding applications,
+where optimized memory handling becomes critical.&lt;/p&gt;
+
+&lt;h4 id=&quot;raspberry-pi-4-fps-improvements&quot;&gt;Raspberry Pi 4 FPS Improvements&lt;/h4&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Trace&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Before Super Pages&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;After Super Pages&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Improvement&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;warzone2100.30secs.1024x768.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;56.39&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;61.10&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+8.36%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_shooting_low_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;20.71&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;21.47&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+3.65%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;quake3e_capture_frames_1800_through_2400_1920x1080.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;60.88&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;62.50&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+2.67%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;supertuxkart-menus_1024x768.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;112.62&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;115.61&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+2.65%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_shooting_high_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;20.45&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;20.88&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+2.10%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;quake2-gles3-1280x720.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;59.76&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;60.84&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.82%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_sun_temple_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;27.60&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;28.03&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.54%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;vkQuake_capture_frames_1_through_1200_1280x720.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;54.59&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;55.30&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.29%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_low_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;32.75&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;33.08&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.00%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;sponza_demo02_800x600.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;20.90&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;21.03&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.61%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;supertuxkart-racing_1024x768.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;8.58&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;8.63&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.60%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_high_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;19.62&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;19.74&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.59%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;serious_sam_trace02_1280x720.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;44.00&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;44.21&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.50%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_vehicle_game-2_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;12.59&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;12.65&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.49%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;sponza_demo01_800x600.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;21.42&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;21.46&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.19%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;quake3e-1280x720.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;84.45&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;84.52&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.09%&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h4 id=&quot;raspberry-pi-5-fps-improvements&quot;&gt;Raspberry Pi 5 FPS Improvements&lt;/h4&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Trace&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Before Super Pages&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;After Super Pages&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Improvement&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;quake2-gles3-1280x720.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;151.77&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;157.26&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+3.62%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;supertuxkart-menus_1024x768.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;306.79&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;313.88&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+2.31%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;warzone2100.30secs.1024x768.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;140.92&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;144.03&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+2.21%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;vkQuake_capture_frames_1_through_1200_1280x720.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;131.45&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;134.20&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+2.10%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_vehicle_game-2_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;24.42&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;24.88&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.89%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_high_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;32.12&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;32.53&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.29%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_sun_temple_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;42.05&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;42.55&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.20%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_shooting_high_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;52.77&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;53.31&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+1.04%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;quake3e-1280x720.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;238.31&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;240.53&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.93%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;warzone2100.70secs.1024x768.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;151.09&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;151.81&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.48%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;sponza_demo02_800x600.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;50.81&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;51.05&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.46%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;supertuxkart-racing_1024x768.trace&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;20.91&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;20.98&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.33%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_low_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;59.68&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;59.86&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.29%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;quake3e_capture_frames_1_through_1800_1920x1080.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;167.70&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;168.17&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.29%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;ue4_shooter_game_shooting_low_quality_640x480.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;53.40&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;53.51&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.22%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;quake3e_capture_frames_1800_through_2400_1920x1080.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;163.37&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;163.64&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.17%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;serious_sam_trace02_1280x720.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;60.00&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;60.03&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;+0.06%&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;sponza_demo01_800x600.gfxr&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;45.04&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;45.04&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;&amp;lt;.01%&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;While an average +1% FPS improvement might seem modest, Super Pages can deliver
+more noticeable gains in memory-intensive 3D applications and when the GPU is
+under heavy usage. Let’s see how the Super Pages perform on Mesa CI.&lt;/p&gt;
+
+&lt;h3 id=&quot;benchmarking-super-pages-mesa-ci-job-duration&quot;&gt;Benchmarking Super Pages: Mesa CI Job Duration&lt;/h3&gt;
+
+&lt;p&gt;To avoid introducing regressions in user-space, I usually test my custom kernels
+with Mesa CI, focusing on the “broadcom-postmerge” stage to verify that all
+Piglit and CTS tests ran smoothly. For Super Pages, I was pleasantly surprised
+by the job duration results, as some job durations were reduced by several
+minutes.&lt;/p&gt;
+
+&lt;h4 id=&quot;mesa-ci-jobs-duration-improvements&quot;&gt;Mesa CI Jobs Duration Improvements&lt;/h4&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Job&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Before Super Pages&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;After Super Pages&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;v3d-rpi4-traces:arm64&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~4m30s&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~3m40s&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;v3d-rpi5-traces:arm64&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~3m30s&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~2m45s&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;v3d-rpi4-gl-full:arm64 */6&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~24-25 minutes&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~22-23 minutes&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;v3d-rpi5-gl-full:arm64&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~48 minutes&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~48 minutes&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;v3dv-rpi4-vk-full:arm64 */6&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~44 minutes&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~41 minutes&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;v3dv-rpi5-vk-full:arm64&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~102 minutes&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;~92 minutes&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Seeing these reductions is especially rewarding. For example, the
+“v3dv-rpi5-vk-full:arm64” job duration decreased by 10 minutes, meaning more FPS
+for users and shorter wait times for Mesa developers.&lt;/p&gt;
+
+&lt;h3 id=&quot;benchmarking-super-pages-ps2-emulation&quot;&gt;Benchmarking Super Pages: PS2 Emulation&lt;/h3&gt;
+
+&lt;p&gt;After sharing a couple of tables, I’ll admit that showcasing performance
+improvements solely through numbers doesn’t always convey the real impact.
+Personally, I find it more satisfying to see performance gains in action with
+real-world applications.&lt;/p&gt;
+
+&lt;p&gt;This led me to explore PlayStation 2 (PS2) emulation on the RPi 5. From watching
+YouTube videos, I noticed that PS2 is a popular console for the RPi 5. While the
+PlayStation (PS1) emulates well even on the RPi 4, and Nintendo 64 and Sega
+Saturn struggle across most hardware, PS2 hits a sweet spot for testing the RPi
+5’s limits.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, I still have my childhood PS2 — my second console after the
+Nintendo GameCube, and one of the most successful consoles worldwide, including
+in Brazil. With a library packed with titles like &lt;em&gt;Metal Gear Solid&lt;/em&gt;, &lt;em&gt;Resident
+Evil&lt;/em&gt;, &lt;em&gt;Tomb Raider&lt;/em&gt;, and &lt;em&gt;Shadow of the Colossus&lt;/em&gt;, the PS2 remains a great
+system for collectors and retro gamers alike.&lt;/p&gt;
+
+&lt;p&gt;I selected a few games from my collection to benchmark on the RPi 5 using a PS2
+emulator. My emulator of choice was &lt;a href=&quot;https://github.com/AetherSX2-backup/AetherSX2-builds&quot;&gt;Aether
+SX2&lt;/a&gt; with Vulkan support.
+Although AetherSX2 is no longer in development, it still performs well on the
+RPi.&lt;/p&gt;
+
+&lt;p&gt;Initially, many games were barely playable, especially those with large buffer
+objects, like Shadow of the Colossus and Gran Turismo 4. However, after enabling
+Super Pages support, I noticed immediate improvements. For example, Shadow of
+the Colossus wouldn’t even open before Super Pages, and while it’s not fully
+playable yet, it does load now. This isn’t a silver bullet, but it’s a step
+forward in improving the driver one piece at a time.&lt;/p&gt;
+
+&lt;p&gt;I ended up selecting four games for a video comparison: &lt;em&gt;Burnout 3: Takedown&lt;/em&gt;,
+&lt;em&gt;Metal Gear Solid 3: Snake Eater&lt;/em&gt;, &lt;em&gt;Resident Evil 4&lt;/em&gt;, and &lt;em&gt;Tekken 4&lt;/em&gt;.&lt;/p&gt;
+
+&lt;video width=&quot;100%&quot; controls=&quot;&quot;&gt;
+  &lt;source src=&quot;/assets/videos/super-pages-rpi5-2024.mp4&quot; type=&quot;video/mp4&quot; /&gt;
+  Your browser does not support the video tag.
+&lt;/video&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt; The BIOS used in the emulator was extracted from my own PS2,
+and I played only games I own, with ROMs I personally extracted. Neither I nor
+Igalia encourage using downloaded BIOS or ROM files from the internet.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;From the video, we can see noticeable improvements in all four games. Although
+they aren’t perfectly playable yet, the performance gains are evident,
+particularly in &lt;em&gt;Resident Evil 4&lt;/em&gt;, where the gameplay saw a solid 5 FPS boost. I
+realize 18 FPS might not satisfy most players, but I still had a lot of fun
+playing &lt;em&gt;Resident Evil 4&lt;/em&gt; on the RPi 5.&lt;/p&gt;
+
+&lt;p&gt;When tracking the FPS for these games, it’s clear that the performance gains go
+well beyond the average 1% seen in other benchmarks. Super Pages show their true
+potential in high-memory applications like PS2 emulation.&lt;/p&gt;
+
+&lt;p&gt;Having seen the performance gains Super Pages can bring to the Raspberry Pi,
+let’s now dive into the technical aspects of the feature.&lt;/p&gt;
+
+&lt;h2 id=&quot;implementing-super-pages&quot;&gt;Implementing Super Pages&lt;/h2&gt;
+
+&lt;p&gt;The first challenge was figuring out how to allocate a contiguous block of
+memory using &lt;em&gt;shmem&lt;/em&gt;. The Shared Memory Virtual Filesystem (&lt;em&gt;shmem&lt;/em&gt;) is used as
+a flexible memory mechanism that allows the GPU and CPU to share access to BOs
+through the system’s temporary filesystem, &lt;em&gt;tmpfs&lt;/em&gt;. &lt;em&gt;tmpfs&lt;/em&gt; is a volatile
+filesystem that stores files in RAM, making it ideal for temporary or high-speed
+data that doesn’t need to persist on RAM.&lt;/p&gt;
+
+&lt;p&gt;For example, to allocate a 256KB BO across four 64KB pages, we need four
+contiguous 64KB memory blocks. However, by default, &lt;em&gt;tmpfs&lt;/em&gt; only allocates
+memory in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PAGE_SIZE&lt;/code&gt; chunks (as seen in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;shmem_file_setup()&lt;/code&gt;), whereas
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PAGE_SIZE&lt;/code&gt; is 4KB on the Raspberry Pi 4 and 16KB on the Raspberry Pi 5. Since
+the function &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_gem_object_init()&lt;/code&gt; — which initializes an allocated
+shmem-backed GEM object — relies on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;shmem_file_setup()&lt;/code&gt; to back these objects
+in memory, we had to consider alternatives, as the default &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PAGE_SIZE&lt;/code&gt; would
+divide memory into increments that are too small to ensure the large, contiguous
+blocks needed by the GPU.&lt;/p&gt;
+
+&lt;p&gt;The solution we proposed was to create &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_gem_object_init_with_mnt()&lt;/code&gt;, which
+allows us to specify the &lt;em&gt;tmpfs&lt;/em&gt; mountpoint where the GEM object will be
+created. This enables us to allocate our BOs in a mountpoint that supports
+larger page sizes. Additionally, to ensure that our BOs are allocated in the
+correct mountpoint, we introduced &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_gem_shmem_create_with_mnt()&lt;/code&gt;, which
+allows the mountpoint to be specified when creating a new DRM GEM shmem object.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20240923141348.2422499-5-mcanal@igalia.com/&quot;&gt;[PATCH v6 04/11] drm/gem: Create a drm_gem_object_init_with_mnt() function&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20240923141348.2422499-7-mcanal@igalia.com/&quot;&gt;[PATCH v6 06/11] drm/gem: Create shmem GEM object in a given mountpoint&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;The next challenge was figuring out how to create a new mountpoint that would
+allow for different page sizes based on the allocation. Simply creating a new
+&lt;em&gt;tmpfs&lt;/em&gt; mountpoint with a fixed bigger page size wouldn’t suffice, as we needed
+flexibility for various allocations. Inspired by the i915 driver, we decided to
+use a &lt;em&gt;tmpfs&lt;/em&gt; mountpoint with the “huge=within_size” flag. This flag, which
+requires the kernel to be configured with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;CONFIG_TRANSPARENT_HUGEPAGE&lt;/code&gt;, enables
+the allocation of huge pages.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://docs.kernel.org/admin-guide/mm/transhuge.html&quot;&gt;Transparent Huge Pages
+(THP)&lt;/a&gt; is a kernel
+feature that automatically manages large memory pages to improve performance
+without needing changes from applications. THP dynamically combines smaller
+pages into larger ones, typically 2MB, reducing memory management overhead and
+improving cache efficiency.&lt;/p&gt;
+
+&lt;p&gt;To support our new allocation strategy, we created a dedicated &lt;em&gt;tmpfs&lt;/em&gt;
+mountpoint for V3D, called gemfs, which provides us an ideal space for managing
+these larger allocations.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20240923141348.2422499-6-mcanal@igalia.com/&quot;&gt;[PATCH v6 05/11] drm/v3d: Introduce gemfs&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;With everything in place for contiguous allocations, the next step was configuring V3D to enable Big/Super Page support.&lt;/p&gt;
+
+&lt;p&gt;We began by addressing a major source of memory pressure on the Raspberry Pi:
+the current 128KB alignment for allocations in the virtual memory space. This
+alignment wastes space when handling small BO allocations, especially since the
+userspace driver performs a large number of these small allocations.&lt;/p&gt;
+
+&lt;p&gt;As a result, we can’t fully utilize the 4GB address space available for the GPU
+on the Raspberry Pi 4 or 5. For example, we can currently allocate up to 32,000
+BOs of 4KB (~140MB) and 3,000 BOs of 400KB (~1.3GB). This becomes a limitation
+for memory-intensive applications. By reducing the page alignment to 4KB, we can
+significantly increase the number of BOs, allowing up to 1,000,000 BOs of 4KB
+(~4GB) and 10,000 BOs of 400KB (~4GB).&lt;/p&gt;
+
+&lt;p&gt;Therefore, the first change I made was reducing the VA alignment of all
+allocations to 4KB.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20240923141348.2422499-8-mcanal@igalia.com/&quot;&gt;[PATCH v6 07/11] drm/v3d: Reduce the alignment of the node allocation&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;With the alignment issue resolved, we can now implement the code to properly set
+the flags on the Page Table Entries (PTE) for Big/Super Pages. Setting these
+flags is straightforward — a simple bitwise operation. The challenge lies in
+determining which BOs can be allocated in Super Pages. For a BO to be eligible
+for a Big Page, its virtual address must be aligned to 64KB, and the same
+applies to its physical address. Same thing for Super Pages, but now the
+addresses must be aligned to 1MB.&lt;/p&gt;
+
+&lt;p&gt;If the BO qualifies for a Big/Super Page, we need to iterate over 16 4KB pages
+(for Big Pages) or 256 4KB pages (for Super Pages) and insert the appropriate
+PTE.&lt;/p&gt;
+
+&lt;p&gt;Additionally, we modified the way we iterate through the BO’s memory. This was
+necessary because the THP may not always allocate the entire BO contiguously.
+For example, it might only allocate contiguously 1MB of a 2MB block. To handle
+this, we now iterate over the blocks of contiguous memory scattered across the
+scatterlist, ensuring that each segment is properly handled during the
+allocation process.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;What is a scatterlist?&lt;/strong&gt; It is a Linux Kernel data structure that manages
+non-contiguous memory as if it were contiguous. It organizes separate memory
+blocks into a single logical buffer, allowing efficient data handling,
+especially in Direct Memory Access (DMA) operations, without needing a
+physically contiguous memory allocation.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20240923141348.2422499-9-mcanal@igalia.com/&quot;&gt;[PATCH v6 08/11] drm/v3d: Support Big/Super Pages when writing out PTEs&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;However, the last few patches alone don’t fully enable the use of Super Pages.
+While PATCH 08/11 technically allows for Super Pages, we’re still relying on DRM
+GEM shmem objects, meaning allocations are still happening in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PAGE_SIZE&lt;/code&gt;
+chunks. Although Big/Super Pages could potentially be used if the system
+naturally allocated 1MB or 64KB contiguously, this is quite rare and not our
+intended outcome. Our goal is to actively use Big/Super Pages as much as
+possible.&lt;/p&gt;
+
+&lt;p&gt;To achieve this, we’ll utilize the V3D-specific mountpoint we created earlier
+for BO allocation whenever possible. By creating BOs through
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm_gem_shmem_create_with_mnt()&lt;/code&gt;, we can ensure that large pages are allocated
+contiguously when possible, enabling the consistent use of Big/Super Pages.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20240923141348.2422499-10-mcanal@igalia.com/&quot;&gt;[PATCH v6 09/11] drm/v3d: Use gemfs/THP in BO creation if available&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;And there you have it — Big/Super Pages are now fully enabled in V3D. The only
+requirement to activate this feature in any given kernel is ensuring that
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;CONFIG_TRANSPARENT_HUGEPAGE&lt;/code&gt; is enabled.&lt;/p&gt;
+
+&lt;h2 id=&quot;final-words&quot;&gt;Final Words&lt;/h2&gt;
+
+&lt;p&gt;You can learn more about ongoing enhancements to the Raspberry Pi driver stack
+in this &lt;a href=&quot;https://www.youtube.com/live/d0MP9-hFUZE?si=k6SL8taOo3oBgG-t&amp;amp;t=21888&quot;&gt;XDC 2024
+talk&lt;/a&gt; by
+José María “Chema” Casanova Crespo. In the talk, Chema discusses the Super
+Pages work I developed, along with other advancements in the driver stack.&lt;/p&gt;
+
+&lt;p&gt;Of course, there are still plenty of improvements on the horizon at Igalia. I’m
+currently experimenting with 64KB CLE allocations in user-space, and I hope to
+share more good news soon.&lt;/p&gt;
+
+&lt;p&gt;Finally, I’d like to express my gratitude to &lt;a href=&quot;https://blogs.igalia.com/itoral/&quot;&gt;Iago
+Toral&lt;/a&gt; and &lt;a href=&quot;https://blogs.igalia.com/tursulin/&quot;&gt;Tvrtko
+Ursulin&lt;/a&gt; for their invaluable support in
+developing Super Pages for the V3D kernel driver. Thank you both for sharing
+your experience with me!&lt;/p&gt;
+
+</description>
+                <pubDate>Mon, 28 Oct 2024 12:00:00 +0000</pubDate>
+                <link>https://mairacanal.github.io/unleashing-power-enabling-super-pages-on-RPi/</link>
+                <guid isPermaLink="true">https://mairacanal.github.io/unleashing-power-enabling-super-pages-on-RPi/</guid>
+            </item>
         
             <item>
                 <title>Linux 6.8: AMD HDR and Raspberry Pi 5</title>
@@ -1964,34 +2557,34 @@ as VGEM is not a usual hotplugged device, we need to use the legacy platform
 device initialization. This made me develop my first binding for legacy
 registration:&lt;/p&gt;
 
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;/// Add a platform-level device and its resources
-pub fn register(name: &amp;amp;&apos;static CStr, id: i32) -&amp;gt; Result&amp;lt;Self&amp;gt; {
-	let pdev = from_kernel_err_ptr(unsafe {
-		bindings::platform_device_register_simple(name.as_char_ptr(), id,
-			core::ptr::null(), 0)
-	})?;
+&lt;div class=&quot;language-rust highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cd&quot;&gt;/// Add a platform-level device and its resources&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;pub&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;&apos;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CStr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;i32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Result&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;Self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pdev&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;from_kernel_err_ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;unsafe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;nn&quot;&gt;bindings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;platform_device_register_simple&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.as_char_ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;nn&quot;&gt;core&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 
-	Ok(Self {
-		ptr: pdev,
-		used_resource: 0,
-		is_registered: true,
-	})
-}
+	&lt;span class=&quot;nf&quot;&gt;Ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;Self&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pdev&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;used_resource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;is_registered&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;For sure, the registration must follow the unregistration of the device, so I
 implemented a Drop trait for the struct Device in order to guarantee the proper
 device removal without explicitly calling it.&lt;/p&gt;
 
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;impl Drop for Device {
-	fn drop(&amp;amp;mut self) {
-		if self.is_registered {
-			// SAFETY: This path only runs if a previous call to `register`
-			// completed successfully.
-			unsafe { bindings::platform_device_unregister(self.ptr) };
-		}
-	}
-}
+&lt;div class=&quot;language-rust highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;impl&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Drop&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Device&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;drop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;mut&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;py&quot;&gt;.is_registered&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;c1&quot;&gt;// SAFETY: This path only runs if a previous call to `register`&lt;/span&gt;
+			&lt;span class=&quot;c1&quot;&gt;// completed successfully.&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;unsafe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;bindings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;platform_device_unregister&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;py&quot;&gt;.ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;After those, I also developed bindings for a couple of more functions and
@@ -2013,44 +2606,44 @@ earlier attached to a VGEM handle.&lt;/p&gt;
 &lt;p&gt;In order to add a fence, bindings to DMA reservation are needed. So, I started
 by creating a safe abstraction for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;struct dma_resv&lt;/code&gt;.&lt;/p&gt;
 
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;/// A generic DMA Resv Object
-///
-/// # Invariants
-/// ptr is a valid pointer to a dma_resv and we own a reference to it.
-pub struct DmaResv {
-    ptr: *mut bindings::dma_resv,
-}
+&lt;div class=&quot;language-rust highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cd&quot;&gt;/// A generic DMA Resv Object&lt;/span&gt;
+&lt;span class=&quot;cd&quot;&gt;///&lt;/span&gt;
+&lt;span class=&quot;cd&quot;&gt;/// # Invariants&lt;/span&gt;
+&lt;span class=&quot;cd&quot;&gt;/// ptr is a valid pointer to a dma_resv and we own a reference to it.&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;pub&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DmaResv&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;mut&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;bindings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dma_resv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 
-impl DmaResv {
+&lt;span class=&quot;k&quot;&gt;impl&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DmaResv&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
 	
-    [...]
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
 	
-    /// Add a fence to the dma_resv object
-    pub fn add_fences(
-        &amp;amp;self,
-        fence: &amp;amp;dyn RawDmaFence,
-        num_fences: u32,
-        usage: bindings::dma_resv_usage,
-    ) -&amp;gt; Result {
-        unsafe { bindings::dma_resv_lock(self.ptr, core::ptr::null_mut()) };
+    &lt;span class=&quot;cd&quot;&gt;/// Add a fence to the dma_resv object&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;pub&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fn&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;add_fences&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;fence&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;dyn&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RawDmaFence&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;num_fences&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;u32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;usage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;bindings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dma_resv_usage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;Result&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;unsafe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;bindings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;dma_resv_lock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;py&quot;&gt;.ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;core&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;null_mut&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
 
-        let ret = self.reserve_fences(num_fences);
-        match ret {
-            Ok(_) =&amp;gt; {
-                // SAFETY: ptr is locked with dma_resv_lock(), and dma_resv_reserve_fences()
-                // has been called.
-                unsafe {
-                    bindings::dma_resv_add_fence(self.ptr, fence.raw(), usage);
-                }
-            }
-            Err(_) =&amp;gt; {}
-        }
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ret&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.reserve_fences&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;num_fences&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ret&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nf&quot;&gt;Ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;c1&quot;&gt;// SAFETY: ptr is locked with dma_resv_lock(), and dma_resv_reserve_fences()&lt;/span&gt;
+                &lt;span class=&quot;c1&quot;&gt;// has been called.&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;unsafe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;nn&quot;&gt;bindings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;dma_resv_add_fence&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;py&quot;&gt;.ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fence&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.raw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;usage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;nf&quot;&gt;Err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
         
-        unsafe { bindings::dma_resv_unlock(self.ptr) };
+        &lt;span class=&quot;k&quot;&gt;unsafe&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;bindings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;dma_resv_unlock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;py&quot;&gt;.ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
 
-        ret
-    }
-}
+        &lt;span class=&quot;n&quot;&gt;ret&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;With that step, I could simply write the IOCTLs based on the new &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DmaResv&lt;/code&gt;
@@ -2549,611 +3142,6 @@ provide me constructive feedback.&lt;/p&gt;
                 <pubDate>Thu, 08 Dec 2022 00:00:00 +0000</pubDate>
                 <link>https://mairacanal.github.io/november-update-exploring-v3d/</link>
                 <guid isPermaLink="true">https://mairacanal.github.io/november-update-exploring-v3d/</guid>
-            </item>
-        
-            <item>
-                <title>GSoC Final Report</title>
-                
-                <description>&lt;p&gt;My journey on the Google Summer of Code project passed by so fast… This is my
-last week on the GSoC and those 14 weeks flew by! A lot of stuff happened during
-those three months, and as I’m writing this blog post, I feel quite nostalgic
-about this three months.&lt;/p&gt;
-
-&lt;p&gt;Before I started GSoC, I never thought I would send so many patches to the
-mailing list, have an abstract approved on XDC 2022, or have commit rights on
-drm-misc.&lt;/p&gt;
-
-&lt;p&gt;GSoC was indeed a fantastic experience. It gave me the opportunity to grow as a
-developer in an open source community and I believe that I ended up GSoC with a
-better understanding of what open source is. I learned more about the community,
-how to communicate with them, and who are the actors in this workflow.&lt;/p&gt;
-
-&lt;p&gt;So, this is a summary report of all my journey at GSoC 2022.&lt;/p&gt;
-
-&lt;h1 id=&quot;contributions-during-gsoc-2022&quot;&gt;Contributions during GSoC 2022&lt;/h1&gt;
-&lt;hr /&gt;
-
-&lt;p&gt;First I will kick off with my non-related contributions. I mean, they are
-somehow related to my project, but they are not exactly unit tests for AMDGPU.&lt;/p&gt;
-
-&lt;h3 id=&quot;kworkflow&quot;&gt;kworkflow&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/kworkflow/kworkflow&quot;&gt;kworkflow&lt;/a&gt; is a tool for reducing the
-environment and setup overhead of developing for Linux, which is maintained by
-my mentor Rodrigo Siqueira. I use it to manage my config files, deploy to my
-testing machine, check code style, and more. Initially, kw didn’t have support
-to deploy for Fedora-based machines.&lt;/p&gt;
-
-&lt;p&gt;During the Community Bonding Period, I added support to deploy Fedora-based
-machines and I wrote a bit about this story in this &lt;a href=&quot;https://mairacanal.github.io/kernel-development-fedora/&quot;&gt;blog
-post&lt;/a&gt;.  Moreover, I
-fixed a couple of bugs that I spotted while using it.&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Patch&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://github.com/kworkflow/kworkflow/pull/601&quot;&gt;docs: dependencies: Add pv to Fedora dependencies&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://github.com/kworkflow/kworkflow/pull/602&quot;&gt;src: kwlib: check if the context is inside a git worktree&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://github.com/kworkflow/kworkflow/pull/613&quot;&gt;Add deploy support to Fedora-based systems&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://github.com/kworkflow/kworkflow/pull/649&quot;&gt;src: help: Fix renaming of configm to kernel-config-manager&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;igt&quot;&gt;IGT&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://gitlab.freedesktop.org/drm/igt-gpu-tools&quot;&gt;IGT GPU Tools&lt;/a&gt; is a
-collection of tools for the development and testing of DRM drivers. During GSoC,
-I ran the AMDGPU suite a couple of times on my testing machine with a single
-display connected through HDMI. With this setup, I was able to detect a couple
-of failures on the IGT tests and I reported some of those issues on the &lt;a href=&quot;https://gitlab.freedesktop.org/drm/amd/-/issues&quot;&gt;AMD bug
-tracker&lt;/a&gt;, but also I sent two
-patches fixing a couple of failures on the test.&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Patch&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/patch/495078/&quot;&gt;[i-g-t,v2] tests/amdgpu: Skip multihead MPO tests on single display&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://patchwork.freedesktop.org/patch/497794/&quot;&gt;[i-g-t,v2] tests/amdgpu/amd_bypass: skip if connector is not DisplayPort&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;linux-kernel---kunit&quot;&gt;Linux Kernel - KUnit&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.kernel.org/dev-tools/kunit/&quot;&gt;KUnit&lt;/a&gt; is the Kernel Unit Testing
-Framework. It is the framework we used for creating unit tests for the AMDGPU
-drivers. My patches to KUnit are based on problems that I noticed I could
-improve while I was writing unit tests for VBA. First, I fixed a simple
-documentation error I spotted when I consulted the docs. The other patches are a
-bit more interesting.&lt;/p&gt;
-
-&lt;p&gt;While I was writing some tests, I realize I was using a lot of expectations such as:&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;KUNIT_EXPECT_EQ&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;memcmp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buffer1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;buffer2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;And I also realize that the output of this expectation can be quite non-helpful,
-as it only gives the output of the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;memcmp&lt;/code&gt; function. So, I created an
-expectation macro for analyzing blocks of memory and outputs the hexdump of the
-memory.&lt;/p&gt;
-
-&lt;p&gt;It was a great community experience to interact with the KUnit developers and
-work on their feedback.&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Patch&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/linux-kselftest/20220720185719.273630-1-mairacanal@riseup.net/T/#u&quot;&gt;Documentation: KUnit: Fix example with compilation error&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/linux-kselftest/20220808125237.277126-2-mairacanal@riseup.net/&quot;&gt;kunit: Introduce KUNIT_EXPECT_MEMEQ and KUNIT_EXPECT_MEMNEQ macros&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/linux-kselftest/20220808125237.277126-3-mairacanal@riseup.net/&quot;&gt;kunit: Add KUnit memory block assertions to the example_all_expect_macros_test&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/linux-kselftest/20220808125237.277126-4-mairacanal@riseup.net/&quot;&gt;kunit: Use KUNIT_EXPECT_MEMEQ macro&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;linux-kernel---drm&quot;&gt;Linux Kernel - DRM&lt;/h3&gt;
-
-&lt;p&gt;In the DRM subsystem, I contributed to the DRM unit tests, which used to be
-selftests and I converted them to KUnit during an LKCamp hackathon with other
-students. I explained more about those tests in this &lt;a href=&quot;https://mairacanal.github.io/from-selftests-to-KUnit/&quot;&gt;blog
-post&lt;/a&gt;.  After those
-patches were merged, I dedicated myself to some janitorial duties on the tests
-folders: fixing stack warnings, refactoring some tests, and making the naming
-more consistent.&lt;/p&gt;
-
-&lt;p&gt;Also, this summer, I &lt;a href=&quot;https://gitlab.freedesktop.org/freedesktop/freedesktop/-/issues/450&quot;&gt;applied for commit
-rights&lt;/a&gt; on
-the drm-misc repository and it was approved. I got pretty glad to have commit
-rights, although I believe it is such a huge responsibility and I plan to use
-this right very carefully.  I must thank my mentor Melissa Wen for encouraging
-me to ask for commit rights and for sharing her knowledge about the community
-and maintainership models (and also for answering a thousand questions I had
-about dim).&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Patch&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m3e0a2a318c5e1689c6a984d2bd4a5679e858eeff&quot;&gt;drm: selftest: convert drm_damage_helper selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#mf58d435b607096449365fd5d3819302d3ca548c6&quot;&gt;drm: selftest: convert drm_cmdline_parser selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m5f3b4cbaa011ea730d7017fcd193e6b1b7d7bae8&quot;&gt;drm: selftest: convert drm_rect selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m5725eabec8f19609ed68bce362da7239a10e3ff2&quot;&gt;drm: selftest: convert drm_format selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m32d0d32fac5f1ef5a67c5844acc6e1793e0b4d53&quot;&gt;drm: selftest: convert drm_plane_helper selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m0434c83b951ad9db5d6cf99abdb7244191246ebd&quot;&gt;drm: selftest: convert drm_dp_mst_helper selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m35dddb45de1ee298e1076c44334af736cc881a38&quot;&gt;drm: selftest: convert drm_framebuffer selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m54ddcbd30df811ef9ec704cc70fa04c24e0f7f8c&quot;&gt;drm: selftest: convert drm_buddy selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220708203052.236290-1-maira.canal@usp.br/T/#m25364c46c57f6513cd1c04588fb8c7e35c0eaa63&quot;&gt;drm: selftest: convert drm_mm selftest to KUnit&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220729124726.748221-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/tests: Split up test cases in igt_check_drm_format_min_pitch&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220828182543.155415-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/mm: Reduce stack frame usage in __igt_reserve&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220901124210.591994-1-mairacanal@riseup.net/T/#mf7a08ad198b95199a4beec1cdbe4c25b24771f72&quot;&gt;drm/tests: Split drm_framebuffer_create_test into parameterized tests&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220901124210.591994-1-mairacanal@riseup.net/T/#mfded29eaff1d5209f5a9c27ab952a367121520d4&quot;&gt;drm/tests: Change “igt_” prefix to “test_drm_”&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;linux-kernel---amdgpu&quot;&gt;Linux Kernel - AMDGPU&lt;/h3&gt;
-
-&lt;p&gt;Most of my patches to the AMDGPU branch were ideas that I had while writing the
-unit tests on VBA. The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba&lt;/code&gt; files were automatically generated,
-which means that the code might not be the most readable one. During the summer,
-I had a couple of ideas for cleaning up a bit of the VBA files and some of those
-ideas are documented in this &lt;a href=&quot;https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/&quot;&gt;blog
-post&lt;/a&gt;.
-And most of my patches are related to this matter.&lt;/p&gt;
-
-&lt;p&gt;But, most of the patches I sent related to the VBA files weren’t merged and
-there was also no feedback on the patches. Some were sent multiple times, but I
-didn’t get an answer. The DML is a very sensitive part of the AMDGPU driver, so
-big changes might not be suitable for them.&lt;/p&gt;
-
-&lt;p&gt;Moreover, there are a couple of fixes. My favorite one is the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm/amdgpu: Fix
-use-after-free on amdgpu_bo_list mutex&lt;/code&gt;, which was a fix to a use-after-free
-problem that appeared in the &lt;a href=&quot;https://lore.kernel.org/dri-devel/CABXGCsM58-8fxVKAVkwsshg+33B_1_t_WesG160AtVBe1ZvKiw@mail.gmail.com/&quot;&gt;mailing
-list&lt;/a&gt;.
-It was fun to read the output provided in the mailing-list and then track the
-bug based on the trace. Also, it was a really nice interaction with other
-developers on the mailing list.&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Patch&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/20220630185005.908140-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/amd/display: Remove return value of Calculate256BBlockSizes&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/20220630201741.991501-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/amd/display: Remove duplicate code across dcn30 and dcn31&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/20220630215316.1078841-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/amd/display: Remove unused variables from vba_vars_st&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m329c95bbd613b7d3368a7a675a1dd90b3cce70af&quot;&gt;drm/amdgpu: Write masked value to control register&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m4c0a16330b7574782a201f10b67d5ea744b601a4&quot;&gt;drm/amd/display: Change get_pipe_idx function scope&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#mcfd965e613d064800a6a82a54e064e8e3e949cc3&quot;&gt;drm/amd/display: Remove unused clk_src variable&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m1f2614742170fe4b2238427cf36dcb98f06b05e5&quot;&gt;drm/amd/display: Remove unused dml32_CalculatedoublePipeDPPCLKAndSCLThroughput function&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m2eb569fdabada2d7ae430770bd84ae5c5021cef5&quot;&gt;drm/amd/display: Remove unused NumberOfStates variable&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#mf1cd1a70ece1c995a9fef2481a0d4524df92ee3f&quot;&gt;drm/amd/display: Remove unused variables from dml_rq_dlg_get_dlg_params&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m96df7c5e1ee5fcbb05c157cce660540920d42579&quot;&gt;drm/amd/display: Remove unused value0 variable&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m5406d98a3e27102d07028c2059a151be8bff04d5&quot;&gt;drm/amd/display: Remove unused variables from dcn10_stream_encoder&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m4dbd50a2e1006e0544da24d523c8fd9b4efa22b4&quot;&gt;drm/amd/display: Remove unused MaxUsedBW variable&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/94dad704-d81a-7dc2-423d-1f728bcb5548@riseup.net/T/#m64fe69263faf9c3d434c4d757857e3e8937272f2&quot;&gt;drm/amd/display: Remove parameters from dml30_CalculateWriteBackDISPCLK&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Rejected&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m1a29f8055054a95f03d47932ac3f303ab24ce7c1&quot;&gt;drm/amd/display: Drop dm_sw_gfx7_2d_thin_l_vp and dm_sw_gfx7_2d_thin_gl&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m2738ab7461b351dd06e74f2787ddd9134c5a9388&quot;&gt;drm/amd/display: Remove duplicated CalculateWriteBackDISPCLK&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#m9e24bbe5084ccc37117a58e72e2afd6d2a419f1f&quot;&gt;drm/amd/display: Remove parameters from rq_dlg_get_dlg_reg&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/aaf722ef-7ead-9d88-ec66-0ab269b65a8f@igalia.com/T/#ma7a739d910814895f6d98c6374d1f1dca24ee1b4&quot;&gt;drm/amd/display: Rewrite CalculateWriteBackDISPCLK function&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/13140020-8139-64f9-51b1-2b71c9b673af@amd.com/T/#m81d3f8826c1247bd0b737f3469943881f0d6484f&quot;&gt;drm/amd/display: Remove unused struct freesync_context&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/20220728182047.264825-1-mairacanal@riseup.net/T/#m50433ff9ec6f795bf0564ac0edb90c1a8d7e56e4&quot;&gt;[PATCH 00/16] Remove entries from struct vba_vars_st&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/20220801124006.89027-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/amd/display: Drop XFCEnabled parameter from CalculatePrefetchSchedule&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/amd-gfx/20220815113931.53226-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/amdgpu: Fix use-after-free on amdgpu_bo_list mutex&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220818132730.399334-1-mairacanal@riseup.net/T/#u&quot;&gt;drm/amd/display: Include missing header&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;strong&gt;Accepted&lt;/strong&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h1 id=&quot;the-kunit-amdgpu-tests&quot;&gt;The KUnit AMDGPU Tests&lt;/h1&gt;
-&lt;hr /&gt;
-
-&lt;p&gt;After this huge tangent, let’s jump into the real milestones of the GSoC
-project. Making a small recapitulation of the idea of my project:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;The Display Mode Library (DML) is a fundamental part of the AMDGPU driver. It
-involves lots of complex calculations and a large number of parameters. That
-said, it points to itself as a great candidate for the implementation of unit
-tests. Unit tests will help graphic developers recognize bugs before they are
-merged into the mainline and make it possible for a future code refactor. This
-project intends to implement unit testing in the Display Mode VBA libraries,
-especially the Display Mode VBA public API and the DCN20’s Display Mode VBA
-functions.&lt;/p&gt;
-
-&lt;/blockquote&gt;
-
-&lt;p&gt;In my project, the deliverables were:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Eleven unit tests for all the public functions on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba20&lt;/code&gt;.&lt;/li&gt;
-  &lt;li&gt;Five blog posts on the progress, problems, concepts, and all.&lt;/li&gt;
-  &lt;li&gt;Run the unit tests on the AMDGPU Radeon RX 5700 XT.&lt;/li&gt;
-  &lt;li&gt;Write documentation for the tests.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;So, let’s discuss point by point the milestones of this summer.&lt;/p&gt;
-
-&lt;h3 id=&quot;the-unit-tests-and-documentation&quot;&gt;The Unit Tests and Documentation&lt;/h3&gt;
-
-&lt;p&gt;First, I had the intention to write unit tests for all the public functions on
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;display_mode_vba20&lt;/code&gt;, which are eleven functions in
-total. Initially, it seems like a good idea to test only the public functions,
-which is usually recommended by Software Engineering authors.&lt;/p&gt;
-
-&lt;p&gt;I started following this plan, but as I was learning more about unit testing, I
-started questioning the feasibility of tests for some functions. I mean, a couple
-of functions had &lt;strong&gt;more than 45 input parameters&lt;/strong&gt; and &lt;strong&gt;more than a thousand
-lines&lt;/strong&gt;. Checking all the possible code branches of those tests seemed to me
-unfeasible because there were a lot of variables to be considered.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;As the function size and the number of parameters grow, the complexity of the
-tests grows exponentially.&lt;/p&gt;
-
-&lt;/blockquote&gt;
-
-&lt;p&gt;So, I ended up writing tests for some static VBA functions. In the end, I wrote
-more than eleven unit tests but the functions for which they were written are
-not the same as planned initially.&lt;/p&gt;
-
-&lt;p&gt;The functions were chosen by two means. First, I was trying to identify
-functions with a more suitable behavior for unit tests. Basically, functions
-with no more than 10 parameters and 100 lines. Also, I was looking for functions
-that were used a lot in the code, in order to increase the coverage and the
-relevance of the tests. But also, sometimes,  Siqueira would suggest some
-functions outside of VBA, such as the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dc_dmub_srv&lt;/code&gt; case, which was inspired on
-a regression.&lt;/p&gt;
-
-&lt;p&gt;Moreover, I also wrote documentation for the tests, giving instructions on how
-to run the tests and how to add more tests to the AMDGPU driver.&lt;/p&gt;
-
-&lt;p&gt;The patches with the test suites and documentation are listed here:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Patch&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Status&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m3a62416af08cd8cef240508798f6072722200573&quot;&gt;drm/amd/display: Introduce KUnit tests to the bw_fixed library&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m55ea9a62f44c3dcf65542078e1c3acbc03dd792d&quot;&gt;drm/amd/display: Introduce KUnit tests to the display_mode_vba library&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#mcc325378f9ff07c2666f3a0b4d0eb4160d9d8ace&quot;&gt;drm/amd/display: Introduce KUnit to dcn20/display_mode_vba_20 library&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#mbd33411310664d71abe907c6b21688c498e8e680&quot;&gt;drm/amd/display: Introduce KUnit tests to dc_dmub_srv library&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://lore.kernel.org/dri-devel/20220831172239.344446-1-mairacanal@riseup.net/T/#m9973c9d5a7f45ce223fc9724fa548e7ef570a0d1&quot;&gt;Documentation/gpu: Add Display Core Unit Test documentation&lt;/a&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;On Review&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;The tests are not merged yet and are currently on the second version, but there
-are some good changes that the tests will be merged soon to the mainline.&lt;/p&gt;
-
-&lt;p&gt;Moreover, I was able to run all the unit tests developed on the AMDGPU Radeon RX
-5700 XT, and also with the kunit-tool.&lt;/p&gt;
-
-&lt;h3 id=&quot;the-blog-posts&quot;&gt;The Blog Posts&lt;/h3&gt;
-
-&lt;p&gt;During the summer, I wrote five blog posts about challenges that I found
-interesting in my journey. All blog posts are listed here:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Date&lt;/th&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Post&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;May 26, 2022&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;a href=&quot;https://mairacanal.github.io/gsoc-22/&quot;&gt;I’m in GSoC ‘22&lt;/a&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Jun 11, 2022&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;a href=&quot;https://mairacanal.github.io/kernel-development-fedora/&quot;&gt;Linux Kernel Developing with Fedora&lt;/a&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Jul 11, 2022&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;a href=&quot;https://mairacanal.github.io/kernel-symbol-table-compilation-more/&quot;&gt;About Kernel Symbol Table, Compilation, and more&lt;/a&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Jul 19, 2022&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;a href=&quot;https://mairacanal.github.io/from-selftests-to-KUnit/&quot;&gt;From Selftests to KUnit&lt;/a&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Aug 10, 2022&lt;/td&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;a href=&quot;https://mairacanal.github.io/does-the-linux-kernel-need-software-engineering/&quot;&gt;Does the Linux Kernel need software engineering?&lt;/a&gt;&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h1 id=&quot;more-than-just-code&quot;&gt;More than just code&lt;/h1&gt;
-&lt;hr /&gt;
-
-&lt;p&gt;During this summer, I was able to evolve my community skills also. Before I
-joined GSoC, I didn’t though I had enough knowledge to review code from others
-or even read the mailing list. Now, I have more confidence to review and test
-some patches (and even commit a patch).&lt;/p&gt;
-
-&lt;p&gt;During GSoC, I developed the habit to read the mailing list daily. Although I
-don’t really get everything that is going on there, I read a couple of threads
-and try to understand what is being discussed. And it became a fun part of my
-day to open Thunderbird and read the mailing lists from AMDGPU, DRM, KUnit, and
-Fedora Devel.&lt;/p&gt;
-
-&lt;p&gt;Moreover, during my mailing list readings, I was able to find some discussions
-that I could contribute to and even review patches. Initially, I didn’t have
-confidence enough to send a Reviewed-by, so I used to send just a Tested-by.
-But, now I feel more courage to send a Reviewed-by and make an argument for my
-points on the mailing lists.&lt;/p&gt;
-
-&lt;p&gt;I made more than a dozen interactions on the mailing list, so I will just list
-the more relevant ones:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;&lt;strong&gt;My first Tested-by:&lt;/strong&gt; This was after some interaction with David Gow on the
-AMDGPU Unit Tests RFC. I stated the need for enabling tests to link to the
-AMDGPU module and this culminated in some patches for it, where I sent my
-&lt;a href=&quot;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3d6e44623841c8b82c2157f2f749019803fb238a&quot;&gt;Tested-by&lt;/a&gt;.
-Also this discussion was the inspiration for this &lt;a href=&quot;https://mairacanal.github.io/kernel-symbol-table-compilation-more/&quot;&gt;blog
-post&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Documentation Reviews on KUnit:&lt;/strong&gt; I reviewed a couple of KUnit
-documentation patches, such as
-&lt;a href=&quot;https://lore.kernel.org/lkml/Yt+wq+xo2Tp6oEF%2F@debian.me/T/&quot;&gt;1&lt;/a&gt; and
-&lt;a href=&quot;https://lore.kernel.org/all/20220822022646.98581-1-tales.aparecida@gmail.com/&quot;&gt;2&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Spot an error in an IGT patch:&lt;/strong&gt; This is a &lt;a href=&quot;https://patchwork.freedesktop.org/patch/491515/&quot;&gt;simple
-one&lt;/a&gt;, but it make me realize
-that I was about to help with my reviews.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Reported a failing KUnit test:&lt;/strong&gt; I was checking LKFT some day, and I
-realized that some KUnit tests were failing in all architectures. So, I &lt;a href=&quot;https://lore.kernel.org/all/346cb279-8e75-24b0-7d12-9803f2b41c73@riseup.net/&quot;&gt;sent
-an
-email&lt;/a&gt;
-reporting the failure to the tests’s author and &lt;a href=&quot;https://lore.kernel.org/all/cover.1661234636.git.sander@svanheule.net/&quot;&gt;he fixed the
-tests&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;PowerPC Compilation Fixes:&lt;/strong&gt; On the same day I sent a patch fixing a
-PowerPC warning on the DRM tests, Melissa asked me how I cross-compiled for
-PPC on IRC as she was working on a PPC warning. I was happy I could help her
-with this &lt;del&gt;after some hours of failing to cross-compile for PPC.&lt;/del&gt; This resulted
-in other
-&lt;a href=&quot;https://lore.kernel.org/lkml/20220720193208.1131493-1-mwen@igalia.com/T/&quot;&gt;review&lt;/a&gt;
-and also a great interaction.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Moreover, I also
-&lt;a href=&quot;https://cgit.freedesktop.org/drm/drm-misc/log/?qt=committer&amp;amp;q=Ma%C3%ADra+Canal&quot;&gt;committed&lt;/a&gt;
-two patches on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm-misc-next&lt;/code&gt;. I reviewed to patches for improving the DRM
-KUnit tests and by the end of the review, I usually wait for someone to push the
-patches into &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;drm-misc-next&lt;/code&gt;, but as those patches were on the list for a while,
-I decided to push it myself. I was pretty afraid of doing something wrong, but
-all went fine with a bit of help from Melissa.&lt;/p&gt;
-
-&lt;h1 id=&quot;next-steps&quot;&gt;Next Steps&lt;/h1&gt;
-&lt;hr /&gt;
-
-&lt;p&gt;Well, I’m pretty excited about the next couple of months for many reasons.
-First, I, &lt;a href=&quot;https://magalilemes.github.io/&quot;&gt;Magali Lemes&lt;/a&gt;, and &lt;a href=&quot;https://crosscat.me/&quot;&gt;Isabella
-Basso&lt;/a&gt; will be attending XDC 2022. It is going to be very
-exciting to participate in an in-place conference and also to make a
-presentation on the main track.&lt;/p&gt;
-
-&lt;p&gt;We are going to talk about the “KUnit sorcery and the uncanny nature of FPU in
-the DRM” on October 4th, presenting a bit of our GSoC project. So, currently,
-I’m training a lot to make a good presentation in October.&lt;/p&gt;
-
-&lt;p&gt;Moreover, I intend to keep contributing to the DRM subsystem, and currently, I
-have some ideas for some code refactors of the DRM KUnit tests. Also, I would
-like to expand my contributions on the DRM to not only test-related. Although I
-do like to write unit tests, I want to learn more about planes, CRTC, color
-management, memory management, and more. Currently, most of my contributions are
-related to janitorial duties and I would like to contribute to implementing new
-features on the DRM or improving the DRM core.&lt;/p&gt;
-
-&lt;p&gt;Finally, by the end of GSoC, I’ll be joining another mentorship project on the
-Linux Graphics Stack, the &lt;a href=&quot;https://www.igalia.com/coding-experience/&quot;&gt;Igalia Coding
-Experience&lt;/a&gt;, in which I will be learning
-more about the DRM subsystem and IGT in the next months. This is making me very
-excited, as I will continue to contribute with open source, especially the Linux
-kernel, with the help of my great mentors Melissa Wen and André Almeida, who are
-software engineers on Igalia.&lt;/p&gt;
-
-&lt;h1 id=&quot;acknowledgment&quot;&gt;&lt;strong&gt;Acknowledgment&lt;/strong&gt;&lt;/h1&gt;
-&lt;hr /&gt;
-
-&lt;p&gt;First, I would like to thank my mentors Rodrigo Siqueira, Melissa Wen, and André
-Almeida. They really believed in our potential, encouraged us to talk to the
-community, and show us some great opportunities. They were an amazing team of
-mentors and I will always be thankful to them. Without them, I would probably
-never would had submitted a project to GSoC.&lt;/p&gt;
-
-&lt;p&gt;Also, I would like to thank the X.Org Foundation for accepting
-my proposal to GSoC and also helping us with funding for XDC 2022.&lt;/p&gt;
-
-&lt;p&gt;Moreover, I would like to thank AMD for donating hardware for us. During the
-project, I used a Radeon RX 5700 XT donated by them, so I’m also very thankful
-to them. Moreover, I would like to thank all AMD engineers that took their time
-to review my patches and send feedback.&lt;/p&gt;
-
-&lt;p&gt;Finally, I would like to thank the DRI community for reviewing my patches and
-giving me constructive feedback. Also, the KUnit community, especially David
-Gow, Daniel Latypov, and Brendan Higgins, review a lot of my patches and took
-their time to meet with us this summer.&lt;/p&gt;
-
-&lt;p&gt;Last, but not least, I thank the companionship of my colleagues Isabella Basso,
-Magali Lemes, and Tales Aparecida during this summer. It was great to have some
-companions to solve problems this summer and to share knowledge.&lt;/p&gt;
-</description>
-                <pubDate>Wed, 07 Sep 2022 00:00:00 +0000</pubDate>
-                <link>https://mairacanal.github.io/gsoc-final-report/</link>
-                <guid isPermaLink="true">https://mairacanal.github.io/gsoc-final-report/</guid>
             </item>
         
     </channel>

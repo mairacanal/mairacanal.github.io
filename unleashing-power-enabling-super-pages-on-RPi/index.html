@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Unleashing Power: Enabling Super Pages on the RPi</title>
+    <meta name="description" content="Blogging about graphics development whenever I can"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/unleashing-power-enabling-super-pages-on-RPi/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://m7.rs/colors/catppuccin-frappe.css" />
+<link rel="stylesheet" href="https://m7.rs/colors/catppuccin-frappe.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://m7.rs/colors/.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/life/">
+          
+            life
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Unleashing Power: Enabling Super Pages on the RPi</h1>
+      
+      
+        <p>
+          Date: <time datetime="2024-10-28T12:00:00+00:00">28th October 2024</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/notes#igalia">#igalia</a>
+          
+            <a href="/notes#kernel">#kernel</a>
+          
+            <a href="/notes#graphics">#graphics</a>
+          
+            <a href="/notes#embedded">#embedded</a>
+          
+        </p>
+      
+    </header>
+
+    <p>Unleashing the power of 3D graphics in the Raspberry Pi is a key commitment for
+<a href="https://www.igalia.com" target="_blank" rel="noopener noreferrer" class="external">Igalia</a> through its collaboration with <a href="https://www.raspberrypi.com" target="_blank" rel="noopener noreferrer" class="external">Raspberry
+Pi</a>. The introduction of Super Pages for the
+Raspberry Pi 4 and 5 marks another step in this journey, offering some
+performance enhancements and more efficient memory usage. In this post, we’ll
+dive deep into the technical details of Super Pages, discuss the challenges we
+faced during implementation, and illustrate the benefits this feature brings to
+the Raspberry Pi ecosystem.</p>
+
+<h2 id="what-are-super-pages">What are Super Pages?</h2>
+
+<p>A Memory Management Unit (MMU) is a hardware component responsible for handling
+memory access at the system level. It translates virtual addresses used by
+programs into physical addresses in main memory, enabling efficient memory
+management and protection. The MMU allows the operating system to allocate
+memory dynamically, isolating processes from one another to prevent them from
+interfering with each other’s memory.</p>
+
+<blockquote>
+  <p><strong>Recommendation:</strong> 📚 <em>Structured computer organization</em> by Andrew Tanenbaum</p>
+</blockquote>
+
+<p>The V3D MMU, which is part of the Broadcom GPU found in the Raspberry Pi 4 and
+5, is responsible for translating 32-bit virtual addresses (VA) used by V3D into
+40-bit physical addresses used externally to V3D. The MMU relies on a page
+table, stored in physical memory, which maps virtual addresses to their
+corresponding physical addresses. The operating system manages this page table,
+and the MMU uses it to perform address translation during memory access.</p>
+
+<p>A fundamental principle of modern operating systems is that memory is not stored
+contiguously. Instead, a contiguous block of memory is divided into smaller
+blocks, called “pages”, which are scattered across the entire address space.
+These pages are typically 4KB in size. This approach enables more efficient
+memory management and allows for features like virtual memory and memory
+protection.</p>
+
+<p>Over the years, the amount of available memory in computers has increased
+dramatically. An early IBM PC had up to 640 KiB of RAM, whereas the ThinkPad I’m
+typing on right now has 32 GB of RAM. Naturally, memory demands have grown
+alongside this increase. Today, it’s common for web browsers to consume several
+gigabytes of RAM, and a single shader can take up multiple megabytes.</p>
+
+<p>As memory usage grows, a 4KB page size may become inefficient for managing large
+memory blocks. Handling a large number of small pages for a single block means
+the MMU must perform multiple address translations, which increases overhead.
+This can reduce the effectiveness of the Translation Lookaside Buffer (TLB), as
+it must store and handle more entries, potentially leading to more cache misses
+and reduced overall performance.</p>
+
+<p>This is why many CPU manufacturers have introduced support for larger page
+sizes. For instance, x86 CPUs typically support 4KB and 2MB pages, with 1GB
+pages available if supported by the hardware. Similarly, ARM64 CPUs can support
+4KB, 16KB, and 64KB page sizes. These larger page sizes help reduce the number
+of pages the MMU needs to manage, improving performance by reducing the overhead
+of address translation and making more efficient use of the TLB.</p>
+
+<p><strong>So, if CPUs are using bigger sizes, why shouldn’t GPUs do the same?</strong></p>
+
+<p>By default, V3D supports 4KB pages. However, by setting specific bits in the
+page table entry, it is possible to create 64KB “Big Pages” and 1MB “Super
+Pages.” The issue is that the current V3D driver available in Linux does not
+enable the use of Big or Super Pages, meaning this hardware feature is currently
+unused.</p>
+
+<p>The advantage of enabling Big and Super Pages is that once an entry for any page
+within a Big or Super Page is cached in the MMU, it can be used to translate all
+virtual addresses within that page’s range without needing to fetch additional
+entries. In theory, this should result in improved performance, especially for
+applications with high memory demands, such as those using multiple large buffer
+objects (BOs).</p>
+
+<p>As Igalia continually strives to enhance the experience for Raspberry Pi users,
+we decided to implement this feature in the upstream kernel. But before diving
+into the implementation details, let’s take a look at the real-world results and
+see if the theoretical benefits of Super Pages have translated into measurable
+improvements for Raspberry Pi users.</p>
+
+<h2 id="what-does-this-feature-mean-for-rpi-users">What Does This Feature Mean for RPi Users?</h2>
+
+<p>With Super Pages implemented, let’s now explore the actual performance
+improvements observed on the Raspberry Pi and see how impactful this feature is
+for users.</p>
+
+<h3 id="benchmarking-super-pages-traces-and-fps-improvements">Benchmarking Super Pages: Traces and FPS Improvements</h3>
+
+<p>To measure the impact of Super Pages, we tested a variety of games and demos
+traces on the Raspberry Pi 4 and 5, covering genres from action to racing. On
+average, we observed a +1.40% FPS improvement on the Raspberry Pi 4 and a +1.30%
+improvement on the Raspberry Pi 5.</p>
+
+<p>For instance, on the Raspberry Pi 4, <em>Warzone 2100</em> saw an 8.36% FPS increase,
+and on the Raspberry Pi 5, <em>Quake II</em> enjoyed a 3.62% boost. These examples
+demonstrate the benefits of Super Pages in resource-demanding applications,
+where optimized memory handling becomes critical.</p>
+
+<h4 id="raspberry-pi-4-fps-improvements">Raspberry Pi 4 FPS Improvements</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Trace</th>
+      <th style="text-align: center">Before Super Pages</th>
+      <th style="text-align: center">After Super Pages</th>
+      <th style="text-align: center">Improvement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>warzone2100.30secs.1024x768.trace</td>
+      <td style="text-align: center">56.39</td>
+      <td style="text-align: center">61.10</td>
+      <td style="text-align: center">+8.36%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_shooting_low_quality_640x480.gfxr</td>
+      <td style="text-align: center">20.71</td>
+      <td style="text-align: center">21.47</td>
+      <td style="text-align: center">+3.65%</td>
+    </tr>
+    <tr>
+      <td>quake3e_capture_frames_1800_through_2400_1920x1080.gfxr</td>
+      <td style="text-align: center">60.88</td>
+      <td style="text-align: center">62.50</td>
+      <td style="text-align: center">+2.67%</td>
+    </tr>
+    <tr>
+      <td>supertuxkart-menus_1024x768.trace</td>
+      <td style="text-align: center">112.62</td>
+      <td style="text-align: center">115.61</td>
+      <td style="text-align: center">+2.65%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_shooting_high_quality_640x480.gfxr</td>
+      <td style="text-align: center">20.45</td>
+      <td style="text-align: center">20.88</td>
+      <td style="text-align: center">+2.10%</td>
+    </tr>
+    <tr>
+      <td>quake2-gles3-1280x720.trace</td>
+      <td style="text-align: center">59.76</td>
+      <td style="text-align: center">60.84</td>
+      <td style="text-align: center">+1.82%</td>
+    </tr>
+    <tr>
+      <td>ue4_sun_temple_640x480.gfxr</td>
+      <td style="text-align: center">27.60</td>
+      <td style="text-align: center">28.03</td>
+      <td style="text-align: center">+1.54%</td>
+    </tr>
+    <tr>
+      <td>vkQuake_capture_frames_1_through_1200_1280x720.gfxr</td>
+      <td style="text-align: center">54.59</td>
+      <td style="text-align: center">55.30</td>
+      <td style="text-align: center">+1.29%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_low_quality_640x480.gfxr</td>
+      <td style="text-align: center">32.75</td>
+      <td style="text-align: center">33.08</td>
+      <td style="text-align: center">+1.00%</td>
+    </tr>
+    <tr>
+      <td>sponza_demo02_800x600.gfxr</td>
+      <td style="text-align: center">20.90</td>
+      <td style="text-align: center">21.03</td>
+      <td style="text-align: center">+0.61%</td>
+    </tr>
+    <tr>
+      <td>supertuxkart-racing_1024x768.trace</td>
+      <td style="text-align: center">8.58</td>
+      <td style="text-align: center">8.63</td>
+      <td style="text-align: center">+0.60%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_high_quality_640x480.gfxr</td>
+      <td style="text-align: center">19.62</td>
+      <td style="text-align: center">19.74</td>
+      <td style="text-align: center">+0.59%</td>
+    </tr>
+    <tr>
+      <td>serious_sam_trace02_1280x720.gfxr</td>
+      <td style="text-align: center">44.00</td>
+      <td style="text-align: center">44.21</td>
+      <td style="text-align: center">+0.50%</td>
+    </tr>
+    <tr>
+      <td>ue4_vehicle_game-2_640x480.gfxr</td>
+      <td style="text-align: center">12.59</td>
+      <td style="text-align: center">12.65</td>
+      <td style="text-align: center">+0.49%</td>
+    </tr>
+    <tr>
+      <td>sponza_demo01_800x600.gfxr</td>
+      <td style="text-align: center">21.42</td>
+      <td style="text-align: center">21.46</td>
+      <td style="text-align: center">+0.19%</td>
+    </tr>
+    <tr>
+      <td>quake3e-1280x720.trace</td>
+      <td style="text-align: center">84.45</td>
+      <td style="text-align: center">84.52</td>
+      <td style="text-align: center">+0.09%</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="raspberry-pi-5-fps-improvements">Raspberry Pi 5 FPS Improvements</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Trace</th>
+      <th style="text-align: center">Before Super Pages</th>
+      <th style="text-align: center">After Super Pages</th>
+      <th style="text-align: center">Improvement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>quake2-gles3-1280x720.trace</td>
+      <td style="text-align: center">151.77</td>
+      <td style="text-align: center">157.26</td>
+      <td style="text-align: center">+3.62%</td>
+    </tr>
+    <tr>
+      <td>supertuxkart-menus_1024x768.trace</td>
+      <td style="text-align: center">306.79</td>
+      <td style="text-align: center">313.88</td>
+      <td style="text-align: center">+2.31%</td>
+    </tr>
+    <tr>
+      <td>warzone2100.30secs.1024x768.trace</td>
+      <td style="text-align: center">140.92</td>
+      <td style="text-align: center">144.03</td>
+      <td style="text-align: center">+2.21%</td>
+    </tr>
+    <tr>
+      <td>vkQuake_capture_frames_1_through_1200_1280x720.gfxr</td>
+      <td style="text-align: center">131.45</td>
+      <td style="text-align: center">134.20</td>
+      <td style="text-align: center">+2.10%</td>
+    </tr>
+    <tr>
+      <td>ue4_vehicle_game-2_640x480.gfxr</td>
+      <td style="text-align: center">24.42</td>
+      <td style="text-align: center">24.88</td>
+      <td style="text-align: center">+1.89%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_high_quality_640x480.gfxr</td>
+      <td style="text-align: center">32.12</td>
+      <td style="text-align: center">32.53</td>
+      <td style="text-align: center">+1.29%</td>
+    </tr>
+    <tr>
+      <td>ue4_sun_temple_640x480.gfxr</td>
+      <td style="text-align: center">42.05</td>
+      <td style="text-align: center">42.55</td>
+      <td style="text-align: center">+1.20%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_shooting_high_quality_640x480.gfxr</td>
+      <td style="text-align: center">52.77</td>
+      <td style="text-align: center">53.31</td>
+      <td style="text-align: center">+1.04%</td>
+    </tr>
+    <tr>
+      <td>quake3e-1280x720.trace</td>
+      <td style="text-align: center">238.31</td>
+      <td style="text-align: center">240.53</td>
+      <td style="text-align: center">+0.93%</td>
+    </tr>
+    <tr>
+      <td>warzone2100.70secs.1024x768.trace</td>
+      <td style="text-align: center">151.09</td>
+      <td style="text-align: center">151.81</td>
+      <td style="text-align: center">+0.48%</td>
+    </tr>
+    <tr>
+      <td>sponza_demo02_800x600.gfxr</td>
+      <td style="text-align: center">50.81</td>
+      <td style="text-align: center">51.05</td>
+      <td style="text-align: center">+0.46%</td>
+    </tr>
+    <tr>
+      <td>supertuxkart-racing_1024x768.trace</td>
+      <td style="text-align: center">20.91</td>
+      <td style="text-align: center">20.98</td>
+      <td style="text-align: center">+0.33%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_low_quality_640x480.gfxr</td>
+      <td style="text-align: center">59.68</td>
+      <td style="text-align: center">59.86</td>
+      <td style="text-align: center">+0.29%</td>
+    </tr>
+    <tr>
+      <td>quake3e_capture_frames_1_through_1800_1920x1080.gfxr</td>
+      <td style="text-align: center">167.70</td>
+      <td style="text-align: center">168.17</td>
+      <td style="text-align: center">+0.29%</td>
+    </tr>
+    <tr>
+      <td>ue4_shooter_game_shooting_low_quality_640x480.gfxr</td>
+      <td style="text-align: center">53.40</td>
+      <td style="text-align: center">53.51</td>
+      <td style="text-align: center">+0.22%</td>
+    </tr>
+    <tr>
+      <td>quake3e_capture_frames_1800_through_2400_1920x1080.gfxr</td>
+      <td style="text-align: center">163.37</td>
+      <td style="text-align: center">163.64</td>
+      <td style="text-align: center">+0.17%</td>
+    </tr>
+    <tr>
+      <td>serious_sam_trace02_1280x720.gfxr</td>
+      <td style="text-align: center">60.00</td>
+      <td style="text-align: center">60.03</td>
+      <td style="text-align: center">+0.06%</td>
+    </tr>
+    <tr>
+      <td>sponza_demo01_800x600.gfxr</td>
+      <td style="text-align: center">45.04</td>
+      <td style="text-align: center">45.04</td>
+      <td style="text-align: center">&lt;.01%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>While an average +1% FPS improvement might seem modest, Super Pages can deliver
+more noticeable gains in memory-intensive 3D applications and when the GPU is
+under heavy usage. Let’s see how the Super Pages perform on Mesa CI.</p>
+
+<h3 id="benchmarking-super-pages-mesa-ci-job-duration">Benchmarking Super Pages: Mesa CI Job Duration</h3>
+
+<p>To avoid introducing regressions in user-space, I usually test my custom kernels
+with Mesa CI, focusing on the “broadcom-postmerge” stage to verify that all
+Piglit and CTS tests ran smoothly. For Super Pages, I was pleasantly surprised
+by the job duration results, as some job durations were reduced by several
+minutes.</p>
+
+<h4 id="mesa-ci-jobs-duration-improvements">Mesa CI Jobs Duration Improvements</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Job</th>
+      <th style="text-align: center">Before Super Pages</th>
+      <th style="text-align: center">After Super Pages</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>v3d-rpi4-traces:arm64</td>
+      <td style="text-align: center">~4m30s</td>
+      <td style="text-align: center">~3m40s</td>
+    </tr>
+    <tr>
+      <td>v3d-rpi5-traces:arm64</td>
+      <td style="text-align: center">~3m30s</td>
+      <td style="text-align: center">~2m45s</td>
+    </tr>
+    <tr>
+      <td>v3d-rpi4-gl-full:arm64 */6</td>
+      <td style="text-align: center">~24-25 minutes</td>
+      <td style="text-align: center">~22-23 minutes</td>
+    </tr>
+    <tr>
+      <td>v3d-rpi5-gl-full:arm64</td>
+      <td style="text-align: center">~48 minutes</td>
+      <td style="text-align: center">~48 minutes</td>
+    </tr>
+    <tr>
+      <td>v3dv-rpi4-vk-full:arm64 */6</td>
+      <td style="text-align: center">~44 minutes</td>
+      <td style="text-align: center">~41 minutes</td>
+    </tr>
+    <tr>
+      <td>v3dv-rpi5-vk-full:arm64</td>
+      <td style="text-align: center">~102 minutes</td>
+      <td style="text-align: center">~92 minutes</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Seeing these reductions is especially rewarding. For example, the
+“v3dv-rpi5-vk-full:arm64” job duration decreased by 10 minutes, meaning more FPS
+for users and shorter wait times for Mesa developers.</p>
+
+<h3 id="benchmarking-super-pages-ps2-emulation">Benchmarking Super Pages: PS2 Emulation</h3>
+
+<p>After sharing a couple of tables, I’ll admit that showcasing performance
+improvements solely through numbers doesn’t always convey the real impact.
+Personally, I find it more satisfying to see performance gains in action with
+real-world applications.</p>
+
+<p>This led me to explore PlayStation 2 (PS2) emulation on the RPi 5. From watching
+YouTube videos, I noticed that PS2 is a popular console for the RPi 5. While the
+PlayStation (PS1) emulates well even on the RPi 4, and Nintendo 64 and Sega
+Saturn struggle across most hardware, PS2 hits a sweet spot for testing the RPi
+5’s limits.</p>
+
+<p>Fortunately, I still have my childhood PS2 — my second console after the
+Nintendo GameCube, and one of the most successful consoles worldwide, including
+in Brazil. With a library packed with titles like <em>Metal Gear Solid</em>, <em>Resident
+Evil</em>, <em>Tomb Raider</em>, and <em>Shadow of the Colossus</em>, the PS2 remains a great
+system for collectors and retro gamers alike.</p>
+
+<p>I selected a few games from my collection to benchmark on the RPi 5 using a PS2
+emulator. My emulator of choice was <a href="https://github.com/AetherSX2-backup/AetherSX2-builds" target="_blank" rel="noopener noreferrer" class="external">Aether
+SX2</a> with Vulkan support.
+Although AetherSX2 is no longer in development, it still performs well on the
+RPi.</p>
+
+<p>Initially, many games were barely playable, especially those with large buffer
+objects, like Shadow of the Colossus and Gran Turismo 4. However, after enabling
+Super Pages support, I noticed immediate improvements. For example, Shadow of
+the Colossus wouldn’t even open before Super Pages, and while it’s not fully
+playable yet, it does load now. This isn’t a silver bullet, but it’s a step
+forward in improving the driver one piece at a time.</p>
+
+<p>I ended up selecting four games for a video comparison: <em>Burnout 3: Takedown</em>,
+<em>Metal Gear Solid 3: Snake Eater</em>, <em>Resident Evil 4</em>, and <em>Tekken 4</em>.</p>
+
+<video width="100%" controls="">
+  <source src="/assets/videos/super-pages-rpi5-2024.mp4" type="video/mp4"></source>
+  Your browser does not support the video tag.
+</video>
+
+<blockquote>
+  <p><strong>Disclaimer:</strong> The BIOS used in the emulator was extracted from my own PS2,
+and I played only games I own, with ROMs I personally extracted. Neither I nor
+Igalia encourage using downloaded BIOS or ROM files from the internet.</p>
+</blockquote>
+
+<p>From the video, we can see noticeable improvements in all four games. Although
+they aren’t perfectly playable yet, the performance gains are evident,
+particularly in <em>Resident Evil 4</em>, where the gameplay saw a solid 5 FPS boost. I
+realize 18 FPS might not satisfy most players, but I still had a lot of fun
+playing <em>Resident Evil 4</em> on the RPi 5.</p>
+
+<p>When tracking the FPS for these games, it’s clear that the performance gains go
+well beyond the average 1% seen in other benchmarks. Super Pages show their true
+potential in high-memory applications like PS2 emulation.</p>
+
+<p>Having seen the performance gains Super Pages can bring to the Raspberry Pi,
+let’s now dive into the technical aspects of the feature.</p>
+
+<h2 id="implementing-super-pages">Implementing Super Pages</h2>
+
+<p>The first challenge was figuring out how to allocate a contiguous block of
+memory using <em>shmem</em>. The Shared Memory Virtual Filesystem (<em>shmem</em>) is used as
+a flexible memory mechanism that allows the GPU and CPU to share access to BOs
+through the system’s temporary filesystem, <em>tmpfs</em>. <em>tmpfs</em> is a volatile
+filesystem that stores files in RAM, making it ideal for temporary or high-speed
+data that doesn’t need to persist on RAM.</p>
+
+<p>For example, to allocate a 256KB BO across four 64KB pages, we need four
+contiguous 64KB memory blocks. However, by default, <em>tmpfs</em> only allocates
+memory in <code class="language-plaintext highlighter-rouge">PAGE_SIZE</code> chunks (as seen in <code class="language-plaintext highlighter-rouge">shmem_file_setup()</code>), whereas
+<code class="language-plaintext highlighter-rouge">PAGE_SIZE</code> is 4KB on the Raspberry Pi 4 and 16KB on the Raspberry Pi 5. Since
+the function <code class="language-plaintext highlighter-rouge">drm_gem_object_init()</code> — which initializes an allocated
+shmem-backed GEM object — relies on <code class="language-plaintext highlighter-rouge">shmem_file_setup()</code> to back these objects
+in memory, we had to consider alternatives, as the default <code class="language-plaintext highlighter-rouge">PAGE_SIZE</code> would
+divide memory into increments that are too small to ensure the large, contiguous
+blocks needed by the GPU.</p>
+
+<p>The solution we proposed was to create <code class="language-plaintext highlighter-rouge">drm_gem_object_init_with_mnt()</code>, which
+allows us to specify the <em>tmpfs</em> mountpoint where the GEM object will be
+created. This enables us to allocate our BOs in a mountpoint that supports
+larger page sizes. Additionally, to ensure that our BOs are allocated in the
+correct mountpoint, we introduced <code class="language-plaintext highlighter-rouge">drm_gem_shmem_create_with_mnt()</code>, which
+allows the mountpoint to be specified when creating a new DRM GEM shmem object.</p>
+
+<p><a href="https://lore.kernel.org/dri-devel/20240923141348.2422499-5-mcanal@igalia.com/" target="_blank" rel="noopener noreferrer" class="external">[PATCH v6 04/11] drm/gem: Create a drm_gem_object_init_with_mnt() function</a></p>
+
+<p><a href="https://lore.kernel.org/dri-devel/20240923141348.2422499-7-mcanal@igalia.com/" target="_blank" rel="noopener noreferrer" class="external">[PATCH v6 06/11] drm/gem: Create shmem GEM object in a given mountpoint</a></p>
+
+<p>The next challenge was figuring out how to create a new mountpoint that would
+allow for different page sizes based on the allocation. Simply creating a new
+<em>tmpfs</em> mountpoint with a fixed bigger page size wouldn’t suffice, as we needed
+flexibility for various allocations. Inspired by the i915 driver, we decided to
+use a <em>tmpfs</em> mountpoint with the “huge=within_size” flag. This flag, which
+requires the kernel to be configured with <code class="language-plaintext highlighter-rouge">CONFIG_TRANSPARENT_HUGEPAGE</code>, enables
+the allocation of huge pages.</p>
+
+<p><a href="https://docs.kernel.org/admin-guide/mm/transhuge.html" target="_blank" rel="noopener noreferrer" class="external">Transparent Huge Pages
+(THP)</a> is a kernel
+feature that automatically manages large memory pages to improve performance
+without needing changes from applications. THP dynamically combines smaller
+pages into larger ones, typically 2MB, reducing memory management overhead and
+improving cache efficiency.</p>
+
+<p>To support our new allocation strategy, we created a dedicated <em>tmpfs</em>
+mountpoint for V3D, called gemfs, which provides us an ideal space for managing
+these larger allocations.</p>
+
+<p><a href="https://lore.kernel.org/dri-devel/20240923141348.2422499-6-mcanal@igalia.com/" target="_blank" rel="noopener noreferrer" class="external">[PATCH v6 05/11] drm/v3d: Introduce gemfs</a></p>
+
+<p>With everything in place for contiguous allocations, the next step was configuring V3D to enable Big/Super Page support.</p>
+
+<p>We began by addressing a major source of memory pressure on the Raspberry Pi:
+the current 128KB alignment for allocations in the virtual memory space. This
+alignment wastes space when handling small BO allocations, especially since the
+userspace driver performs a large number of these small allocations.</p>
+
+<p>As a result, we can’t fully utilize the 4GB address space available for the GPU
+on the Raspberry Pi 4 or 5. For example, we can currently allocate up to 32,000
+BOs of 4KB (~140MB) and 3,000 BOs of 400KB (~1.3GB). This becomes a limitation
+for memory-intensive applications. By reducing the page alignment to 4KB, we can
+significantly increase the number of BOs, allowing up to 1,000,000 BOs of 4KB
+(~4GB) and 10,000 BOs of 400KB (~4GB).</p>
+
+<p>Therefore, the first change I made was reducing the VA alignment of all
+allocations to 4KB.</p>
+
+<p><a href="https://lore.kernel.org/dri-devel/20240923141348.2422499-8-mcanal@igalia.com/" target="_blank" rel="noopener noreferrer" class="external">[PATCH v6 07/11] drm/v3d: Reduce the alignment of the node allocation</a></p>
+
+<p>With the alignment issue resolved, we can now implement the code to properly set
+the flags on the Page Table Entries (PTE) for Big/Super Pages. Setting these
+flags is straightforward — a simple bitwise operation. The challenge lies in
+determining which BOs can be allocated in Super Pages. For a BO to be eligible
+for a Big Page, its virtual address must be aligned to 64KB, and the same
+applies to its physical address. Same thing for Super Pages, but now the
+addresses must be aligned to 1MB.</p>
+
+<p>If the BO qualifies for a Big/Super Page, we need to iterate over 16 4KB pages
+(for Big Pages) or 256 4KB pages (for Super Pages) and insert the appropriate
+PTE.</p>
+
+<p>Additionally, we modified the way we iterate through the BO’s memory. This was
+necessary because the THP may not always allocate the entire BO contiguously.
+For example, it might only allocate contiguously 1MB of a 2MB block. To handle
+this, we now iterate over the blocks of contiguous memory scattered across the
+scatterlist, ensuring that each segment is properly handled during the
+allocation process.</p>
+
+<blockquote>
+  <p><strong>What is a scatterlist?</strong> It is a Linux Kernel data structure that manages
+non-contiguous memory as if it were contiguous. It organizes separate memory
+blocks into a single logical buffer, allowing efficient data handling,
+especially in Direct Memory Access (DMA) operations, without needing a
+physically contiguous memory allocation.</p>
+</blockquote>
+
+<p><a href="https://lore.kernel.org/dri-devel/20240923141348.2422499-9-mcanal@igalia.com/" target="_blank" rel="noopener noreferrer" class="external">[PATCH v6 08/11] drm/v3d: Support Big/Super Pages when writing out PTEs</a></p>
+
+<p>However, the last few patches alone don’t fully enable the use of Super Pages.
+While PATCH 08/11 technically allows for Super Pages, we’re still relying on DRM
+GEM shmem objects, meaning allocations are still happening in <code class="language-plaintext highlighter-rouge">PAGE_SIZE</code>
+chunks. Although Big/Super Pages could potentially be used if the system
+naturally allocated 1MB or 64KB contiguously, this is quite rare and not our
+intended outcome. Our goal is to actively use Big/Super Pages as much as
+possible.</p>
+
+<p>To achieve this, we’ll utilize the V3D-specific mountpoint we created earlier
+for BO allocation whenever possible. By creating BOs through
+<code class="language-plaintext highlighter-rouge">drm_gem_shmem_create_with_mnt()</code>, we can ensure that large pages are allocated
+contiguously when possible, enabling the consistent use of Big/Super Pages.</p>
+
+<p><a href="https://lore.kernel.org/dri-devel/20240923141348.2422499-10-mcanal@igalia.com/" target="_blank" rel="noopener noreferrer" class="external">[PATCH v6 09/11] drm/v3d: Use gemfs/THP in BO creation if available</a></p>
+
+<p>And there you have it — Big/Super Pages are now fully enabled in V3D. The only
+requirement to activate this feature in any given kernel is ensuring that
+<code class="language-plaintext highlighter-rouge">CONFIG_TRANSPARENT_HUGEPAGE</code> is enabled.</p>
+
+<h2 id="final-words">Final Words</h2>
+
+<p>You can learn more about ongoing enhancements to the Raspberry Pi driver stack
+in this <a href="https://www.youtube.com/live/d0MP9-hFUZE?si=k6SL8taOo3oBgG-t&amp;t=21888" target="_blank" rel="noopener noreferrer" class="external">XDC 2024
+talk</a> by
+José María “Chema” Casanova Crespo. In the talk, Chema discusses the Super
+Pages work I developed, along with other advancements in the driver stack.</p>
+
+<p>Of course, there are still plenty of improvements on the horizon at Igalia. I’m
+currently experimenting with 64KB CLE allocations in user-space, and I hope to
+share more good news soon.</p>
+
+<p>Finally, I’d like to express my gratitude to <a href="https://blogs.igalia.com/itoral/" target="_blank" rel="noopener noreferrer" class="external">Iago
+Toral</a> and <a href="https://blogs.igalia.com/tursulin/" target="_blank" rel="noopener noreferrer" class="external">Tvrtko
+Ursulin</a> for their invaluable support in
+developing Super Pages for the V3D kernel driver. Thank you both for sharing
+your experience with me!</p>
+
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>F8E4 5D7D 0116 7707 29A6 77D1 </span> 3FF3 0E8A 7688 FAAA
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
+  </p>
+
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/unleashing-power-enabling-super-pages-on-RPi/">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>

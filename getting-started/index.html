@@ -100,23 +100,23 @@
 
 <p>With a lot of git grep, I found a drm_lock boilerplate and code my first Linux Kernel patch. It was small, but it was my first patch and I was extremely excited.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>As requested in GPU Driver Developers Guide TODO list, replaces all
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">As requested in GPU Driver Developers Guide TODO list, replaces all
 drm_lock boilerplates for DRM_MODESET_LOCK_ALL_* helpers.
-
-Signed-off-by: Maíra Canal &lt;maira.canal@usp.br&gt;
+</span><span class="err">
+</span><span class="p">Signed-off-by: Maíra Canal &lt;maira.canal@usp.br&gt;
 ---
- drivers/gpu/drm/i915/display/intel_display.c | 13 ++-----------
+</span> drivers/gpu/drm/i915/display/intel_display.c | 13 ++-----------
  1 file changed, 2 insertions(+), 11 deletions(-)
-
-diff --git a/drivers/gpu/drm/i915/display/intel_display.c b/drivers/gpu/drm/i915/display/intel_display.c
+<span class="err">
+</span><span class="gh">diff --git a/drivers/gpu/drm/i915/display/intel_display.c b/drivers/gpu/drm/i915/display/intel_display.c
 index 17f44ffea586..71b7ff7b7dea 100644
---- a/drivers/gpu/drm/i915/display/intel_display.c
-+++ b/drivers/gpu/drm/i915/display/intel_display.c
-@@ -13466,22 +13466,13 @@ void intel_display_resume(struct drm_device *dev)
+</span><span class="gd">--- a/drivers/gpu/drm/i915/display/intel_display.c
+</span><span class="gi">+++ b/drivers/gpu/drm/i915/display/intel_display.c
+</span><span class="p">@@ -13466,22 +13466,13 @@</span> void intel_display_resume(struct drm_device *dev)
 	if (state)
 		state-&gt;acquire_ctx = &amp;ctx;
-
--	drm_modeset_acquire_init(&amp;ctx, 0);
+<span class="err">
+</span><span class="gd">-	drm_modeset_acquire_init(&amp;ctx, 0);
 -
 -	while (1) {
 -		ret = drm_modeset_lock_all_ctx(dev, &amp;ctx);
@@ -125,17 +125,17 @@ index 17f44ffea586..71b7ff7b7dea 100644
 -
 -		drm_modeset_backoff(&amp;ctx);
 -	}
-+	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
-
-	if (!ret)
+</span><span class="gi">+	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
+</span><span class="err">
+</span>	if (!ret)
 		ret = __intel_display_resume(dev, state, &amp;ctx);
-
-	intel_enable_ipc(dev_priv);
--	drm_modeset_drop_locks(&amp;ctx);
+<span class="err">
+</span>	intel_enable_ipc(dev_priv);
+<span class="gd">-	drm_modeset_drop_locks(&amp;ctx);
 -	drm_modeset_acquire_fini(&amp;ctx);
-+	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
-
-	if (ret)
+</span><span class="gi">+	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
+</span><span class="err">
+</span>	if (ret)
 		drm_err(&amp;dev_priv-&gt;drm,
 </code></pre></div></div>
 
@@ -161,184 +161,184 @@ index 17f44ffea586..71b7ff7b7dea 100644
 
 <p>So, I picked up the <code class="language-plaintext highlighter-rouge">regulator/lp872x.c</code> driver and converted also. Then, on my fourth try, <strong>my patch was finally approved</strong>. Mark Brown approved my patch and applied. My patch was merged to the mainstream in Linux v5.17.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Removing all linux/gpio.h and linux/of_gpio.h dependencies and replacing
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">Removing all linux/gpio.h and linux/of_gpio.h dependencies and replacing
 them with the gpiod interface
-
-Signed-off-by: Maíra Canal &lt;maira.canal@usp.br&gt;
+</span><span class="err">
+</span><span class="p">Signed-off-by: Maíra Canal &lt;maira.canal@usp.br&gt;
 ---
 drivers/regulator/lp872x.c       | 38 +++++++++++++-------------------
 include/linux/regulator/lp872x.h | 14 ++++++------
 2 files changed, 22 insertions(+), 30 deletions(-)
-
-diff --git a/drivers/regulator/lp872x.c b/drivers/regulator/lp872x.c
+</span><span class="err">
+</span><span class="gh">diff --git a/drivers/regulator/lp872x.c b/drivers/regulator/lp872x.c
 index e84be29533f4..1dba5dbcd461 100644
---- a/drivers/regulator/lp872x.c
-+++ b/drivers/regulator/lp872x.c
-@@ -10,13 +10,12 @@
+</span><span class="gd">--- a/drivers/regulator/lp872x.c
+</span><span class="gi">+++ b/drivers/regulator/lp872x.c
+</span><span class="p">@@ -10,13 +10,12 @@</span>
 #include &lt;linux/i2c.h&gt;
 #include &lt;linux/regmap.h&gt;
 #include &lt;linux/err.h&gt;
--#include &lt;linux/gpio.h&gt;
-+#include &lt;linux/gpio/consumer.h&gt;
-#include &lt;linux/delay.h&gt;
+<span class="gd">-#include &lt;linux/gpio.h&gt;
+</span><span class="gi">+#include &lt;linux/gpio/consumer.h&gt;
+</span>#include &lt;linux/delay.h&gt;
 #include &lt;linux/regulator/lp872x.h&gt;
 #include &lt;linux/regulator/driver.h&gt;
 #include &lt;linux/platform_device.h&gt;
 #include &lt;linux/of.h&gt;
--#include &lt;linux/of_gpio.h&gt;
-#include &lt;linux/regulator/of_regulator.h&gt;
-
-/* Registers : LP8720/8725 shared */
-@@ -250,12 +249,12 @@ static int lp872x_regulator_enable_time(struct regulator_dev *rdev)
+<span class="gd">-#include &lt;linux/of_gpio.h&gt;
+</span>#include &lt;linux/regulator/of_regulator.h&gt;
+<span class="err">
+</span>/* Registers : LP8720/8725 shared */
+<span class="p">@@ -250,12 +249,12 @@</span> static int lp872x_regulator_enable_time(struct regulator_dev *rdev)
 }
-
-static void lp872x_set_dvs(struct lp872x *lp, enum lp872x_dvs_sel dvs_sel,
--			int gpio)
-+			struct gpio_desc *gpio)
-{
+<span class="err">
+</span><span class="p">static void lp872x_set_dvs(struct lp872x *lp, enum lp872x_dvs_sel dvs_sel,
+</span><span class="gd">-			int gpio)
+</span><span class="gi">+			struct gpio_desc *gpio)
+</span>{
 	enum lp872x_dvs_state state;
-
-	state = dvs_sel == SEL_V1 ? DVS_HIGH : DVS_LOW;
--	gpio_set_value(gpio, state);
-+	gpiod_set_value(gpio, state);
-	lp-&gt;dvs_pin = state;
+<span class="err">
+</span>	state = dvs_sel == SEL_V1 ? DVS_HIGH : DVS_LOW;
+<span class="gd">-	gpio_set_value(gpio, state);
+</span><span class="gi">+	gpiod_set_value(gpio, state);
+</span>	lp-&gt;dvs_pin = state;
 }
-
-@@ -321,7 +320,7 @@ static int lp872x_buck_set_voltage_sel(struct regulator_dev *rdev,
+<span class="err">
+</span><span class="p">@@ -321,7 +320,7 @@</span> static int lp872x_buck_set_voltage_sel(struct regulator_dev *rdev,
 	u8 addr, mask = LP872X_VOUT_M;
 	struct lp872x_dvs *dvs = lp-&gt;pdata ? lp-&gt;pdata-&gt;dvs : NULL;
-
--	if (dvs &amp;&amp; gpio_is_valid(dvs-&gt;gpio))
-+	if (dvs &amp;&amp; dvs-&gt;gpio)
-		lp872x_set_dvs(lp, dvs-&gt;vsel, dvs-&gt;gpio);
-
-	addr = lp872x_select_buck_vout_addr(lp, buck);
-@@ -675,7 +674,6 @@ static const struct regulator_desc lp8725_regulator_desc[] = {
-
-static int lp872x_init_dvs(struct lp872x *lp)
-{
--	int ret, gpio;
-	struct lp872x_dvs *dvs = lp-&gt;pdata ? lp-&gt;pdata-&gt;dvs : NULL;
+<span class="err">
+</span><span class="gd">-	if (dvs &amp;&amp; gpio_is_valid(dvs-&gt;gpio))
+</span><span class="gi">+	if (dvs &amp;&amp; dvs-&gt;gpio)
+</span>		lp872x_set_dvs(lp, dvs-&gt;vsel, dvs-&gt;gpio);
+<span class="err">
+</span>	addr = lp872x_select_buck_vout_addr(lp, buck);
+<span class="p">@@ -675,7 +674,6 @@</span> static const struct regulator_desc lp8725_regulator_desc[] = {
+<span class="err">
+</span><span class="p">static int lp872x_init_dvs(struct lp872x *lp)
+</span>{
+<span class="gd">-	int ret, gpio;
+</span>	struct lp872x_dvs *dvs = lp-&gt;pdata ? lp-&gt;pdata-&gt;dvs : NULL;
 	enum lp872x_dvs_state pinstate;
 	u8 mask[] = { LP8720_EXT_DVS_M, LP8725_DVS1_M | LP8725_DVS2_M };
-@@ -684,15 +682,15 @@ static int lp872x_init_dvs(struct lp872x *lp)
+<span class="p">@@ -684,15 +682,15 @@</span> static int lp872x_init_dvs(struct lp872x *lp)
 	if (!dvs)
 		goto set_default_dvs_mode;
-
--	gpio = dvs-&gt;gpio;
+<span class="err">
+</span><span class="gd">-	gpio = dvs-&gt;gpio;
 -	if (!gpio_is_valid(gpio))
-+	if (!dvs-&gt;gpio)
-		goto set_default_dvs_mode;
-
-	pinstate = dvs-&gt;init_state;
--	ret = devm_gpio_request_one(lp-&gt;dev, gpio, pinstate, "LP872X DVS");
+</span><span class="gi">+	if (!dvs-&gt;gpio)
+</span>		goto set_default_dvs_mode;
+<span class="err">
+</span>	pinstate = dvs-&gt;init_state;
+<span class="gd">-	ret = devm_gpio_request_one(lp-&gt;dev, gpio, pinstate, "LP872X DVS");
 -	if (ret) {
 -		dev_err(lp-&gt;dev, "gpio request err: %d\n", ret);
 -		return ret;
-+	dvs-&gt;gpio = devm_gpiod_get_optional(lp-&gt;dev, "ti,dvs", pinstate);
+</span><span class="gi">+	dvs-&gt;gpio = devm_gpiod_get_optional(lp-&gt;dev, "ti,dvs", pinstate);
 +
 +	if (IS_ERR(dvs-&gt;gpio)) {
 +		dev_err(lp-&gt;dev, "gpio request err: %ld\n", PTR_ERR(dvs-&gt;gpio));
 +		return PTR_ERR(dvs-&gt;gpio);
-	}
-
-	lp-&gt;dvs_pin = pinstate;
-@@ -706,20 +704,17 @@ static int lp872x_init_dvs(struct lp872x *lp)
-
-static int lp872x_hw_enable(struct lp872x *lp)
-{
--	int ret, gpio;
+</span>	}
+<span class="err">
+</span>	lp-&gt;dvs_pin = pinstate;
+<span class="p">@@ -706,20 +704,17 @@</span> static int lp872x_init_dvs(struct lp872x *lp)
+<span class="err">
+</span><span class="p">static int lp872x_hw_enable(struct lp872x *lp)
+</span>{
+<span class="gd">-	int ret, gpio;
 -
-	if (!lp-&gt;pdata)
+</span>	if (!lp-&gt;pdata)
 		return -EINVAL;
-
--	gpio = lp-&gt;pdata-&gt;enable_gpio;
+<span class="err">
+</span><span class="gd">-	gpio = lp-&gt;pdata-&gt;enable_gpio;
 -	if (!gpio_is_valid(gpio))
-+	if (!lp-&gt;pdata-&gt;enable_gpio)
-		return 0;
-
-	/* Always set enable GPIO high. */
--	ret = devm_gpio_request_one(lp-&gt;dev, gpio, GPIOF_OUT_INIT_HIGH, "LP872X EN");
+</span><span class="gi">+	if (!lp-&gt;pdata-&gt;enable_gpio)
+</span>		return 0;
+<span class="err">
+</span>	/* Always set enable GPIO high. */
+<span class="gd">-	ret = devm_gpio_request_one(lp-&gt;dev, gpio, GPIOF_OUT_INIT_HIGH, "LP872X EN");
 -	if (ret) {
 -		dev_err(lp-&gt;dev, "gpio request err: %d\n", ret);
 -		return ret;
-+	lp-&gt;pdata-&gt;enable_gpio = devm_gpiod_get_optional(lp-&gt;dev, "enable", GPIOD_OUT_HIGH);
+</span><span class="gi">+	lp-&gt;pdata-&gt;enable_gpio = devm_gpiod_get_optional(lp-&gt;dev, "enable", GPIOD_OUT_HIGH);
 +	if (IS_ERR(lp-&gt;pdata-&gt;enable_gpio)) {
 +		dev_err(lp-&gt;dev, "gpio request err: %ld\n", PTR_ERR(lp-&gt;pdata-&gt;enable_gpio));
 +		return PTR_ERR(lp-&gt;pdata-&gt;enable_gpio);
-	}
-
-	/* Each chip has a different enable delay. */
-@@ -844,13 +839,10 @@ static struct lp872x_platform_data
+</span>	}
+<span class="err">
+</span>	/* Each chip has a different enable delay. */
+<span class="p">@@ -844,13 +839,10 @@</span> static struct lp872x_platform_data
 	if (!pdata-&gt;dvs)
 		return ERR_PTR(-ENOMEM);
-
--	pdata-&gt;dvs-&gt;gpio = of_get_named_gpio(np, "ti,dvs-gpio", 0);
-	of_property_read_u8(np, "ti,dvs-vsel", (u8 *)&amp;pdata-&gt;dvs-&gt;vsel);
+<span class="err">
+</span><span class="gd">-	pdata-&gt;dvs-&gt;gpio = of_get_named_gpio(np, "ti,dvs-gpio", 0);
+</span>	of_property_read_u8(np, "ti,dvs-vsel", (u8 *)&amp;pdata-&gt;dvs-&gt;vsel);
 	of_property_read_u8(np, "ti,dvs-state", &amp;dvs_state);
 	pdata-&gt;dvs-&gt;init_state = dvs_state ? DVS_HIGH : DVS_LOW;
-
--	pdata-&gt;enable_gpio = of_get_named_gpio(np, "enable-gpios", 0);
+<span class="err">
+</span><span class="gd">-	pdata-&gt;enable_gpio = of_get_named_gpio(np, "enable-gpios", 0);
 -
-	if (of_get_child_count(np) == 0)
+</span>	if (of_get_child_count(np) == 0)
 		goto out;
-
-diff --git a/include/linux/regulator/lp872x.h b/include/linux/regulator/lp872x.h
+<span class="err">
+</span><span class="gh">diff --git a/include/linux/regulator/lp872x.h b/include/linux/regulator/lp872x.h
 index d780dbb8b423..8e7e0343c6e1 100644
---- a/include/linux/regulator/lp872x.h
-+++ b/include/linux/regulator/lp872x.h
-@@ -10,7 +10,7 @@
-
-#include &lt;linux/regulator/machine.h&gt;
+</span><span class="gd">--- a/include/linux/regulator/lp872x.h
+</span><span class="gi">+++ b/include/linux/regulator/lp872x.h
+</span><span class="p">@@ -10,7 +10,7 @@</span>
+<span class="err">
+</span>#include &lt;linux/regulator/machine.h&gt;
 #include &lt;linux/platform_device.h&gt;
--#include &lt;linux/gpio.h&gt;
-+#include &lt;linux/gpio/consumer.h&gt;
-
-#define LP872X_MAX_REGULATORS		9
-
-@@ -41,8 +41,8 @@ enum lp872x_regulator_id {
+<span class="gd">-#include &lt;linux/gpio.h&gt;
+</span><span class="gi">+#include &lt;linux/gpio/consumer.h&gt;
+</span><span class="err">
+</span>#define LP872X_MAX_REGULATORS		9
+<span class="err">
+</span><span class="p">@@ -41,8 +41,8 @@</span> enum lp872x_regulator_id {
 };
-
-enum lp872x_dvs_state {
--	DVS_LOW  = GPIOF_OUT_INIT_LOW,
+<span class="err">
+</span><span class="p">enum lp872x_dvs_state {
+</span><span class="gd">-	DVS_LOW  = GPIOF_OUT_INIT_LOW,
 -	DVS_HIGH = GPIOF_OUT_INIT_HIGH,
-+	DVS_LOW  = GPIOD_OUT_LOW,
+</span><span class="gi">+	DVS_LOW  = GPIOD_OUT_LOW,
 +	DVS_HIGH = GPIOD_OUT_HIGH,
-};
-
-enum lp872x_dvs_sel {
-@@ -52,12 +52,12 @@ enum lp872x_dvs_sel {
-
-/**
+</span>};
+<span class="err">
+</span><span class="p">enum lp872x_dvs_sel {
+@@ -52,12 +52,12 @@</span> enum lp872x_dvs_sel {
+<span class="err">
+</span>/**
 * lp872x_dvs
-- * @gpio       : gpio pin number for dvs control
-+ * @gpio       : gpio descriptor for dvs control
-* @vsel       : dvs selector for buck v1 or buck v2 register
+<span class="gd">- * @gpio       : gpio pin number for dvs control
+</span><span class="gi">+ * @gpio       : gpio descriptor for dvs control
+</span>* @vsel       : dvs selector for buck v1 or buck v2 register
 * @init_state : initial dvs pin state
 */
-struct lp872x_dvs {
--	int gpio;
-+	struct gpio_desc *gpio;
-	enum lp872x_dvs_sel vsel;
+<span class="p">struct lp872x_dvs {
+</span><span class="gd">-	int gpio;
+</span><span class="gi">+	struct gpio_desc *gpio;
+</span>	enum lp872x_dvs_sel vsel;
 	enum lp872x_dvs_state init_state;
 };
-@@ -78,14 +78,14 @@ struct lp872x_regulator_data {
+<span class="p">@@ -78,14 +78,14 @@</span> struct lp872x_regulator_data {
 * @update_config     : if LP872X_GENERAL_CFG register is updated, set true
 * @regulator_data    : platform regulator id and init data
 * @dvs               : dvs data for buck voltage control
-- * @enable_gpio       : gpio pin number for enable control
-+ * @enable_gpio       : gpio descriptor for enable control
-*/
-struct lp872x_platform_data {
-	u8 general_config;
+<span class="gd">- * @enable_gpio       : gpio pin number for enable control
+</span><span class="gi">+ * @enable_gpio       : gpio descriptor for enable control
+</span>*/
+<span class="p">struct lp872x_platform_data {
+</span>	u8 general_config;
 	bool update_config;
 	struct lp872x_regulator_data regulator_data[LP872X_MAX_REGULATORS];
 	struct lp872x_dvs *dvs;
--	int enable_gpio;
-+	struct gpio_desc *enable_gpio;
-};
-
-#endif
+<span class="gd">-	int enable_gpio;
+</span><span class="gi">+	struct gpio_desc *enable_gpio;
+</span>};
+<span class="err">
+</span>#endif
 </code></pre></div></div>
 
 <p>Really recommend to any kernel newbie to start contributing to any subsystem maintained by Mark Brown. He is really helpful and very responsive.</p>

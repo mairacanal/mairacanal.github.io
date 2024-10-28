@@ -166,34 +166,34 @@ as VGEM is not a usual hotplugged device, we need to use the legacy platform
 device initialization. This made me develop my first binding for legacy
 registration:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/// Add a platform-level device and its resources
-pub fn register(name: &amp;'static CStr, id: i32) -&gt; Result&lt;Self&gt; {
-	let pdev = from_kernel_err_ptr(unsafe {
-		bindings::platform_device_register_simple(name.as_char_ptr(), id,
-			core::ptr::null(), 0)
-	})?;
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cd">/// Add a platform-level device and its resources</span>
+<span class="k">pub</span> <span class="k">fn</span> <span class="nf">register</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">'static</span> <span class="n">CStr</span><span class="p">,</span> <span class="n">id</span><span class="p">:</span> <span class="nb">i32</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Result</span><span class="o">&lt;</span><span class="k">Self</span><span class="o">&gt;</span> <span class="p">{</span>
+	<span class="k">let</span> <span class="n">pdev</span> <span class="o">=</span> <span class="nf">from_kernel_err_ptr</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span>
+		<span class="nn">bindings</span><span class="p">::</span><span class="nf">platform_device_register_simple</span><span class="p">(</span><span class="n">name</span><span class="nf">.as_char_ptr</span><span class="p">(),</span> <span class="n">id</span><span class="p">,</span>
+			<span class="nn">core</span><span class="p">::</span><span class="nn">ptr</span><span class="p">::</span><span class="nf">null</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+	<span class="p">})</span><span class="o">?</span><span class="p">;</span>
 
-	Ok(Self {
-		ptr: pdev,
-		used_resource: 0,
-		is_registered: true,
-	})
-}
+	<span class="nf">Ok</span><span class="p">(</span><span class="k">Self</span> <span class="p">{</span>
+		<span class="n">ptr</span><span class="p">:</span> <span class="n">pdev</span><span class="p">,</span>
+		<span class="n">used_resource</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+		<span class="n">is_registered</span><span class="p">:</span> <span class="k">true</span><span class="p">,</span>
+	<span class="p">})</span>
+<span class="p">}</span>
 </code></pre></div></div>
 
 <p>For sure, the registration must follow the unregistration of the device, so I
 implemented a Drop trait for the struct Device in order to guarantee the proper
 device removal without explicitly calling it.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>impl Drop for Device {
-	fn drop(&amp;mut self) {
-		if self.is_registered {
-			// SAFETY: This path only runs if a previous call to `register`
-			// completed successfully.
-			unsafe { bindings::platform_device_unregister(self.ptr) };
-		}
-	}
-}
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">impl</span> <span class="nb">Drop</span> <span class="k">for</span> <span class="n">Device</span> <span class="p">{</span>
+	<span class="k">fn</span> <span class="nf">drop</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="k">self</span><span class="py">.is_registered</span> <span class="p">{</span>
+			<span class="c1">// SAFETY: This path only runs if a previous call to `register`</span>
+			<span class="c1">// completed successfully.</span>
+			<span class="k">unsafe</span> <span class="p">{</span> <span class="nn">bindings</span><span class="p">::</span><span class="nf">platform_device_unregister</span><span class="p">(</span><span class="k">self</span><span class="py">.ptr</span><span class="p">)</span> <span class="p">};</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div></div>
 
 <p>After those, I also developed bindings for a couple of more functions and
@@ -215,44 +215,44 @@ earlier attached to a VGEM handle.</p>
 <p>In order to add a fence, bindings to DMA reservation are needed. So, I started
 by creating a safe abstraction for <code class="language-plaintext highlighter-rouge">struct dma_resv</code>.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/// A generic DMA Resv Object
-///
-/// # Invariants
-/// ptr is a valid pointer to a dma_resv and we own a reference to it.
-pub struct DmaResv {
-    ptr: *mut bindings::dma_resv,
-}
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cd">/// A generic DMA Resv Object</span>
+<span class="cd">///</span>
+<span class="cd">/// # Invariants</span>
+<span class="cd">/// ptr is a valid pointer to a dma_resv and we own a reference to it.</span>
+<span class="k">pub</span> <span class="k">struct</span> <span class="n">DmaResv</span> <span class="p">{</span>
+    <span class="n">ptr</span><span class="p">:</span> <span class="o">*</span><span class="k">mut</span> <span class="nn">bindings</span><span class="p">::</span><span class="n">dma_resv</span><span class="p">,</span>
+<span class="p">}</span>
 
-impl DmaResv {
+<span class="k">impl</span> <span class="n">DmaResv</span> <span class="p">{</span>
 	
-    [...]
+    <span class="p">[</span><span class="o">...</span><span class="p">]</span>
 	
-    /// Add a fence to the dma_resv object
-    pub fn add_fences(
-        &amp;self,
-        fence: &amp;dyn RawDmaFence,
-        num_fences: u32,
-        usage: bindings::dma_resv_usage,
-    ) -&gt; Result {
-        unsafe { bindings::dma_resv_lock(self.ptr, core::ptr::null_mut()) };
+    <span class="cd">/// Add a fence to the dma_resv object</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">add_fences</span><span class="p">(</span>
+        <span class="o">&amp;</span><span class="k">self</span><span class="p">,</span>
+        <span class="n">fence</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">dyn</span> <span class="n">RawDmaFence</span><span class="p">,</span>
+        <span class="n">num_fences</span><span class="p">:</span> <span class="nb">u32</span><span class="p">,</span>
+        <span class="n">usage</span><span class="p">:</span> <span class="nn">bindings</span><span class="p">::</span><span class="n">dma_resv_usage</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Result</span> <span class="p">{</span>
+        <span class="k">unsafe</span> <span class="p">{</span> <span class="nn">bindings</span><span class="p">::</span><span class="nf">dma_resv_lock</span><span class="p">(</span><span class="k">self</span><span class="py">.ptr</span><span class="p">,</span> <span class="nn">core</span><span class="p">::</span><span class="nn">ptr</span><span class="p">::</span><span class="nf">null_mut</span><span class="p">())</span> <span class="p">};</span>
 
-        let ret = self.reserve_fences(num_fences);
-        match ret {
-            Ok(_) =&gt; {
-                // SAFETY: ptr is locked with dma_resv_lock(), and dma_resv_reserve_fences()
-                // has been called.
-                unsafe {
-                    bindings::dma_resv_add_fence(self.ptr, fence.raw(), usage);
-                }
-            }
-            Err(_) =&gt; {}
-        }
+        <span class="k">let</span> <span class="n">ret</span> <span class="o">=</span> <span class="k">self</span><span class="nf">.reserve_fences</span><span class="p">(</span><span class="n">num_fences</span><span class="p">);</span>
+        <span class="k">match</span> <span class="n">ret</span> <span class="p">{</span>
+            <span class="nf">Ok</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c1">// SAFETY: ptr is locked with dma_resv_lock(), and dma_resv_reserve_fences()</span>
+                <span class="c1">// has been called.</span>
+                <span class="k">unsafe</span> <span class="p">{</span>
+                    <span class="nn">bindings</span><span class="p">::</span><span class="nf">dma_resv_add_fence</span><span class="p">(</span><span class="k">self</span><span class="py">.ptr</span><span class="p">,</span> <span class="n">fence</span><span class="nf">.raw</span><span class="p">(),</span> <span class="n">usage</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{}</span>
+        <span class="p">}</span>
         
-        unsafe { bindings::dma_resv_unlock(self.ptr) };
+        <span class="k">unsafe</span> <span class="p">{</span> <span class="nn">bindings</span><span class="p">::</span><span class="nf">dma_resv_unlock</span><span class="p">(</span><span class="k">self</span><span class="py">.ptr</span><span class="p">)</span> <span class="p">};</span>
 
-        ret
-    }
-}
+        <span class="n">ret</span>
+    <span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div></div>
 
 <p>With that step, I could simply write the IOCTLs based on the new <code class="language-plaintext highlighter-rouge">DmaResv</code>

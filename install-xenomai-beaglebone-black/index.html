@@ -141,49 +141,49 @@
 
 <p>First, we need to access the Beaglebone Black through SSH.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh debian@192.168.7.2
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh debian@192.168.7.2
 </code></pre></div></div>
 
 <p>In order to keep the repositories and packages updated before we start the Cobalt core installation, we can run:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt update
-sudo apt upgrade
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt update
+<span class="nb">sudo </span>apt upgrade
 </code></pre></div></div>
 
 <p>To install the Cobalt core, first, we need to know the version of the Linux image we will install. A couple of pre-compiled kernel versions are provided by Beagleboard for Debian Buster and they are listed <a href="http://repos.rcn-ee.net/latest/buster-armhf/LATEST-ti-xenomai" target="_blank" rel="noopener noreferrer" class="external">here</a>.</p>
 
 <p>After deciding on the kernel version, we can just run the following command to install and update the kernel.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install linux-image-{KERNEL TAGFORM}
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt <span class="nb">install </span>linux-image-<span class="o">{</span>KERNEL TAGFORM<span class="o">}</span>
 </code></pre></div></div>
 
 <p>I installed the 4.19.94-ti-xenomai-r64 version, so I ran:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install linux-image-4.19.94-ti-xenomai-r64
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt <span class="nb">install </span>linux-image-4.19.94-ti-xenomai-r64
 </code></pre></div></div>
 
 <p>To load the new kernel, we need to reboot the machine and reconnect through SSH.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo reboot
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>reboot
 ssh debian@192.168.7.2
 </code></pre></div></div>
 
 <p>To check that the kernel was properly installed, we can check the kernel version with:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uname -r
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">uname</span> <span class="nt">-r</span>
 </code></pre></div></div>
 
 <p>The output must be the kernel tag form that you selected previously. In my case, the output was 4.19.94-ti-xenomai-r64.</p>
 
 <p>We can also check the kernel log and search for Xenomai references. Looking at <code class="language-plaintext highlighter-rouge">dmesg</code>, we will find something like this:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>debian@beaglebone:~$ dmesg | grep -i xenomai
-[    0.000000] Linux version 4.19.94-ti-xenomai-r64 (voodoo@rpi4b4g-06) (gcc version 8.3.0 (Debian 8.3.0-6)) #1buster SMP PREEMPT Sat May 22 01:02:28 UTC 2021
-[    1.220506] [Xenomai] scheduling class idle registered.
-[    1.220521] [Xenomai] scheduling class rt registered.
-[    1.220676] I-pipe: head domain Xenomai registered.
-[    1.225554] [Xenomai] Cobalt v3.1
-[    1.753962] usb usb1: Manufacturer: Linux 4.19.94-ti-xenomai-r64 musb-hcd
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>debian@beaglebone:~<span class="nv">$ </span>dmesg | <span class="nb">grep</span> <span class="nt">-i</span> xenomai
+<span class="o">[</span>    0.000000] Linux version 4.19.94-ti-xenomai-r64 <span class="o">(</span>voodoo@rpi4b4g-06<span class="o">)</span> <span class="o">(</span>gcc version 8.3.0 <span class="o">(</span>Debian 8.3.0-6<span class="o">))</span> <span class="c">#1buster SMP PREEMPT Sat May 22 01:02:28 UTC 2021</span>
+<span class="o">[</span>    1.220506] <span class="o">[</span>Xenomai] scheduling class idle registered.
+<span class="o">[</span>    1.220521] <span class="o">[</span>Xenomai] scheduling class rt registered.
+<span class="o">[</span>    1.220676] I-pipe: <span class="nb">head </span>domain Xenomai registered.
+<span class="o">[</span>    1.225554] <span class="o">[</span>Xenomai] Cobalt v3.1
+<span class="o">[</span>    1.753962] usb usb1: Manufacturer: Linux 4.19.94-ti-xenomai-r64 musb-hcd
 </code></pre></div></div>
 
 <p>Look that we are running Cobalt v3.1 and this version is extremely important to the next step.</p>
@@ -192,41 +192,41 @@ ssh debian@192.168.7.2
 
 <p>First, we need to install the appropriate Xenomai bindings. From the kernel log, I could check that I’m running Cobalt v3.1, so I’m going to download the Xenomai 3.1 tarball.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget https://xenomai.org/downloads/xenomai/stable/xenomai-3.1.tar.bz2
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget https://xenomai.org/downloads/xenomai/stable/xenomai-3.1.tar.bz2
 </code></pre></div></div>
 
 <p>If you are running another version of Cobalt, you can just change the version tag from the URL.</p>
 
 <p>Next, we can decompress the tarball and get inside the Xenomai folder.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tar xf xenomai-3.1.tar.bz2
-cd xenomai-3.1
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">tar </span>xf xenomai-3.1.tar.bz2
+<span class="nb">cd </span>xenomai-3.1
 </code></pre></div></div>
 
 <p>Now, it is time to build and install the Xenomai binding. First, we need to configure the built environment by running:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./configure --enable-smp
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./configure <span class="nt">--enable-smp</span>
 </code></pre></div></div>
 
 <p>Although the Beaglebone Black has a single-core processor, the flag <code class="language-plaintext highlighter-rouge">--enable-smp</code> is important, because the precompiled kernel versions from Beagleboard enable CONFIG_SMP by default.</p>
 
 <p>Then, finally, we can build and install Xenomai.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make
-sudo make install
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make
+<span class="nb">sudo </span>make <span class="nb">install</span>
 </code></pre></div></div>
 
 <p>And then, you are done!</p>
 
 <p>You can test the real-time system by running:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo su
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>su
 /usr/xenomai/bin/latency
 </code></pre></div></div>
 
 <p>The output will be similar to this:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>== Sampling period: 1000 us
+<pre><code class="language-plain">== Sampling period: 1000 us
 == Test mode: periodic user-mode task
 == All results in microseconds
 warming up...
@@ -249,7 +249,7 @@ RTD|     11.539|     12.955|     51.580|       0|     0|      7.875|     57.249
 RTD|     10.747|     13.254|     52.163|       0|     0|      7.875|     57.249
 ^C---|-----------|-----------|-----------|--------|------|-------------------------
 RTS|      7.875|     14.543|     57.249|       0|     0|    00:00:15/00:00:15
-</code></pre></div></div>
+</code></pre>
 
 <p>This command displays a message every second with minimum, maximum, and average latency values. Notice that all the latencies are in the order of microseconds.</p>
 
