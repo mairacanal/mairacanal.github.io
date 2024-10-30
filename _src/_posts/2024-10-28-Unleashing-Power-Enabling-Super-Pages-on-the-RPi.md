@@ -347,8 +347,7 @@ requirement to activate this feature in any given kernel is ensuring that
 ## Final Words
 
 You can learn more about ongoing enhancements to the Raspberry Pi driver stack
-in this [XDC 2024
-talk](https://www.youtube.com/live/d0MP9-hFUZE?si=k6SL8taOo3oBgG-t&t=21888) by
+in this [XDC 2024 talk](https://youtu.be/tlSFHkp6ODM?si=YVuLqbp9tYQkK6PD) by
 José María "Chema" Casanova Crespo. In the talk, Chema discusses the Super
 Pages work I developed, along with other advancements in the driver stack.
 
