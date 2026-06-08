@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Maíra Canal | Bringing Runtime Power Management to the Raspberry Pi GPU</title>
+    <meta name="description" content="Blogging about graphics development whenever I can"
+    />
+    
+
+    <link rel="canonical" href="https://mairacanal.github.io/bringing-runtime-pm-to-raspberry-pi-gpu/" />
+    <!-- Common head elements I use in this website and cgit -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+<link rel="icon" href="/assets/favicon/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+<link rel="manifest" href="/assets/favicon/site.webmanifest">
+
+<link rel="stylesheet" href="/assets/style.css" />
+<link rel="stylesheet" href="https://m7.rs/colors/catppuccin-frappe.css" />
+<link rel="stylesheet" href="https://m7.rs/colors/catppuccin-frappe.css" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://m7.rs/colors/.css" media="print" />
+<link rel="stylesheet" id="theme-css" />
+
+<script src="/assets/main.js"></script>
+
+    <!-- Matomo -->
+<script>
+  var _paq = window._paq = window._paq || [];
+  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="//stats.igalia.com/";
+    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    _paq.push(['setSiteId', '28']);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<!-- End Matomo Code -->
+
+  </head>
+  <body>
+    <header>
+  <div class="title">{ <a href="/">Maíra Canal</a> }</div>
+<nav>
+    <ul>
+      
+      <li>
+        <a class="colorscheme" aria-label="Change colorscheme" href="/colorscheme/">
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/about-me/">
+          
+            about
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/">
+          
+            blog
+          
+        </a>
+      </li>
+      
+      <li>
+        <a href="/cv/">
+          
+            cv
+          
+        </a>
+      </li>
+      
+    </ul>
+</nav>
+
+</header>
+
+<main>
+  <article>
+    <header>
+      <h1>Bringing Runtime Power Management to the Raspberry Pi GPU</h1>
+      
+      
+        <p>
+          Date: <time datetime="2026-06-08T15:30:00+00:00">8th June 2026</time>
+        </p>
+      
+      
+        <p>
+          Tags:
+          
+            <a href="/tag/igalia/">#igalia</a>
+          
+            <a href="/tag/kernel/">#kernel</a>
+          
+            <a href="/tag/rpi/">#rpi</a>
+          
+        </p>
+      
+    </header>
+
+    <p>As part of Igalia’s collaboration with Raspberry Pi, I have previously blogged about several improvements we landed for the Broadcom VideoCore GPU (known as V3D), with the goal of extracting the best possible performance from the hardware. However, performance is not the whole story. On embedded devices, power consumption is just as important: reducing unnecessary activity helps lower heat generation, improve energy efficiency, and preserve performance over time by avoiding thermal throttling.</p>
+
+<p>That is why, over the last few months, we have been working on adding Runtime Power Management support to the upstream V3D DRM driver, allowing the GPU to be powered and clocked according to its actual usage.</p>
+
+<h2 id="why-runtime-power-management">Why Runtime Power Management?</h2>
+
+<p>In the Linux kernel, Runtime Power Management (known as Runtime PM) is the mechanism that allows individual devices to be suspended and resumed dynamically while the system as a whole remains running. Instead of keeping a device fully powered all the time, the kernel can put the device into a low-power state when it is idle and bring it back when it is needed again.</p>
+
+<p>In the graphics context, it is easy to see why runtime PM can be useful. A GPU is not necessarily active all the time: it may be heavily used while rendering a scene, but remain idle for long periods afterwards. If the driver keeps the GPU clocked during those idle periods, the system keeps spending energy on a block that is not doing useful work at all.</p>
+
+<p>For embedded platforms, this is even more pressing. Reducing unnecessary power consumption helps decrease heat generation and improve overall energy efficiency. Even if the board is not battery-powered, avoiding needless power usage can reduce the need for cooling and leave more thermal budget available for other blocks.</p>
+
+<h2 id="the-problem-an-idle-gpu-with-an-enabled-clock">The Problem: an idle GPU with an enabled clock</h2>
+
+<p>Until now, the V3D driver had a very simple power model: the GPU clock was enabled during probe and remained enabled for the entire lifetime of the driver. In practice, this meant that once the driver was loaded, the V3D clock stayed on until the driver was removed, regardless of whether the GPU was actively executing jobs. This was simple and functional, but it meant that an idle GPU was not idle from a power-management point of view.</p>
+
+<p>On Raspberry Pi platforms, this is easy to observe with <code class="language-plaintext highlighter-rouge">vcgencmd</code>. Even with no GPU workload running, the V3D clock would still report an enabled frequency:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>vcgencmd measure_clock v3d
+frequency<span class="o">(</span>0<span class="o">)=</span>960016128
+</code></pre></div></div>
+
+<p>If the GPU is idle, the driver should be able to let the hardware become idle as well. Runtime PM provides the kernel infrastructure for that, but enabling it in the V3D driver required a bit more than simply adding suspend and resume callbacks.</p>
+
+<h2 id="making-the-raspberry-pi-firmware-clocks-obey">Making the Raspberry Pi firmware clocks obey</h2>
+
+<p>At first glance, adding Runtime PM to V3D might look like a driver-local change, but in practice, things were a bit more subtle.</p>
+
+<p>On Raspberry Pi platforms, some clocks are managed by the Raspberry Pi firmware. From the V3D driver’s point of view, this is supposed to be mostly transparent: the driver uses the standard Linux clock framework, and the clock provider takes care of talking to the firmware underneath. However, this abstraction only works if calls to <code class="language-plaintext highlighter-rouge">clk_prepare_enable()</code> and <code class="language-plaintext highlighter-rouge">clk_disable_unprepare()</code> are translated into actual firmware requests to enable and disable the clock.</p>
+
+<p>Surprisingly, that was not happening. The Raspberry Pi firmware clock driver did not implement the prepare/unprepare hooks, so these calls did not actually ask the firmware to enable or disable the clock. We fixed that by translating the common clock framework operations into the corresponding Raspberry Pi firmware commands <a href="#ref-1">[1]</a><a href="#ref-2">[2]</a><a href="#ref-3">[3]</a>.</p>
+
+<p>However, there was still one firmware-specific caveat: on current firmware versions, <code class="language-plaintext highlighter-rouge">RPI_FIRMWARE_SET_CLOCK_STATE</code> does not fully power off the clock as expected. To work around this limitation and achieve meaningful power savings, the clock rate also needs to be set to the minimum before disabling the clock. This behavior may change in future firmware releases, but for now the clock driver needs to account for it explicitly.</p>
+
+<p>With the firmware clock limitation addressed, the V3D driver could start relying on the usual kernel clock APIs as part of its Runtime PM flow. The next step was to reorganize the driver so that powering the GPU up and down became part of its operation.</p>
+
+<h2 id="introducing-runtime-pm-to-v3d">Introducing Runtime PM to V3D</h2>
+
+<p>With the clock side behaving as expected, we could move the V3D driver itself to a Runtime PM model <a href="#ref-7">[7]</a><a href="#ref-8">[8]</a><a href="#ref-9">[9]</a>.</p>
+
+<p>This required a small refactor of the probe path to separate power-independent setup from GPU-powered initialization. Resources that do not require the GPU to be powered are allocated during probe, while any initialization that depends on the GPU being clocked is handled during runtime resume. Runtime suspend then disables the clock again when the device becomes idle. The resulting flow is simple:</p>
+
+<p><img src="/assets/images/runtime-pm-flow.png" alt="Runtime PM Flow" width="320"></p>
+
+<p>With that in place, the change becomes visible from userspace. While a GPU workload such as <code class="language-plaintext highlighter-rouge">glmark2</code> is running, the V3D clock is enabled:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>vcgencmd measure_clock v3d
+frequency<span class="o">(</span>0<span class="o">)=</span>960016128
+</code></pre></div></div>
+
+<p>After the workload finishes and the GPU becomes idle, the clock can drop back to zero:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>vcgencmd measure_clock v3d
+frequency<span class="o">(</span>0<span class="o">)=</span>0
+</code></pre></div></div>
+
+<p>This is the behavior we wanted: the GPU remains available when there is work to do, but it no longer keeps its clock enabled while idle.</p>
+
+<h2 id="results">Results</h2>
+
+<p>To evaluate the effect of Runtime PM, we measured the board’s power consumption with an external power meter in three scenarios: an idle desktop session with <code class="language-plaintext highlighter-rouge">labwc</code> running, an idle system without the compositor, and a full <code class="language-plaintext highlighter-rouge">glmark2</code> run. Each condition was sampled at 100 Hz for around 300 seconds.</p>
+
+<p>The first case represents a mostly idle graphical session, where <code class="language-plaintext highlighter-rouge">labwc</code>, the compositor used by Raspberry Pi OS, may still wake the GPU occasionally. The second is a baseline with no graphical workload, while the third is a sustained GPU benchmark intended to keep the GPU active.</p>
+
+<p>The numbers behave the way one would hope. When the GPU is genuinely idle, the clock can be gated off and the savings show up as a clear drop: average draw falls from 3.30 W to 3.19 W with labwc running, and from 3.18 W to 3.09 W with no compositor at all. Both idle scenarios end up with savings of about 0.1 W (around 3%). Under <code class="language-plaintext highlighter-rouge">glmark2</code>, where the GPU is doing useful work for most of the run, the difference shrinks to about 0.015 W (0.3%), which is expected, as Runtime PM mainly affects the periods where the GPU becomes idle.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Scenario</th>
+      <th style="text-align: center">Before</th>
+      <th style="text-align: center">After</th>
+      <th style="text-align: center">Difference</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Idle, compositor running</td>
+      <td style="text-align: center">3.300 W</td>
+      <td style="text-align: center">3.192 W</td>
+      <td style="text-align: center">-0.108 W (-3.3%)</td>
+    </tr>
+    <tr>
+      <td>Idle, no compositor</td>
+      <td style="text-align: center">3.179 W</td>
+      <td style="text-align: center">3.093 W</td>
+      <td style="text-align: center">-0.086 W (-2.7%)</td>
+    </tr>
+    <tr>
+      <td>
+<code class="language-plaintext highlighter-rouge">glmark2</code> full run</td>
+      <td style="text-align: center">5.698 W</td>
+      <td style="text-align: center">5.683 W</td>
+      <td style="text-align: center">-0.015 W (-0.3%)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The distribution of idle samples with <code class="language-plaintext highlighter-rouge">labwc</code> running also shows the effect clearly. With Runtime PM enabled, the distribution shifts toward lower power states. This indicates that the board spends more time in lower-power idle states once the V3D clock is no longer kept enabled unnecessarily.</p>
+
+<p><img src="/assets/images/idle-power-with-compositor.png" alt="Idle power consumption with labwc"></p>
+
+<p>The effect is even cleaner with no compositor running. The samples collapse into two very narrow peaks with no overlap between them: without Runtime PM, the board sits at a stable 3.18 W; with Runtime PM, it sits at a stable 3.09 W.</p>
+
+<p><img src="/assets/images/idle-power-without-compositor.png" alt="Idle power consumption without compositor"></p>
+
+<p>For <code class="language-plaintext highlighter-rouge">glmark2</code>, the time-series data shows that both configurations follow the same general workload pattern. Runtime PM does not significantly change the power profile while the GPU is busy, which is the intended behavior. The benefit appears when the workload leaves idle gaps or finishes, allowing the clock to be disabled again.</p>
+
+<p><img src="/assets/images/glmark2-power-vs-time.png" alt="glmark2 power consumption over time"></p>
+
+<p>Overall, these measurements show that Runtime PM reduces power consumption where it matters most: when the GPU is idle. The absolute savings are modest at the board level, since the measurement includes the whole Raspberry Pi rather than the GPU power block alone, but the reduction is consistent with the intended change. The V3D clock no longer remains enabled for the full lifetime of the driver, and that translates into measurable reductions in idle power consumption.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Runtime PM support for V3D is one of those changes that is easy to overlook when everything is working correctly: userspace does not need to do anything differently, applications keep using the GPU as before, and the improvement happens underneath, in the way the kernel manages the hardware.</p>
+
+<p>Beyond improving raw GPU performance, our work at <a href="https://www.igalia.com" target="_blank" rel="noopener noreferrer" class="external">Igalia</a> is also about making the upstream graphics stack behave better as a system: more efficient when idle, more robust across firmware interfaces, and better aligned with the expectations of the Linux kernel infrastructure.</p>
+
+<h2 id="references">References</h2>
+
+<p id="ref-1">[1] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=919d6924ae9b4bcc9cb1d5ce4b78d5b92665d630" target="_blank" rel="noopener noreferrer" class="external">clk: bcm: rpi: Turn firmware clock on/off when preparing/unpreparing - kernel/git/torvalds/linux.git - Linux kernel source tree</a></p>
+
+<p id="ref-2">[2] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6526402b9bac873d7a64c6e81eb53307d8471f08" target="_blank" rel="noopener noreferrer" class="external">clk: bcm: rpi: Maximize V3D clock - kernel/git/torvalds/linux.git - Linux kernel source tree</a></p>
+
+<p id="ref-3">[3] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=672299736af6c398e867782708b7400957e62c76" target="_blank" rel="noopener noreferrer" class="external">clk: bcm: rpi: Manage clock rate in prepare/unprepare callbacks - kernel/git/torvalds/linux.git - Linux kernel source tree</a></p>
+
+<p id="ref-4">[4] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=522567362b634015ca85b5460482ee0843feb105" target="_blank" rel="noopener noreferrer" class="external">clk: bcm: rpi: Mark VEC clock as CLK_IGNORE_UNUSED - kernel/git/torvalds/linux.git - Linux kernel source tree</a></p>
+
+<p id="ref-5">[5] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b826d2c0b0ecb844c84431ba6b502e744f5d919a" target="_blank" rel="noopener noreferrer" class="external">pmdomain: bcm: bcm2835-power: Increase ASB control timeout - kernel/git/torvalds/linux.git - Linux kernel source tree</a></p>
+
+<p id="ref-6">[6] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=d797ecf3ffc5cc3e622bfee4cee6b17372c5bcc7" target="_blank" rel="noopener noreferrer" class="external">pmdomain: bcm: bcm2835-power: Replace open-coded polling with readl_poll_timeout_atomic() - kernel/git/torvalds/linux.git - Linux kernel source tree</a></p>
+
+<p id="ref-7">[7] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=de1e32ef1d625ee4d717bcf10c23df2722324f62" target="_blank" rel="noopener noreferrer" class="external">drm/v3d: Use devm_reset_control_get_optional_exclusive() - kernel/git/next/linux-next.git - The linux-next integration testing tree</a></p>
+
+<p id="ref-8">[8] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=ffd7371ed4179827dcf401543b37b69e5781f924" target="_blank" rel="noopener noreferrer" class="external">drm/v3d: Allocate all resources before enabling the clock - kernel/git/next/linux-next.git - The linux-next integration testing tree</a></p>
+
+<p id="ref-9">[9] <a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=458f2a712ab42b7d3615208862922dc35fe90ef9" target="_blank" rel="noopener noreferrer" class="external">drm/v3d: Introduce Runtime Power Management - kernel/git/next/linux-next.git - The linux-next integration testing tree</a></p>
+
+
+
+  </article>
+</main>
+
+<footer>
+  <address>
+  <p>
+      E-mail:
+      <a href="mailto:mairacanal@riseup.net">mairacanal@riseup.net</a>
+    <br>
+    <span class="pgp">PGP:
+      <a href="/pgp.asc">
+        <span>F8E4 5D7D 0116 7707 29A6 77D1 </span> 3FF3 0E8A 7688 FAAA
+      </a>
+    </span>
+  </p>
+
+  <p>
+    Social:
+    <a href="https://github.com/mairacanal" class="external github" target="_blank" rel="noopener noreferrer">GitHub</a>;
+    <a href="https://gitlab.freedesktop.org/mairacanal" class="external gitlab" target="_blank" rel="noopener noreferrer">GitLab</a>;
+    <a href="https://linkedin.com/in/mairacanal" class="external linkedin" target="_blank" rel="noopener noreferrer">LinkedIn</a>;
+    <a rel="me noopener noreferrer" href="https://fosstodon.org/@mairacanal" class="external mastodon" target="_blank">Mastodon</a>
+  </p>
+
+  <p class="copyleft">Copyleft(C) <a href="https://m7.rs/" target="_blank" rel="noopener noreferrer" class="external">Gabriel Fontes</a> (<a href="https://github.com/Misterio77/website" target="_blank" rel="noopener noreferrer" class="external">Source Code</a>)</p>
+</address>
+
+<p class="print-site-link"><small>Also available at <a href="https://mairacanal.github.io/bringing-runtime-pm-to-raspberry-pi-gpu/">my website</a>.</small></p>
+
+</footer>
+
+  </body>
+</html>
