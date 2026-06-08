@@ -146,7 +146,15 @@ figure {
   figcaption {
     padding: 1em;
     color: var(--text-muted);
+    text-align: center;
   }
+}
+
+// Center images and video within post content
+main article img,
+main article video {
+  display: block;
+  margin-inline: auto;
 }
 
 // ===================
