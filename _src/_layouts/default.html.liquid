@@ -21,7 +21,7 @@ layout: root.html
         <p>
           Tags:
           {% for tag in page.tags %}
-            <a href="/notes#{{ tag }}">#{{ tag }}</a>
+            <a href="/tag/{{ tag | slugify }}/">#{{ tag }}</a>
           {% endfor %}
         </p>
       {% endif %}
