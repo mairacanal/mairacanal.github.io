@@ -1,6 +1,7 @@
 result
 _site
 gems
+.bundle
 .jekyll-cache
 .jekyll-metadata
 .sass-cache
