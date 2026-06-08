@@ -11,7 +11,7 @@ jobs:
       # Setup ruby
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.1.4
+          ruby-version: "3.4"
       # Install dependencies
       - run: bundle install
       # Build with jekyll
