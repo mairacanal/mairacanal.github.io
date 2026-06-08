@@ -1,3 +1,6 @@
+@use "sass:map";
+@use "sass:string";
+
 @function opposite-position($direction) {
   $map: (
     'top':    'bottom',
@@ -5,7 +8,7 @@
     'bottom': 'top',
     'left':   'right',
   );
-  @return unquote(map-get($map, $direction));
+  @return string.unquote(map.get($map, $direction));
 }
 
 @function position-to-location($position) {
@@ -13,7 +16,7 @@
     'left':  'before',
     'right': 'after',
   );
-  @return unquote(map-get($map, $position));
+  @return string.unquote(map.get($map, $position));
 }
 // Make the element be an icon
 @mixin set-icon($icon-name, $size: 1.5rem, $margin: calc($size / 10), $align: "middle") {
@@ -29,7 +32,7 @@
   -webkit-mask: $icon no-repeat;
   mask-size: cover;
   -webkit-mask-size: cover;
-  vertical-align: unquote($align);
+  vertical-align: string.unquote($align);
 }
 
 // Adds an icon after or before something
@@ -46,7 +49,7 @@
     -webkit-mask: $icon no-repeat;
     mask-size: cover;
     -webkit-mask-size: cover;
-    vertical-align: unquote($align);
+    vertical-align: string.unquote($align);
     position: relative;
   }
 }

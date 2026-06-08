@@ -1,9 +1,9 @@
-@import "vendor/normalize";
-@import "vendor/water";
+@use "vendor/normalize";
+@use "vendor/water";
 
-@import "highlight";
-@import "typography";
-@import "utils";
+@use "highlight";
+@use "typography";
+@use "utils" as *;
 
 #scheme-name:after {
   content: var(--scheme-name);
